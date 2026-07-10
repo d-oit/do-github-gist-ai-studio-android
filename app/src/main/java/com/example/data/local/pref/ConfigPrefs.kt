@@ -10,7 +10,7 @@ import javax.inject.Singleton
 
 @Singleton
 class ConfigPrefs @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) {
     private val prefs = context.getSharedPreferences("gist_config_prefs", Context.MODE_PRIVATE)
 

@@ -25,7 +25,7 @@ object StorageModule {
             AppDatabase::class.java,
             "gist_database"
         )
-        .fallbackToDestructiveMigration()
+        .fallbackToDestructiveMigration(dropAllTables = true)
         .build()
     }
 

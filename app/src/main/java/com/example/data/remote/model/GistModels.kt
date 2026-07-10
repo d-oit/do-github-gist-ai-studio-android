@@ -5,43 +5,43 @@ import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
 data class GistFileRequest(
-    @Json(name = "content") val content: String
+    @param:Json(name = "content") val content: String
 )
 
 @JsonClass(generateAdapter = true)
 data class GistRequest(
-    @Json(name = "description") val description: String?,
-    @Json(name = "public") val isPublic: Boolean,
-    @Json(name = "files") val files: Map<String, GistFileRequest?>
+    @param:Json(name = "description") val description: String?,
+    @param:Json(name = "public") val isPublic: Boolean,
+    @param:Json(name = "files") val files: Map<String, GistFileRequest?>
 )
 
 @JsonClass(generateAdapter = true)
 data class GistOwnerResponse(
-    @Json(name = "login") val login: String?,
-    @Json(name = "id") val id: Int?,
-    @Json(name = "avatar_url") val avatarUrl: String?
+    @param:Json(name = "login") val login: String?,
+    @param:Json(name = "id") val id: Int?,
+    @param:Json(name = "avatar_url") val avatarUrl: String?
 )
 
 @JsonClass(generateAdapter = true)
 data class GistFileResponse(
-    @Json(name = "filename") val filename: String?,
-    @Json(name = "type") val type: String?,
-    @Json(name = "language") val language: String?,
-    @Json(name = "raw_url") val rawUrl: String?,
-    @Json(name = "size") val size: Long?,
-    @Json(name = "content") val content: String?
+    @param:Json(name = "filename") val filename: String?,
+    @param:Json(name = "type") val type: String?,
+    @param:Json(name = "language") val language: String?,
+    @param:Json(name = "raw_url") val rawUrl: String?,
+    @param:Json(name = "size") val size: Long?,
+    @param:Json(name = "content") val content: String?
 )
 
 @JsonClass(generateAdapter = true)
 data class GistResponse(
-    @Json(name = "id") val id: String?,
-    @Json(name = "description") val description: String?,
-    @Json(name = "html_url") val htmlUrl: String?,
-    @Json(name = "url") val url: String?,
-    @Json(name = "created_at") val createdAt: String?,
-    @Json(name = "updated_at") val updatedAt: String?,
-    @Json(name = "node_id") val nodeId: String?,
-    @Json(name = "public") val isPublic: Boolean?,
-    @Json(name = "owner") val owner: GistOwnerResponse?,
-    @Json(name = "files") val files: Map<String, GistFileResponse>?
+    @param:Json(name = "id") val id: String?,
+    @param:Json(name = "description") val description: String?,
+    @param:Json(name = "html_url") val htmlUrl: String?,
+    @param:Json(name = "url") val url: String?,
+    @param:Json(name = "created_at") val createdAt: String?,
+    @param:Json(name = "updated_at") val updatedAt: String?,
+    @param:Json(name = "node_id") val nodeId: String?,
+    @param:Json(name = "public") val isPublic: Boolean?,
+    @param:Json(name = "owner") val owner: GistOwnerResponse?,
+    @param:Json(name = "files") val files: Map<String, GistFileResponse>?
 )
