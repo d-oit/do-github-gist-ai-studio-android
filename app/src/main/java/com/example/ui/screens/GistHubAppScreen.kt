@@ -70,6 +70,10 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
     val statusMessage by viewModel.statusMessage.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
 
+    val remoteGists by viewModel.remoteGists.collectAsState()
+    val isFetchingRemote by viewModel.isFetchingRemote.collectAsState()
+    val remoteError by viewModel.remoteError.collectAsState()
+
     var activeTab by remember { mutableStateOf("home") }
     val searchQuery by viewModel.searchQuery.collectAsState()
     var isSearchExpanded by remember { mutableStateOf(false) }
@@ -78,8 +82,7 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
     var showEditor by remember { mutableStateOf(false) }
     var editingGistId by remember { mutableStateOf<String?>(null) }
     var editorDescription by remember { mutableStateOf("") }
-    var editorFilename by remember { mutableStateOf("") }
-    var editorContent by remember { mutableStateOf("") }
+    var editorFiles by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
     var editorIsPublic by remember { mutableStateOf(true) }
     var editorIsPinned by remember { mutableStateOf(false) }
 
@@ -283,8 +286,7 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
                     onClick = {
                         editingGistId = null
                         editorDescription = ""
-                        editorFilename = ""
-                        editorContent = ""
+                        editorFiles = listOf("gistfile1.md" to "")
                         editorIsPublic = true
                         editorIsPinned = false
                         showEditor = true
@@ -319,8 +321,7 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
                         onEdit = { item ->
                             editingGistId = item.gist.id
                             editorDescription = item.gist.description ?: ""
-                            editorFilename = item.files.firstOrNull()?.filename ?: ""
-                            editorContent = item.files.firstOrNull()?.content ?: ""
+                            editorFiles = item.files.map { it.filename to it.content }
                             editorIsPublic = item.gist.isPublic
                             editorIsPinned = item.gist.isPinned
                             showEditor = true
@@ -337,8 +338,7 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
                         onEdit = { item ->
                             editingGistId = item.gist.id
                             editorDescription = item.gist.description ?: ""
-                            editorFilename = item.files.firstOrNull()?.filename ?: ""
-                            editorContent = item.files.firstOrNull()?.content ?: ""
+                            editorFiles = item.files.map { it.filename to it.content }
                             editorIsPublic = item.gist.isPublic
                             editorIsPinned = item.gist.isPinned
                             showEditor = true
@@ -347,8 +347,7 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
                         onCreateDraftClick = {
                             editingGistId = null
                             editorDescription = ""
-                            editorFilename = "untitled.kt"
-                            editorContent = ""
+                            editorFiles = listOf("gistfile1.md" to "")
                             editorIsPublic = true
                             editorIsPinned = false
                             showEditor = true
@@ -360,7 +359,11 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
                     SyncScreen(
                         gists = gists,
                         isSyncing = isSyncing,
-                        onSyncClick = { viewModel.syncAll() }
+                        onSyncClick = { viewModel.syncAll() },
+                        remoteGists = remoteGists,
+                        isFetchingRemote = isFetchingRemote,
+                        remoteError = remoteError,
+                        onRefreshRemote = { viewModel.fetchRemoteGistsDirectly() }
                     )
                 }
                 "config" -> {
@@ -372,6 +375,9 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
         }
     }
 
+    val aiAnalysis by viewModel.aiAnalysis.collectAsState()
+    val isAnalyzingGist by viewModel.isAnalyzingGist.collectAsState()
+
     // Modal Draft Editor
     if (showEditor) {
         // Key the dialog state to avoid stale inputs when opening/closing or changing items
@@ -379,18 +385,27 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
             DraftEditorDialog(
                 show = showEditor,
                 editingGistId = editingGistId,
-                onDismiss = { showEditor = false },
+                onDismiss = {
+                    showEditor = false
+                    viewModel.clearAiAnalysis()
+                },
                 initialDescription = editorDescription,
-                initialFilename = editorFilename,
-                initialContent = editorContent,
+                initialFiles = editorFiles,
                 initialIsPublic = editorIsPublic,
                 initialIsPinned = editorIsPinned,
-                onSave = { description, filename, content, isPublic, isPinned ->
+                isAnalyzing = isAnalyzingGist,
+                aiAnalysis = aiAnalysis,
+                onAnalyzeClick = { desc, filesList ->
+                    viewModel.analyzeGistContent(desc, filesList)
+                },
+                onClearAiClick = {
+                    viewModel.clearAiAnalysis()
+                },
+                onSave = { description, filesList, isPublic, isPinned ->
                     if (editingGistId == null) {
                         viewModel.createGist(
                             description = description,
-                            filename = filename,
-                            content = content,
+                            files = filesList,
                             isPublic = isPublic,
                             isPinned = isPinned
                         )
@@ -398,8 +413,7 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
                         viewModel.updateGist(
                             id = editingGistId!!,
                             description = description,
-                            filename = filename,
-                            content = content,
+                            files = filesList,
                             isPublic = isPublic,
                             isPinned = isPinned
                         )
@@ -415,6 +429,7 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
         GistPreviewDialog(
             show = previewGist != null,
             item = previewGist,
+            viewModel = viewModel,
             onDismiss = { previewGist = null }
         )
     }

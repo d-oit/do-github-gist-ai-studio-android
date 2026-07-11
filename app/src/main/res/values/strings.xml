@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Do Gist Hub</string>
+    <string name="verify_idle">Verify Token &amp; Autofill Profile</string>
+    <string name="verify_loading">Verifying Token...</string>
+    <string name="verify_success">Token Verified &amp; Saved Successfully!</string>
+    <string name="verify_failed">Verification Failed! Tap to Retry</string>
+    <string name="verify_success_toast">GitHub personal access token has been verified and safely saved to secure storage.</string>
 </resources>

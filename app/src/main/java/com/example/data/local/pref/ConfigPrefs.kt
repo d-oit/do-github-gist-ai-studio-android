@@ -3,7 +3,7 @@ package com.example.data.local.pref
 import android.content.Context
 import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKeys
+import androidx.security.crypto.MasterKey
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -14,22 +14,25 @@ class ConfigPrefs @Inject constructor(
 ) {
     private val prefs = context.getSharedPreferences("gist_config_prefs", Context.MODE_PRIVATE)
 
-    private val masterKeyAlias by lazy {
+    private val masterKey by lazy {
         try {
-            MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+            MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
         } catch (e: Exception) {
-            Log.e("ConfigPrefs", "Failed to get/create master key alias", e)
-            ""
+            Log.e("ConfigPrefs", "Failed to create master key", e)
+            null
         }
     }
 
     private val securePrefs by lazy {
         try {
-            if (masterKeyAlias.isNotEmpty()) {
+            val mKey = masterKey
+            if (mKey != null) {
                 EncryptedSharedPreferences.create(
-                    "secure_gist_config_prefs",
-                    masterKeyAlias,
                     context,
+                    "secure_gist_config_prefs",
+                    mKey,
                     EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                     EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
                 )

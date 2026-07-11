@@ -106,9 +106,7 @@ fun GistCard(
                     Text(
                         text = item.gist.description ?: "No description provided",
                         fontSize = 13.sp,
-                        color = GraySecondary,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
+                        color = GraySecondary
                     )
                 }
 

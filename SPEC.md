@@ -180,3 +180,107 @@ The workflow harness script `./harness.sh` supports the following execution trig
 - **`./harness.sh help`**: Outlines all available command triggers.
 
 By adhering to this design specification and utilizing the workflow harness, the project guarantees pristine visual quality, structured offline performance, and robust development velocity.
+
+---
+
+## 6. Multi-File Draft Editing Architecture
+To match the official GitHub Gist web interface, Do Gist Hub supports managing multiple files under a single Gist entity.
+- **UI Presentation**: Stacking input cards inside `DraftEditorDialog`. Each file block permits editing the filename and raw content, with full validation.
+- **Addition & Deletion**: Interactive "+ Add File" buttons spawn fresh cards. Deletion is supported if more than one file exists, preventing empty gists.
+- **Languages**: File language identification triggers reactively via filename extension checking.
+
+---
+
+## 7. Advanced Content Quality Checkers
+Content is checked continuously in the Draft Editor, rendering real-time suggestions:
+1. **Spell Checker**: Dictionary lookup matching technical and common terms.
+2. **Grammar Checker**: Scans for duplicated adjacent words, checks for sentence-starting capitalization, and verifies standard punctuation spacing.
+3. **External Link Checker**: Parses URLs, checking for correct structures. Flags insecure URLs (`http` instead of `https`), and provides inline upgrade actions to immediately replace insecure references.
+
+---
+
+## 8. Hybrid Local LLM Assistant
+To assist code development offline, a specialized AI module operates on-device:
+- **Offline Model**: Uses structured parsing, regex keyword indexing, and token-weight complexity analyzers to instantly output code complexity (1-10), maintainability profiles, descriptive summaries, language suggestions, and performance optimizations.
+- **Online Fallback**: Connects directly to the Gemini API (`gemini-3.5-flash`) via REST with security-conscious keys managed via `BuildConfig`. When offline or keyless, it gracefully degrades to the local on-device engine without interrupting user flow.
+
+---
+
+## 9. High-Fidelity UI/UX Web Parity
+To deliver a desktop-class experience mirroring the GitHub web interface:
+- **Optional Markdown Editor/Preview**: Both the draft editor (`DraftEditorDialog`) and preview screens (`GistPreviewDialog`) support real-time Markdown rendering with an inline-formatting parser (Write vs Preview Markdown tabs) resembling the official GitHub web UI.
+- **Full Description Visibility**: Gist descriptions are fully visible without truncation on the main Gist card and preview screen. The editor's description input field utilizes an enhanced, multi-line container with a raised minimum height (`100.dp`).
+- **Persistent User Credentials**: The persistent storage subsystem saves the user profile avatar, login handle, and secure API personal access token together. On startup, user details are automatically loaded and hydrated.
+- **Detailed Gist Creation Info**: Displays complete metadata in a dedicated card, including the owner's avatar, login handle, formatted Created At and Updated At ISO timestamps, public/secret status badge, and copyable Web URL link.
+
+---
+
+## 10. GitHub-Parity Rich Markdown Editor Specification (Gist Content & Comments Scope Only)
+To provide a high-fidelity editor resembling the official GitHub comment and file editing interface, the markdown input panels support an interactive, action-oriented formatting environment scoped strictly for editing and viewing the **content of gist files** and **gist comments**:
+
+### 10.1 Structural Layout & Visual Hierarchy
+- **Header Navigation Tabs**: 
+  - Dual-mode horizontal tabs: **Write** (default editing canvas) and **Preview** (instant markdown rendering output).
+  - High-contrast visual underline indicating the active tab, paired with a thin bottom border dividing the tabs from the editing area.
+- **Markdown Formatting Toolbar**:
+  - Horizontal tool belt containing clean, recognizable vector icons aligned to standard Material symbols.
+  - Separated from the text field using subtle, low-impact spacing to prevent screen clutter.
+- **Content/Comment Input Box**:
+  - Spacious multi-line text input field with a raised minimum height (`120.dp`) and clean padding, featuring a neutral placeholder (e.g., `"Leave a comment"` or `"Gist file content..."`).
+  - Text input utilizing a monospace font family when writing raw markdown.
+- **Status Indicator Footer**:
+  - **Bottom-Left Area**: "Markdown is supported" indicator with an official Markdown downward-arrow logo.
+  - **Bottom-Right Area**: "Paste, drop, or click to add files" interactive zone with a vector paperclip/image icon representing media/attachment capabilities.
+
+### 10.2 Formatting Helper Actions (Text Transformation Rules)
+Clicking formatting buttons in the toolbar instantly mutates the active text field value by appending or wrapping markdown templates at the current selection or text end:
+1. **Header (`H`)**: Prepends `### ` to line start or appends `### Header`.
+2. **Bold (`B`)**: Wraps selected text in double asterisks `**bold_text**` or appends `**Bold**`.
+3. **Italic (`I`)**: Wraps selected text in single asterisks `*italic_text*` or appends `*Italic*`.
+4. **Blockquote (`>`)**: Prepends `> ` blockquote indicators.
+5. **Code Block (`<>`)**: Wraps selection with multi-line code blocks ` ```code``` ` or inline backticks `` `code` ``.
+6. **Link (Chain Icon)**: Generates standard hyperlinks template: `[Link Text](https://url)`.
+7. **Numbered List (`1.`)**: Appends or prepends `1. ` prefix rules.
+8. **Bulleted List (`-`)**: Appends or prepends `- ` bullet characters.
+9. **Task List (`[x]`)**: Inserts empty checkbox brackets: `- [ ] Task`.
+10. **File Attachment (`Paperclip`)**: Appends an image/file reference template: `![Alt Text](url)`.
+11. **Mention User (`@`)**: Appends `@` character to trigger handle references.
+12. **Quote Reference (Reply Bubble)**: Formulates nested blockquotes to reference prior statements.
+
+### 10.3 Accessibility & Developer Identifiers
+- **Minimum Interactive Size**: Every button element on the formatting toolbar maintains a touch target of at least `48.dp x 48.dp`.
+- **Test Tags**: Buttons and input areas are annotated with consistent `snake_case` test tags:
+  - `markdown_toolbar`: The layout wrapper.
+  - `markdown_btn_header`, `markdown_btn_bold`, `markdown_btn_italic`, `markdown_btn_quote`, `markdown_btn_code`, `markdown_btn_link`, `markdown_btn_num_list`, `markdown_btn_bullet_list`, `markdown_btn_task_list`, `markdown_btn_attachment`, `markdown_btn_mention`, `markdown_btn_quote_reply`.
+  - `markdown_footer_logo`: Markdown support logo.
+  - `markdown_footer_attachment_hint`: File addition hint.
+- **Content Descriptions**: Every icon button explicitly defines localized semantic labels (e.g., `contentDescription = "Format Bold"`).
+- **Test Tags**: The explorer list component and cards are fully tagged for automated testing with `github_gist_api_list_container`, `remote_gist_refresh_button`, and `remote_gist_card_UUID`.
+
+---
+
+## 11. Secure Token Storage (2026 Android Security Best Practices)
+To prevent unauthorized access to personal access tokens and secure credentials, Do Gist Hub complies fully with modern 2026 Android platform security directives:
+1. **MasterKey Hardware Backing**:
+   - Migration from deprecated `MasterKeys` APIs to the unified `MasterKey.Builder` to configure a secure hardware-backed key (stored within the Android Keystore system).
+   - Generates an AES-256 GCM master key that leverages secure hardware-backed cryptographic co-processors (StrongBox / Trusted Execution Environment) whenever available.
+2. **EncryptedSharedPreferences Integration**:
+   - Saves personal access tokens (PAT) and user profile information in an encrypted preference file (`secure_gist_config_prefs`).
+   - Leverages AES256-SIV for filename/key encryption and AES256-GCM for preference values, mitigating side-channel leaks, debugging dumps, and device-root level snooping.
+   - Falls back gracefully to standard private shared preferences if the secure keystore initialization fails.
+## 12. Token Verification Button State Architecture
+To deliver absolute visual and functional clarity, the "Verify Token" button transitions reactively through four distinct lifecycle states governed by a structured Kotlin sealed interface `TokenVerificationState`:
+
+### 12.1 State Architecture Definitions
+*   `TokenVerificationState.Idle`: Initial state. The user inputs their PAT and taps "Verify". Text reads **"Verify Token & Autofill Profile"**, using standard primary color schemes.
+*   `TokenVerificationState.Verifying`: Active validation state. Button is disabled to block double-taps, displaying a dynamic **CircularProgressIndicator** spinner and text reads **"Verifying Token..."**.
+*   `TokenVerificationState.Success`: Definitively indicates verification and storage success. Color transitions to a secure **Material Green (Color(0xFF2E7D32))** containing a checkmark circle. Spawns a localized Toast declaring **"GitHub personal access token has been verified and safely saved to secure storage."**
+*   `TokenVerificationState.Error`: Displays a robust diagnostic state. The background transitions to the Material error color showing an error outline icon. Text updates to **"Verification Failed! Tap to Retry"** while displaying the detailed authentication failure reason.
+
+### 12.2 Visual and Accessibility Specifications
+*   **Color Shifts**: Primary Blue/Teal (Idle) -> Primary Faded (Verifying) -> Success Green (Success) -> Error Red (Error).
+*   **String Resources**: Fully configured in `strings.xml` to support localizations and maintain zero hardcoded magic text strings in source files.
+*   **Test Tags**: The verify button remains targetable under the automated testing identifier `config_verify_button`.
+
+
+

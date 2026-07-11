@@ -43,5 +43,22 @@ data class GistResponse(
     @param:Json(name = "node_id") val nodeId: String?,
     @param:Json(name = "public") val isPublic: Boolean?,
     @param:Json(name = "owner") val owner: GistOwnerResponse?,
-    @param:Json(name = "files") val files: Map<String, GistFileResponse>?
+    @param:Json(name = "files") val files: Map<String, GistFileResponse>?,
+    @param:Json(name = "history") val history: List<GistHistoryResponse>? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class GistHistoryChangeStatus(
+    @param:Json(name = "deletions") val deletions: Int?,
+    @param:Json(name = "additions") val additions: Int?,
+    @param:Json(name = "total") val total: Int?
+)
+
+@JsonClass(generateAdapter = true)
+data class GistHistoryResponse(
+    @param:Json(name = "url") val url: String?,
+    @param:Json(name = "version") val version: String?,
+    @param:Json(name = "user") val user: GistOwnerResponse?,
+    @param:Json(name = "change_status") val changeStatus: GistHistoryChangeStatus?,
+    @param:Json(name = "committed_at") val committedAt: String?
 )

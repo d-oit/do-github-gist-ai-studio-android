@@ -40,6 +40,12 @@ interface GitHubApiService {
         @Body request: GistRequest
     ): GistResponse
 
+    @GET("gists/{id}/{sha}")
+    suspend fun getGistRevision(
+        @Path("id") id: String,
+        @Path("sha") sha: String
+    ): GistResponse
+
     @DELETE("gists/{id}")
     suspend fun deleteGist(
         @Path("id") id: String

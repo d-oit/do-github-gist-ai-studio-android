@@ -54,6 +54,45 @@ class GistRepository @Inject constructor(
         }
     }
 
+    suspend fun fetchGistsDirectly(): Result<List<com.example.data.remote.model.GistResponse>> {
+        val token = configPrefs.getGithubToken().trim()
+        if (token.isEmpty()) {
+            return Result.failure(Exception("GitHub token is not configured"))
+        }
+        return try {
+            val responses = apiService.getGists()
+            Result.success(responses)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun fetchRemoteGist(id: String): Result<com.example.data.remote.model.GistResponse> {
+        val token = configPrefs.getGithubToken().trim()
+        if (token.isEmpty()) {
+            return Result.failure(Exception("GitHub token is not configured"))
+        }
+        return try {
+            val response = apiService.getGist(id)
+            Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun fetchRemoteGistRevision(id: String, sha: String): Result<com.example.data.remote.model.GistResponse> {
+        val token = configPrefs.getGithubToken().trim()
+        if (token.isEmpty()) {
+            return Result.failure(Exception("GitHub token is not configured"))
+        }
+        return try {
+            val response = apiService.getGistRevision(id, sha)
+            Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun fetchFromRemote(): Result<Unit> {
         if (configPrefs.getGithubToken().trim().isEmpty()) {
             return Result.failure(Exception("GitHub token is not configured"))
@@ -312,17 +351,28 @@ class GistRepository @Inject constructor(
     }
 
     private fun detectLanguage(filename: String): String {
+        val lower = filename.lowercase()
         return when {
-            filename.endsWith(".kt") -> "Kotlin"
-            filename.endsWith(".java") -> "Java"
-            filename.endsWith(".py") -> "Python"
-            filename.endsWith(".js") -> "JavaScript"
-            filename.endsWith(".ts") -> "TypeScript"
-            filename.endsWith(".json") -> "JSON"
-            filename.endsWith(".xml") -> "XML"
-            filename.endsWith(".html") -> "HTML"
-            filename.endsWith(".css") -> "CSS"
-            filename.endsWith(".md") -> "Markdown"
+            lower.endsWith(".kt") || lower.endsWith(".kts") -> "Kotlin"
+            lower.endsWith(".java") -> "Java"
+            lower.endsWith(".py") -> "Python"
+            lower.endsWith(".js") || lower.endsWith(".jsx") || lower.endsWith(".mjs") -> "JavaScript"
+            lower.endsWith(".ts") || lower.endsWith(".tsx") -> "TypeScript"
+            lower.endsWith(".json") -> "JSON"
+            lower.endsWith(".xml") -> "XML"
+            lower.endsWith(".html") -> "HTML"
+            lower.endsWith(".css") || lower.endsWith(".scss") -> "CSS"
+            lower.endsWith(".md") || lower.endsWith(".markdown") -> "Markdown"
+            lower.endsWith(".yml") || lower.endsWith(".yaml") -> "YAML"
+            lower.endsWith(".toml") -> "TOML"
+            lower.endsWith(".rs") -> "Rust"
+            lower.endsWith(".go") -> "Go"
+            lower.endsWith(".swift") -> "Swift"
+            lower.endsWith(".rb") -> "Ruby"
+            lower.endsWith(".sql") -> "SQL"
+            lower.endsWith(".sh") || lower.endsWith(".bash") || lower.endsWith(".zsh") -> "Shell"
+            lower == "makefile" -> "Makefile"
+            lower == "dockerfile" -> "Dockerfile"
             else -> "Text"
         }
     }

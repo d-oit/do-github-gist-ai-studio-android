@@ -256,6 +256,10 @@ class GistAppE2ETest {
             return gistsList.find { it.id == id } ?: throw Exception("Gist Not Found")
         }
 
+        override suspend fun getGistRevision(id: String, sha: String): GistResponse {
+            return getGist(id)
+        }
+
         override suspend fun getAuthenticatedUser(): GistOwnerResponse {
             if (shouldFailUser) throw Exception("Unauthorized")
             return userResponse

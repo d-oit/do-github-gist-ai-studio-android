@@ -98,3 +98,60 @@ To run validation checks and update project status:
 # 3. Execute all unit and Robolectric tests
 ./harness.sh test
 ```
+
+---
+
+## 🚀 6. Advanced Parity & Local AI Features
+
+High-impact features aligning with official GitHub Gist web parity, offline intelligence, and interactive checkers.
+
+- [x] **Multi-File Draft Editing**: Allow creating, editing, and deleting multiple files inside a single Gist draft with dynamic file cards stacked inside the editor.
+- [x] **Advanced Content Quality Checkers**:
+  - **Spell Checker**: Dictionary lookup covering core developer concepts and standard typos.
+  - **Grammar Checker**: Find duplicate words, improper sentence capitalization, and punctuation spacing.
+  - **External Link Checker**: Parse URLs in description and content; flag insecure HTTP links and provide instant upgrade-to-HTTPS corrections.
+- [x] **Hybrid Local LLM Assistant**:
+  - **Offline Intelligence**: Evaluate cyclomatic complexity, estimate maintainability, create summaries, and suggest optimization actions 100% locally.
+  - **Online API Integration**: If online and API key is present, communicate with `gemini-3.5-flash` using a REST client for deeper insights, with automatic offline fallback.
+- [x] **Developer Loop Verification**: Verify compile and test targets using the harness, ensuring 100% compliance.
+- [x] **High-Fidelity UI/UX Web Parity**:
+  - **Optional Markdown Editor/Preview**: File cards in both `DraftEditorDialog` and `GistPreviewDialog` allow toggling between raw code writing/display and highly styled real-time Markdown preview rendering (Write vs Preview Markdown) resembling the GitHub web UI.
+  - **Full Description Visibility & Raised Field Height**: Description lines are fully visible without truncation on the main Gist card and preview screen, and the editor's description field has raised minimum height with multi-line input.
+  - **Persistent User Credentials**: Persistent storage of the user profile avatar and login together with the Personal Access Token, auto-loading user details from GitHub on startup if absent.
+  - **Detailed Gist Creation Info**: Displays complete metadata (avatar, login handle, formatted Created At and Updated At timestamps, public/secret status badge, and copyable Web URL link) in the preview dialog.
+- [x] **GitHub-Parity Rich Markdown Editor & Formatting Toolbar (Gist Content & Comments Scope Only)**:
+  - [x] Implement dual-tab horizontal navigation (`Write` vs `Preview`) with bottom line indicator and neutral placeholder texts for file contents and gist comments.
+  - [x] Render a specialized 12-action formatting toolbar containing standard vector iconography (`H`, `B`, `I`, quote, code, link, numbered list, bulleted list, task list, attachment, mention, and quote reply).
+  - [x] Wire syntax helpers to inject appropriate markdown tags and templates at the active selection or text end of gist file contents or comments.
+  - [x] Design decorative status footers containing left-aligned "Markdown is supported" logo indicator and right-aligned "Paste, drop, or click to add files" interactive attachment hint.
+  - [x] Enforce Material 3 touch target compliance (minimum 48dp) and annotate components with custom accessibility semantics and `snake_case` test tags.
+- [x] **Live GitHub API Gists Explorer**:
+  - [x] Added `fetchGistsDirectly()` to `GistRepository` performing secure raw REST queries to the GitHub Gists API endpoint with the stored personal access token (PAT).
+  - [x] Wired reactive states (`remoteGists`, `isFetchingRemote`, `remoteError`) in `GistViewModel` to cache and load direct cloud records cleanly on startup and demand.
+  - [x] Built the `GitHubGistApiList` Material 3 list component showing Gist titles (resolved filename), descriptions, metadata, visibility badges, file count indicators, and creator avatar/profile references.
+  - [x] Integrated the live explorer directly inside the scrollable container of the Sync tab screen with full refresh and error handling states.
+- [x] **2026 Android Security Best Practices & Compliance**:
+  - [x] Migrated deprecated `MasterKeys` Keystore API to standard unified `MasterKey.Builder` to ensure robust hardware-backed cryptographic co-processor protection (StrongBox/TEE).
+  - [x] Integrated `EncryptedSharedPreferences` for secure preference file storage (`secure_gist_config_prefs`), encrypting stored GitHub Personal Access Tokens and profile values using AES-256 (SIV for keys, GCM for values).
+  - [x] Ensured graceful fallback mechanisms to standard private shared preferences if system cryptographic keystore initialization fails.
+  - [x] Implemented on-boot migration of plaintext configurations to the encrypted storage pool with subsequent plain files cleanups.
+- [x] **Verify Token Dynamic Button State Implementation**:
+  - [x] Declared the structured Kotlin sealed interface `TokenVerificationState` representing Idle, Verifying, Success, and Error states.
+  - [x] Integrated the token verification state machine flow within `GistViewModel.kt` to drive state transitions reactively.
+  - [x] Created dynamic UI string resources in `strings.xml` to avoid hardcoded text strings in source files.
+  - [x] Configured rich Material 3 design transitions on the button layout in `ConfigScreen.kt` using custom color shifts (e.g., Success Green, Error Red) and contextual vector icons.
+  - [x] Wired a success-triggered `LaunchedEffect` to display transient Toast notifications confirming verified token security.
+- [x] **First File Default Filename & Restricted Addition Parity**:
+  - [x] Configured the Gist draft creation and edit initialization flows to prepopulate the first file with the default filename `"gistfile1.md"`.
+  - [x] Restrained multi-file additions by dynamically enabling the "Add File" button only if the first file's filename matches `"gistfile1.md"`.
+  - [x] Provided a helpful contextual inline validation/warning message below the button when it's disabled to guide the user.
+- [x] **Gist Revisions & Split/Unified Diff Parity**:
+  - [x] Integrated GitHub Gist revisions API (`GET /gists/{id}` history fields and `GET /gists/{id}/{sha}` for specific revisions).
+  - [x] Added `fetchRemoteGist` and `fetchRemoteGistRevision` to both `GistRepository` and `GistViewModel`.
+  - [x] Added horizontal tab switcher inside `GistPreviewDialog` for `Files` vs `Revisions` navigation.
+  - [x] Formatted and displayed revision lists with author avatar, login, committed timestamp, additions (green `+`), and deletions (red `-`).
+  - [x] Created high-fidelity line-based LCS (Longest Common Subsequence) diff generator in pure Kotlin with aligned side-by-side (Split) or inline (Unified) options.
+  - [x] Managed horizontal scroll states inside side-by-side split cards to support clean mobile viewing without truncation.
+
+
+

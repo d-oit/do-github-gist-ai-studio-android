@@ -363,6 +363,11 @@ class GistOfflineE2ETest {
             return gistsList.find { it.id == id } ?: throw Exception("Gist Not Found")
         }
 
+        override suspend fun getGistRevision(id: String, sha: String): GistResponse {
+            checkOffline()
+            return getGist(id)
+        }
+
         override suspend fun getAuthenticatedUser(): GistOwnerResponse {
             checkOffline()
             return defaultOwner

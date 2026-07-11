@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudUpload
@@ -35,24 +37,33 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.entity.GistWithFiles
+import com.example.ui.components.GitHubGistApiList
 
 @Composable
 fun SyncScreen(
     gists: List<GistWithFiles>,
     isSyncing: Boolean,
-    onSyncClick: () -> Unit
+    onSyncClick: () -> Unit,
+    remoteGists: List<com.example.data.remote.model.GistResponse>,
+    isFetchingRemote: Boolean,
+    remoteError: String?,
+    onRefreshRemote: () -> Unit
 ) {
     val unsynced = remember(gists) {
         gists.filter { it.gist.isLocalOnly || it.gist.isDirty || it.gist.isDeleted }
     }
+    val scrollState = rememberScrollState()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(scrollState)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Top
     ) {
+        // Local state card
+        Spacer(modifier = Modifier.height(16.dp))
         Box(
             modifier = Modifier
                 .size(100.dp)
@@ -159,7 +170,7 @@ fun SyncScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         Button(
             onClick = onSyncClick,
@@ -183,5 +194,16 @@ fun SyncScreen(
                 Text("Sync with GitHub", fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }
         }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Direct GitHub Gists list component from GITHUB_PAT
+        GitHubGistApiList(
+            gists = remoteGists,
+            isFetching = isFetchingRemote,
+            error = remoteError,
+            onRefresh = onRefreshRemote,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
     }
 }

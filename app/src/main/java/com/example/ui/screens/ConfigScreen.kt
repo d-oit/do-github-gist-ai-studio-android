@@ -45,7 +45,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.widget.Toast
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import com.example.ui.viewmodel.GistViewModel
+import com.example.ui.viewmodel.TokenVerificationState
 
 @Composable
 fun ConfigScreen(
@@ -57,6 +65,19 @@ fun ConfigScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val isFetchingProfile by viewModel.isFetchingProfile.collectAsState()
     val currentTheme by viewModel.appTheme.collectAsState()
+
+    val context = LocalContext.current
+    val tokenVerificationState by viewModel.tokenVerificationState.collectAsState()
+
+    LaunchedEffect(tokenVerificationState) {
+        if (tokenVerificationState is TokenVerificationState.Success) {
+            Toast.makeText(
+                context,
+                context.getString(R.string.verify_success_toast),
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -111,40 +132,71 @@ fun ConfigScreen(
         }
 
         item {
+            val buttonColors = when (tokenVerificationState) {
+                is TokenVerificationState.Verifying -> ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                    contentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
+                )
+                is TokenVerificationState.Success -> ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF2E7D32), // Custom 2026 Material success green
+                    contentColor = Color.White
+                )
+                is TokenVerificationState.Error -> ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError
+                )
+                else -> ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+
+            val buttonText = when (tokenVerificationState) {
+                is TokenVerificationState.Verifying -> stringResource(R.string.verify_loading)
+                is TokenVerificationState.Success -> stringResource(R.string.verify_success)
+                is TokenVerificationState.Error -> stringResource(R.string.verify_failed)
+                else -> stringResource(R.string.verify_idle)
+            }
+
+            val buttonIcon = when (tokenVerificationState) {
+                is TokenVerificationState.Success -> Icons.Default.CheckCircle
+                is TokenVerificationState.Error -> Icons.Default.ErrorOutline
+                else -> Icons.Default.Check
+            }
+
             Button(
                 onClick = {
                     keyboardController?.hide()
                     viewModel.validateAndFetchProfile()
                 },
-                enabled = !isFetchingProfile && token.trim().isNotEmpty(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ),
+                enabled = tokenVerificationState !is TokenVerificationState.Verifying && token.trim().isNotEmpty(),
+                colors = buttonColors,
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp)
                     .testTag("config_verify_button")
             ) {
-                if (isFetchingProfile) {
+                if (tokenVerificationState is TokenVerificationState.Verifying) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
                         color = MaterialTheme.colorScheme.onPrimary,
                         strokeWidth = 2.5.dp
                     )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(buttonText, fontWeight = FontWeight.Bold)
                 } else {
                     Row(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = "Verify",
+                            imageVector = buttonIcon,
+                            contentDescription = buttonText,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Verify Token & Autofill Profile", fontWeight = FontWeight.Bold)
+                        Text(buttonText, fontWeight = FontWeight.Bold)
                     }
                 }
             }
