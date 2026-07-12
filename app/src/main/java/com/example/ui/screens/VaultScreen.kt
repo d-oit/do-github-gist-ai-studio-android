@@ -19,14 +19,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.entity.GistWithFiles
@@ -40,7 +46,9 @@ import com.example.ui.theme.GraySecondary
 fun VaultScreen(
     gists: List<GistWithFiles>,
     searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
     onTogglePin: (String) -> Unit,
+    onToggleStar: (String) -> Unit,
     onEdit: (GistWithFiles) -> Unit,
     onDelete: (String) -> Unit,
     onCreateDraftClick: () -> Unit,
@@ -55,10 +63,13 @@ fun VaultScreen(
             draftGists.sortedWith(compareByDescending<GistWithFiles> { it.gist.isPinned }.thenByDescending { it.gist.createdAt })
         } else {
             draftGists.filter { item ->
-                val filename = item.files.firstOrNull()?.filename ?: ""
                 val desc = item.gist.description ?: ""
-                filename.contains(searchQuery, ignoreCase = true) ||
-                        desc.contains(searchQuery, ignoreCase = true)
+                val matchesDescription = desc.contains(searchQuery, ignoreCase = true)
+                val matchesFiles = item.files.any { file ->
+                    file.filename.contains(searchQuery, ignoreCase = true) ||
+                            file.content.contains(searchQuery, ignoreCase = true)
+                }
+                matchesDescription || matchesFiles
             }.sortedWith(compareByDescending<GistWithFiles> { it.gist.isPinned }.thenByDescending { it.gist.createdAt })
         }
     }
@@ -68,6 +79,46 @@ fun VaultScreen(
             .fillMaxSize()
             .padding(horizontal = 16.dp)
     ) {
+        // Persistent Search Bar
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = onSearchQueryChange,
+            placeholder = { Text("Search drafts by filename or description...", fontSize = 14.sp) },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Search icon",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(
+                        onClick = { onSearchQueryChange("") },
+                        modifier = Modifier.testTag("clear_vault_search_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Clear search",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp, bottom = 4.dp)
+                .testTag("vault_search_bar"),
+            singleLine = true,
+            shape = RoundedCornerShape(24.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+            )
+        )
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -162,6 +213,7 @@ fun VaultScreen(
                     GistCard(
                         item = item,
                         onTogglePin = { onTogglePin(item.gist.id) },
+                        onToggleStar = { onToggleStar(item.gist.id) },
                         onEdit = { onEdit(item) },
                         onDelete = { onDelete(item.gist.id) },
                         onPreview = { onPreview(item) }

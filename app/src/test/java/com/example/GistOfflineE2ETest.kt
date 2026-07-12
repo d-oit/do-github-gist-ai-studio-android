@@ -433,5 +433,28 @@ class GistOfflineE2ETest {
             gistsList.removeAll { it.id == id }
             return Response.success(Unit)
         }
+
+        val starredGistIds = mutableSetOf<String>()
+
+        override suspend fun checkIsStarred(id: String): Response<Unit> {
+            checkOffline()
+            return if (starredGistIds.contains(id)) {
+                Response.success(204, Unit)
+            } else {
+                Response.error(404, okhttp3.ResponseBody.create(null, ""))
+            }
+        }
+
+        override suspend fun starGist(id: String): Response<Unit> {
+            checkOffline()
+            starredGistIds.add(id)
+            return Response.success(204, Unit)
+        }
+
+        override suspend fun unstarGist(id: String): Response<Unit> {
+            checkOffline()
+            starredGistIds.remove(id)
+            return Response.success(204, Unit)
+        }
     }
 }

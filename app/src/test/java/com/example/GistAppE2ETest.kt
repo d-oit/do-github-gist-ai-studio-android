@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.example.data.local.AppDatabase
+import com.example.data.local.entity.GistEntity
 import com.example.data.local.pref.ConfigPrefs
 import com.example.data.repository.GistRepository
 import com.example.data.remote.api.GitHubApiService
@@ -240,6 +241,152 @@ class GistAppE2ETest {
         assertFalse(viewModel.gists.value.first().gist.isPinned)
     }
 
+    @Test
+    fun test_toggleStar_online_immediate_sync() = runTest(testDispatcher) {
+        configPrefs.setGithubToken("ghp_valid_token")
+        configPrefs.setOwnerLogin("testUser")
+
+        // 1. Create draft and sync to make it remote
+        viewModel.createGist(
+            description = "Online Starrable Gist",
+            filename = "star_online.txt",
+            content = "online content",
+            isPublic = true,
+            isPinned = false
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.syncAll()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val syncedItem = viewModel.gists.value.first { !it.gist.id.startsWith("draft_") }
+        val gistId = syncedItem.gist.id
+
+        // 2. Toggle star while online
+        viewModel.toggleStar(gistId)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // 3. Since we are online, it should sync immediately!
+        val starredItem = viewModel.gists.value.first { it.gist.id == gistId }
+        assertTrue(starredItem.gist.isStarred)
+        assertFalse(starredItem.gist.isStarredDirty) // Immediately synced, so not dirty!
+        assertTrue(fakeApiService.starredGistIds.contains(gistId))
+    }
+
+    @Test
+    fun test_toggleStar_offline_delayed_sync() = runTest(testDispatcher) {
+        // Clear token to simulate offline/unauthorized state
+        configPrefs.setGithubToken("")
+        configPrefs.setOwnerLogin("testUser")
+
+        // 1. Create a remote-like gist manually in DB
+        val mockGistId = "remote_123"
+        val now = "2026-07-09T09:00:00Z"
+        val entity = GistEntity(
+            id = mockGistId,
+            description = "Offline Starrable Gist",
+            htmlUrl = "https://gist.github.com/mockGistId",
+            url = "https://api.github.com/gists/mockGistId",
+            createdAt = now,
+            updatedAt = now,
+            nodeId = "mock_node",
+            isPublic = true,
+            isPinned = false,
+            isLocalOnly = false,
+            isDirty = false,
+            isStarred = false,
+            isStarredDirty = false,
+            ownerLogin = "testUser",
+            ownerId = 12345,
+            ownerAvatarUrl = ""
+        )
+        database.gistDao().insertGist(entity)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Also add it to our fake api service so it exists when sync fetches
+        fakeApiService.gistsList.add(
+            GistResponse(
+                id = mockGistId,
+                description = "Offline Starrable Gist",
+                htmlUrl = "https://gist.github.com/mockGistId",
+                url = "https://api.github.com/gists/mockGistId",
+                createdAt = now,
+                updatedAt = now,
+                nodeId = "mock_node",
+                isPublic = true,
+                owner = fakeApiService.userResponse,
+                files = emptyMap()
+            )
+        )
+
+        // 2. Toggle star while offline (no token)
+        viewModel.toggleStar(mockGistId)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val starredItem = viewModel.gists.value.first { it.gist.id == mockGistId }
+        assertTrue(starredItem.gist.isStarred)
+        assertTrue(starredItem.gist.isStarredDirty) // Must be dirty because it couldn't push offline!
+        assertFalse(fakeApiService.starredGistIds.contains(mockGistId)) // Not pushed yet
+
+        // 3. Restore token (go online) and sync
+        configPrefs.setGithubToken("ghp_valid_token")
+        viewModel.syncAll()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val syncedItem = viewModel.gists.value.first { it.gist.id == mockGistId }
+        assertTrue(syncedItem.gist.isStarred)
+        assertFalse(syncedItem.gist.isStarredDirty) // Now cleared post successful sync!
+        assertTrue(fakeApiService.starredGistIds.contains(mockGistId)) // Successfully pushed!
+    }
+
+    @Test
+    fun test_exportBackup_saves_successfully() = runTest(testDispatcher) {
+        configPrefs.setGithubToken("ghp_valid_token")
+        configPrefs.setOwnerLogin("testUser")
+
+        // 1. Create a local draft Gist
+        viewModel.createGist(
+            description = "Gist for Backup Test",
+            filename = "backup_test.txt",
+            content = "This content should be backed up.",
+            isPublic = true,
+            isPinned = true
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Verify it was added
+        val currentGists = viewModel.gists.value
+        assertEquals(1, currentGists.size)
+
+        // 2. Prepare a temporary file and its Uri
+        val tempFile = java.io.File.createTempFile("gist_backup_test", ".json")
+        val uri = android.net.Uri.fromFile(tempFile)
+
+        // 3. Trigger exportBackup
+        var isSuccess = false
+        var resultMsg = ""
+        viewModel.exportBackup(context, uri, testDispatcher) { success, msg ->
+            isSuccess = success
+            resultMsg = msg
+        }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // 4. Assertions
+        assertTrue("Backup should have succeeded: $resultMsg", isSuccess)
+        assertTrue("Backup file must exist", tempFile.exists())
+        assertTrue("Backup file size must be greater than 0", tempFile.length() > 0)
+
+        // Read the written JSON file content
+        val fileContent = tempFile.readText()
+        assertTrue("JSON should contain backupVersion", fileContent.contains("\"backupVersion\""))
+        assertTrue("JSON should contain the correct description", fileContent.contains("Gist for Backup Test"))
+        assertTrue("JSON should contain the correct filename", fileContent.contains("backup_test.txt"))
+        assertTrue("JSON should contain the correct content", fileContent.contains("This content should be backed up."))
+
+        // Clean up
+        tempFile.delete()
+    }
+
     // --- Fake GitHub API Service Implementation ---
     private class FakeGitHubApiService : GitHubApiService {
         var userResponse = GistOwnerResponse(
@@ -321,6 +468,26 @@ class GistAppE2ETest {
         override suspend fun deleteGist(id: String): Response<Unit> {
             gistsList.removeAll { it.id == id }
             return Response.success(Unit)
+        }
+
+        val starredGistIds = mutableSetOf<String>()
+
+        override suspend fun checkIsStarred(id: String): Response<Unit> {
+            return if (starredGistIds.contains(id)) {
+                Response.success(204, Unit)
+            } else {
+                Response.error(404, okhttp3.ResponseBody.create(null, ""))
+            }
+        }
+
+        override suspend fun starGist(id: String): Response<Unit> {
+            starredGistIds.add(id)
+            return Response.success(204, Unit)
+        }
+
+        override suspend fun unstarGist(id: String): Response<Unit> {
+            starredGistIds.remove(id)
+            return Response.success(204, Unit)
         }
     }
 }

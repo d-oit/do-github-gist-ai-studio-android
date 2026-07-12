@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -60,6 +62,7 @@ fun borderButtonStroke() = androidx.compose.foundation.BorderStroke(1.dp, Materi
 fun GistCard(
     item: GistWithFiles,
     onTogglePin: () -> Unit,
+    onToggleStar: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onPreview: () -> Unit
@@ -108,12 +111,51 @@ fun GistCard(
                         fontSize = 13.sp,
                         color = GraySecondary
                     )
+                    if (item.gist.tags.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            item.gist.tags.forEach { tag ->
+                                Box(
+                                    modifier = Modifier
+                                        .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(6.dp))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = "#$tag",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onTogglePin) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    IconButton(
+                        onClick = onToggleStar,
+                        modifier = Modifier.testTag("star_button_${item.gist.id}")
+                    ) {
                         Icon(
-                            imageVector = if (item.gist.isPinned) Icons.Default.Star else Icons.Default.StarBorder,
+                            imageVector = if (item.gist.isStarred) Icons.Default.Star else Icons.Default.StarBorder,
+                            contentDescription = "Star",
+                            tint = if (item.gist.isStarred) Color(0xFFFFA000) else GraySecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    IconButton(
+                        onClick = onTogglePin,
+                        modifier = Modifier.testTag("pin_button_${item.gist.id}")
+                    ) {
+                        Icon(
+                            imageVector = if (item.gist.isPinned) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
                             contentDescription = "Pin",
                             tint = if (item.gist.isPinned) ActivePurple else GraySecondary,
                             modifier = Modifier.size(20.dp)
@@ -153,6 +195,31 @@ fun GistCard(
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = DarkPurpleText
+                                )
+                            }
+                        }
+                    }
+
+                    if (item.gist.isStarred) {
+                        Box(
+                            modifier = Modifier
+                                .background(Color(0xFFFFF8E1), RoundedCornerShape(8.dp))
+                                .border(1.dp, Color(0xFFFFE082), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = "Starred Badge",
+                                    tint = Color(0xFFFFA000),
+                                    modifier = Modifier.size(10.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = if (item.gist.isStarredDirty) "Star Pending" else "Starred",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFE65100)
                                 )
                             }
                         }

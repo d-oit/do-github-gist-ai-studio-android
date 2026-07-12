@@ -1,18 +1,33 @@
 package com.example.ui.viewmodel
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.DoGistHubApp
+import com.example.data.local.entity.GistBackupFile
+import com.example.data.local.entity.GistBackupItem
+import com.example.data.local.entity.GistBackupPayload
 import com.example.data.local.entity.GistWithFiles
 import com.example.data.local.pref.ConfigPrefs
 import com.example.data.repository.GistRepository
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class GistViewModel(
     private val repository: GistRepository,
@@ -24,6 +39,22 @@ class GistViewModel(
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private val _selectedTag = MutableStateFlow<String?>(null)
+    val selectedTag: StateFlow<String?> = _selectedTag.asStateFlow()
+
+    val allTags: StateFlow<List<String>> = repository.allGists
+        .map { list ->
+            list.flatMap { it.gist.tags }
+                .filter { it.isNotBlank() }
+                .distinct()
+                .sorted()
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
@@ -68,14 +99,21 @@ class GistViewModel(
 
     init {
         viewModelScope.launch {
-            _searchQuery.collectLatest { query ->
+            combine(_searchQuery, _selectedTag) { query, tag ->
+                query to tag
+            }.collectLatest { (query, tag) ->
                 val flow = if (query.isBlank()) {
                     repository.allGists
                 } else {
                     repository.searchLocalGists(query.trim())
                 }
                 flow.collectLatest { list ->
-                    _gists.value = list
+                    val filteredList = if (tag == null) {
+                        list
+                    } else {
+                        list.filter { it.gist.tags.contains(tag) }
+                    }
+                    _gists.value = filteredList
                 }
             }
         }
@@ -110,6 +148,16 @@ class GistViewModel(
 
     fun updateSearchQuery(query: String) {
         _searchQuery.value = query
+    }
+
+    fun updateSelectedTag(tag: String?) {
+        _selectedTag.value = tag
+    }
+
+    fun updateGistTags(id: String, tags: List<String>) {
+        viewModelScope.launch {
+            repository.updateGistTags(id, tags)
+        }
     }
 
     fun clearMessages() {
@@ -237,7 +285,8 @@ class GistViewModel(
         description: String,
         files: List<Pair<String, String>>,
         isPublic: Boolean,
-        isPinned: Boolean
+        isPinned: Boolean,
+        tags: List<String> = emptyList()
     ) {
         viewModelScope.launch {
             clearMessages()
@@ -254,7 +303,8 @@ class GistViewModel(
                 description = description,
                 files = files,
                 isPublic = isPublic,
-                isPinned = isPinned
+                isPinned = isPinned,
+                tags = tags
             )
             _statusMessage.value = "Draft created successfully"
         }
@@ -265,9 +315,10 @@ class GistViewModel(
         filename: String,
         content: String,
         isPublic: Boolean,
-        isPinned: Boolean
+        isPinned: Boolean,
+        tags: List<String> = emptyList()
     ) {
-        createGist(description, listOf(filename to content), isPublic, isPinned)
+        createGist(description, listOf(filename to content), isPublic, isPinned, tags)
     }
 
     fun updateGist(
@@ -275,7 +326,8 @@ class GistViewModel(
         description: String,
         files: List<Pair<String, String>>,
         isPublic: Boolean,
-        isPinned: Boolean
+        isPinned: Boolean,
+        tags: List<String> = emptyList()
     ) {
         viewModelScope.launch {
             clearMessages()
@@ -293,7 +345,8 @@ class GistViewModel(
                 description = description,
                 files = files,
                 isPublic = isPublic,
-                isPinned = isPinned
+                isPinned = isPinned,
+                tags = tags
             )
             _statusMessage.value = "Local changes saved"
         }
@@ -305,14 +358,25 @@ class GistViewModel(
         filename: String,
         content: String,
         isPublic: Boolean,
-        isPinned: Boolean
+        isPinned: Boolean,
+        tags: List<String> = emptyList()
     ) {
-        updateGist(id, description, listOf(filename to content), isPublic, isPinned)
+        updateGist(id, description, listOf(filename to content), isPublic, isPinned, tags)
     }
 
     fun togglePin(id: String) {
         viewModelScope.launch {
             repository.togglePin(id)
+        }
+    }
+
+    fun toggleStar(id: String) {
+        viewModelScope.launch {
+            clearMessages()
+            val result = repository.toggleStar(id)
+            result.onFailure { error ->
+                _errorMessage.value = "Star operation failed: ${error.message}"
+            }
         }
     }
 
@@ -363,6 +427,82 @@ class GistViewModel(
 
     suspend fun getRemoteGistRevision(id: String, sha: String): Result<com.example.data.remote.model.GistResponse> {
         return repository.fetchRemoteGistRevision(id, sha)
+    }
+
+    fun exportBackup(
+        context: Context,
+        uri: Uri,
+        ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
+        onResult: (Boolean, String) -> Unit
+    ) {
+        viewModelScope.launch(ioDispatcher) {
+            try {
+                val localGists = gists.value
+                val backupItems = localGists.map { item ->
+                    GistBackupItem(
+                        id = item.gist.id,
+                        description = item.gist.description,
+                        htmlUrl = item.gist.htmlUrl,
+                        url = item.gist.url,
+                        createdAt = item.gist.createdAt,
+                        updatedAt = item.gist.updatedAt,
+                        isPublic = item.gist.isPublic,
+                        isPinned = item.gist.isPinned,
+                        isLocalOnly = item.gist.isLocalOnly,
+                        isDirty = item.gist.isDirty,
+                        isDeleted = item.gist.isDeleted,
+                        isStarred = item.gist.isStarred,
+                        isStarredDirty = item.gist.isStarredDirty,
+                        ownerLogin = item.gist.ownerLogin,
+                        ownerId = item.gist.ownerId,
+                        ownerAvatarUrl = item.gist.ownerAvatarUrl,
+                        files = item.files.map { file ->
+                            GistBackupFile(
+                                filename = file.filename,
+                                content = file.content,
+                                type = file.type,
+                                language = file.language,
+                                size = file.size
+                            )
+                        }
+                    )
+                }
+
+                val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+                val exportedAt = sdf.format(Date())
+
+                val payload = GistBackupPayload(
+                    backupVersion = 1,
+                    exportedAt = exportedAt,
+                    gists = backupItems
+                )
+
+                val moshi = Moshi.Builder()
+                    .addLast(KotlinJsonAdapterFactory())
+                    .build()
+                val adapter = moshi.adapter(GistBackupPayload::class.java).indent("  ")
+                val jsonString = adapter.toJson(payload)
+
+                if (uri.scheme == "file") {
+                    val file = java.io.File(uri.path ?: throw Exception("Invalid file path"))
+                    file.outputStream().use { outputStream ->
+                        outputStream.write(jsonString.toByteArray(Charsets.UTF_8))
+                    }
+                } else {
+                    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                        outputStream.write(jsonString.toByteArray(Charsets.UTF_8))
+                    } ?: throw Exception("Failed to open output stream")
+                }
+
+                launch(Dispatchers.Main) {
+                    onResult(true, "Backup completed successfully")
+                }
+            } catch (e: Exception) {
+                launch(Dispatchers.Main) {
+                    onResult(false, e.localizedMessage ?: e.message ?: "Failed to save backup")
+                }
+            }
+        }
     }
 
     class Factory(

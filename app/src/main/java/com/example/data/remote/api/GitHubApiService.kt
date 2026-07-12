@@ -9,6 +9,7 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 
 /**
@@ -48,6 +49,21 @@ interface GitHubApiService {
 
     @DELETE("gists/{id}")
     suspend fun deleteGist(
+        @Path("id") id: String
+    ): Response<Unit>
+
+    @GET("gists/{id}/star")
+    suspend fun checkIsStarred(
+        @Path("id") id: String
+    ): Response<Unit>
+
+    @PUT("gists/{id}/star")
+    suspend fun starGist(
+        @Path("id") id: String
+    ): Response<Unit>
+
+    @DELETE("gists/{id}/star")
+    suspend fun unstarGist(
         @Path("id") id: String
     ): Response<Unit>
 }

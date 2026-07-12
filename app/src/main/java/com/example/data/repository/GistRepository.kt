@@ -38,6 +38,10 @@ class GistRepository @Inject constructor(
         return gistDao.getGistById(id)
     }
 
+    suspend fun updateGistTags(id: String, tags: List<String>) {
+        gistDao.updateTags(id, tags)
+    }
+
     suspend fun fetchUserProfile(): Result<com.example.data.remote.model.GistOwnerResponse> {
         val token = configPrefs.getGithubToken().trim()
         if (token.isEmpty()) {
@@ -118,8 +122,26 @@ class GistRepository @Inject constructor(
                 // Check pinned state from previous local cache to preserve it
                 val previousLocal = gistDao.getGistById(id)
                 val isPinned = previousLocal?.gist?.isPinned ?: false
+                
+                val isStarred = if (previousLocal?.gist?.isStarredDirty == true) {
+                    previousLocal.gist.isStarred
+                } else {
+                    try {
+                        apiService.checkIsStarred(id).code() == 204
+                    } catch (e: Exception) {
+                        previousLocal?.gist?.isStarred ?: false
+                    }
+                }
+                val isStarredDirty = previousLocal?.gist?.isStarredDirty ?: false
 
-                saveResponseToDb(fullGist, isPinned = isPinned, isLocalOnly = false, isDirty = false)
+                saveResponseToDb(
+                    response = fullGist,
+                    isPinned = isPinned,
+                    isLocalOnly = false,
+                    isDirty = false,
+                    isStarred = isStarred,
+                    isStarredDirty = isStarredDirty
+                )
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -131,7 +153,8 @@ class GistRepository @Inject constructor(
         description: String,
         files: List<Pair<String, String>>, // filename to content
         isPublic: Boolean,
-        isPinned: Boolean
+        isPinned: Boolean,
+        tags: List<String> = emptyList()
     ): String {
         val tempId = "draft_" + UUID.randomUUID().toString()
         val now = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(Date())
@@ -148,6 +171,7 @@ class GistRepository @Inject constructor(
             isPinned = isPinned,
             isLocalOnly = true,
             isDirty = false,
+            tags = tags,
             ownerLogin = configPrefs.getOwnerLogin(),
             ownerId = configPrefs.getOwnerId(),
             ownerAvatarUrl = configPrefs.getOwnerAvatarUrl()
@@ -175,7 +199,8 @@ class GistRepository @Inject constructor(
         description: String,
         files: List<Pair<String, String>>,
         isPublic: Boolean,
-        isPinned: Boolean
+        isPinned: Boolean,
+        tags: List<String> = emptyList()
     ) {
         val previous = gistDao.getGistById(id) ?: return
         val now = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(Date())
@@ -185,6 +210,7 @@ class GistRepository @Inject constructor(
             isPublic = isPublic,
             isPinned = isPinned,
             isDirty = !previous.gist.isLocalOnly, // only dirty if it was already synced
+            tags = tags,
             updatedAt = now
         )
 
@@ -208,6 +234,46 @@ class GistRepository @Inject constructor(
         val previous = gistDao.getGistById(id) ?: return
         val updated = previous.gist.copy(isPinned = !previous.gist.isPinned)
         gistDao.insertGist(updated)
+    }
+
+    suspend fun toggleStar(id: String): Result<Unit> {
+        val previous = gistDao.getGistById(id) ?: return Result.failure(Exception("Gist not found"))
+        val newStarred = !previous.gist.isStarred
+        
+        // 1. Immediately reflect state changes locally
+        val updated = previous.gist.copy(
+            isStarred = newStarred,
+            isStarredDirty = !previous.gist.isLocalOnly
+        )
+        gistDao.insertGist(updated)
+
+        if (previous.gist.isLocalOnly) {
+            return Result.success(Unit)
+        }
+
+        // 2. Push to GitHub if network is available
+        val token = configPrefs.getGithubToken().trim()
+        if (token.isEmpty()) {
+            return Result.success(Unit)
+        }
+
+        return try {
+            val response = if (newStarred) {
+                apiService.starGist(id)
+            } else {
+                apiService.unstarGist(id)
+            }
+            if (response.isSuccessful || response.code() == 204) {
+                val synced = updated.copy(isStarredDirty = false)
+                gistDao.insertGist(synced)
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Failed to update star on GitHub: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            // Network failure: we keep isStarredDirty = true so it syncs later
+            Result.success(Unit)
+        }
     }
 
     suspend fun deleteGist(id: String): Result<Unit> {
@@ -276,23 +342,76 @@ class GistRepository @Inject constructor(
                     )
                     val response = apiService.createGist(request)
                     
+                    // If also starred locally, push that star
+                    if (item.gist.isStarred) {
+                        try {
+                            apiService.starGist(response.id!!)
+                        } catch (e: Exception) {}
+                    }
+
                     // Delete temporary local draft, save the synchronized response
                     gistDao.deleteGistById(item.gist.id)
-                    saveResponseToDb(response, isPinned = item.gist.isPinned, isLocalOnly = false, isDirty = false)
-                    successCount++
-                } else if (item.gist.isDirty) {
-                    // Update existing gist on GitHub
-                    val fileRequests = item.files.associate { file ->
-                        file.filename to GistFileRequest(content = file.content)
-                    }
-                    val request = GistRequest(
-                        description = item.gist.description,
-                        isPublic = item.gist.isPublic,
-                        files = fileRequests
+                    saveResponseToDb(
+                        response = response,
+                        isPinned = item.gist.isPinned,
+                        isLocalOnly = false,
+                        isDirty = false,
+                        isStarred = item.gist.isStarred,
+                        isStarredDirty = false
                     )
-                    val response = apiService.updateGist(item.gist.id, request)
-                    saveResponseToDb(response, isPinned = item.gist.isPinned, isLocalOnly = false, isDirty = false)
                     successCount++
+                } else {
+                    // It already exists on GitHub, check if there are edits (isDirty) or star modifications (isStarredDirty)
+                    var isStarred = item.gist.isStarred
+                    var isStarredDirty = item.gist.isStarredDirty
+
+                    if (item.gist.isStarredDirty) {
+                        try {
+                            val response = if (item.gist.isStarred) {
+                                apiService.starGist(item.gist.id)
+                            } else {
+                                apiService.unstarGist(item.gist.id)
+                            }
+                            if (response.isSuccessful || response.code() == 204) {
+                                isStarredDirty = false
+                            }
+                        } catch (e: Exception) {
+                            // If push fails, keep it dirty
+                        }
+                    }
+
+                    if (item.gist.isDirty) {
+                        // Update existing gist on GitHub
+                        val fileRequests = item.files.associate { file ->
+                            file.filename to GistFileRequest(content = file.content)
+                        }
+                        val request = GistRequest(
+                            description = item.gist.description,
+                            isPublic = item.gist.isPublic,
+                            files = fileRequests
+                        )
+                        val response = apiService.updateGist(item.gist.id, request)
+                        saveResponseToDb(
+                            response = response,
+                            isPinned = item.gist.isPinned,
+                            isLocalOnly = false,
+                            isDirty = false,
+                            isStarred = isStarred,
+                            isStarredDirty = isStarredDirty
+                        )
+                        successCount++
+                    } else if (item.gist.isStarredDirty && !isStarredDirty) {
+                        // Star was modified and successfully updated but there were no description/file edits
+                        val updated = item.gist.copy(
+                            isStarred = isStarred,
+                            isStarredDirty = false
+                        )
+                        gistDao.insertGist(updated)
+                        successCount++
+                    } else if (item.gist.isStarredDirty && isStarredDirty) {
+                        // Star update failed
+                        failCount++
+                    }
                 }
             } catch (e: Exception) {
                 failCount++
@@ -313,9 +432,14 @@ class GistRepository @Inject constructor(
         response: GistResponse,
         isPinned: Boolean,
         isLocalOnly: Boolean,
-        isDirty: Boolean
+        isDirty: Boolean,
+        isStarred: Boolean = false,
+        isStarredDirty: Boolean = false
     ) {
         val id = response.id ?: return
+        val existing = gistDao.getGistById(id)
+        val tags = existing?.gist?.tags ?: emptyList()
+
         val entity = GistEntity(
             id = id,
             description = response.description,
@@ -329,6 +453,9 @@ class GistRepository @Inject constructor(
             isLocalOnly = isLocalOnly,
             isDirty = isDirty,
             isDeleted = false,
+            isStarred = isStarred,
+            isStarredDirty = isStarredDirty,
+            tags = tags,
             ownerLogin = response.owner?.login ?: configPrefs.getOwnerLogin(),
             ownerId = response.owner?.id ?: configPrefs.getOwnerId(),
             ownerAvatarUrl = response.owner?.avatarUrl ?: configPrefs.getOwnerAvatarUrl()

@@ -5,4 +5,9 @@
     <string name="verify_success">Token Verified &amp; Saved Successfully!</string>
     <string name="verify_failed">Verification Failed! Tap to Retry</string>
     <string name="verify_success_toast">GitHub personal access token has been verified and safely saved to secure storage.</string>
+    <string name="backup_title">Local Backup &amp; Export</string>
+    <string name="backup_description">Export all your locally stored Gists (including offline drafts and synced snippets) into a single, structured JSON file for safety or migration.</string>
+    <string name="backup_button">Export JSON Backup</string>
+    <string name="backup_success">Local backup successfully exported!</string>
+    <string name="backup_failed">Export failed: %s</string>
 </resources>

@@ -37,6 +37,9 @@ interface GistDao {
     @Query("DELETE FROM gists WHERE id = :id")
     suspend fun deleteGistById(id: String)
 
+    @Query("UPDATE gists SET tags = :tags WHERE id = :id")
+    suspend fun updateTags(id: String, tags: List<String>)
+
     @Transaction
     suspend fun upsertGistWithFiles(gist: GistEntity, files: List<GistFileEntity>) {
         deleteFilesByGistId(gist.id)
@@ -45,11 +48,11 @@ interface GistDao {
     }
 
     @Transaction
-    @Query("SELECT * FROM gists WHERE isDirty = 1 OR isLocalOnly = 1 OR isDeleted = 1")
+    @Query("SELECT * FROM gists WHERE isDirty = 1 OR isLocalOnly = 1 OR isDeleted = 1 OR isStarredDirty = 1")
     suspend fun getUnsynchronizedGists(): List<GistWithFiles>
 
     @Transaction
-    @Query("SELECT * FROM gists WHERE isDirty = 1 OR isLocalOnly = 1 OR isDeleted = 1")
+    @Query("SELECT * FROM gists WHERE isDirty = 1 OR isLocalOnly = 1 OR isDeleted = 1 OR isStarredDirty = 1")
     fun observeUnsynchronizedGists(): Flow<List<GistWithFiles>>
 
     @Transaction

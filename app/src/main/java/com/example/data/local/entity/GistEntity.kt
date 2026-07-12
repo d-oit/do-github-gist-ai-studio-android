@@ -17,6 +17,9 @@ data class GistEntity(
     val isLocalOnly: Boolean,
     val isDirty: Boolean,
     val isDeleted: Boolean = false,
+    val isStarred: Boolean = false,
+    val isStarredDirty: Boolean = false,
+    val tags: List<String> = emptyList(),
     val ownerLogin: String,
     val ownerId: Int,
     val ownerAvatarUrl: String

@@ -13,7 +13,7 @@ import com.example.data.local.entity.GistFileEntity
         GistEntity::class,
         GistFileEntity::class
     ],
-    version = 2,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)

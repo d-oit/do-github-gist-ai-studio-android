@@ -143,8 +143,13 @@ High-impact features aligning with official GitHub Gist web parity, offline inte
   - [x] Wired a success-triggered `LaunchedEffect` to display transient Toast notifications confirming verified token security.
 - [x] **First File Default Filename & Restricted Addition Parity**:
   - [x] Configured the Gist draft creation and edit initialization flows to prepopulate the first file with the default filename `"gistfile1.md"`.
-  - [x] Restrained multi-file additions by dynamically enabling the "Add File" button only if the first file's filename matches `"gistfile1.md"`.
-  - [x] Provided a helpful contextual inline validation/warning message below the button when it's disabled to guide the user.
+  - [x] Lifted restriction of requiring the first file to be named `"gistfile1.md"` to add more files. Users can now rename the first file to anything (e.g., custom code file extensions) and add multi-file drafts unconditionally.
+- [x] **Immediate & Offline-First Gist Starring/Unstarring**:
+  - [x] Expanded `GistEntity` schema to track `isStarred` and `isStarredDirty` fields with versioned database migration support.
+  - [x] Added `checkIsStarred`, `starGist`, and `unstarGist` endpoints to `GitHubApiService` and wired them securely in `GistRepository`.
+  - [x] Designed offline-first and online-proactive starring sync state machine. If online, toggling star pushes instantly to GitHub; if offline, it flags locally and syncs reactively during background Worker cycles.
+  - [x] Integrated star buttons, dynamic status badges, and Material Symbols icons into `GistCard` across `HomeScreen` and `VaultScreen`.
+  - [x] Added rigorous Robolectric JVM integration tests (`test_toggleStar_online_immediate_sync` and `test_toggleStar_offline_delayed_sync`) verifying state flow behaviors.
 - [x] **Gist Revisions & Split/Unified Diff Parity**:
   - [x] Integrated GitHub Gist revisions API (`GET /gists/{id}` history fields and `GET /gists/{id}/{sha}` for specific revisions).
   - [x] Added `fetchRemoteGist` and `fetchRemoteGistRevision` to both `GistRepository` and `GistViewModel`.
@@ -152,6 +157,30 @@ High-impact features aligning with official GitHub Gist web parity, offline inte
   - [x] Formatted and displayed revision lists with author avatar, login, committed timestamp, additions (green `+`), and deletions (red `-`).
   - [x] Created high-fidelity line-based LCS (Longest Common Subsequence) diff generator in pure Kotlin with aligned side-by-side (Split) or inline (Unified) options.
   - [x] Managed horizontal scroll states inside side-by-side split cards to support clean mobile viewing without truncation.
+- [x] **Local Persistent Search & Filter Parity**:
+  - [x] Designed and implemented beautiful persistent Material 3-compliant search bars at the top of both `HomeScreen` and `VaultScreen`.
+  - [x] Configured rounded pill-shape text fields featuring leading search icons, trailing close icons with instant query clearing, and customized surface variant container backgrounds.
+  - [x] Refined the search matching algorithm to scan through all files associated with each Gist, matching on any file name or file content in addition to Gist descriptions (case-insensitive).
+  - [x] Annotated search components with standard accessibility descriptors and unique snake_case test tags (`home_search_bar` and `vault_search_bar`) for robust verification.
+- [x] **Full-Fidelity JSON Backup Export**:
+  - [x] Formulated version-controlled `GistBackupPayload`, `GistBackupItem`, and `GistBackupFile` models matching Room relational schemas.
+  - [x] Integrated background `exportBackup` routine utilizing runtime Moshi serialization to construct highly-formatted backup JSON payloads.
+  - [x] Handled Uri resolving robustly across both local `file://` schemes for test isolation and `content://` schemes for official Android System file selection.
+  - [x] Developed custom interactive backup export card UI inside `ConfigScreen` with custom accessibility content descriptions and `config_backup_button` test tags.
+  - [x] Wrote robust Robolectric unit tests to verify database extraction, Moshi formatting, and stream-write operations.
+- [x] **Lightweight Code Syntax Highlighter**:
+  - [x] Designed and implemented a high-performance regex-based syntax tokenizer supporting multiple languages (Kotlin, Java, JavaScript, TypeScript, Python, XML, HTML, CSS, SQL, JSON) with an automatic safe generic fallback.
+  - [x] Embedded the custom code highlighter inside the Gist preview modal in `GistPreviewDialog.kt`, automatically styling tokens with modern, readable color palettes on dark containers.
+  - [x] Integrated syntax highlighting for code blocks inside markdown previews (e.g. ````kotlin` or ````json`), parsing language tags automatically.
+  - [x] Coded memory-efficient caching using Compose `remember(content, lang)` blocks to avoid unnecessary parsing during state recomposition.
+  - [x] Authored robust Robolectric unit tests inside `SyntaxHighlighterTest.kt` verifying exact token mapping, italicised comments, and fallback behaviors.
+- [x] **Local Gists Tagging & Grouping System**:
+  - [x] Modified `GistEntity` database schema to support a list of tags (`tags: List<String> = emptyList()`) with fallback destructive migrations handling automatically.
+  - [x] Implemented local database queries in `GistDao` to update tags for Gists dynamically.
+  - [x] Added persistent tagging support in `GistRepository` during Gist draft creation and local modification, preserving tags on remote sync response writes.
+  - [x] Integrated a comma-separated tag input field in `DraftEditorDialog` with custom accessibility parameters and `editor_tags` test tags.
+  - [x] Rendered tag badges on the Gist list card prefixed with `#` in modern Material 3 `secondaryContainer` colors.
+  - [x] Configured scrollable tag filtering chips below the home screen search bar for instant, zero-latency reactive tag filtering.
 
 
 

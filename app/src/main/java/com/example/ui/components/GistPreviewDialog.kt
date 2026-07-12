@@ -193,27 +193,37 @@ fun MarkdownText(
         val lines = text.split("\n")
         var inCodeBlock = false
         var codeBlockContent = ""
+        var codeBlockLang = ""
         
         for (line in lines) {
             val trimmed = line.trim()
             if (trimmed.startsWith("```")) {
                 if (inCodeBlock) {
+                    val currentLang = codeBlockLang
+                    val currentContent = codeBlockContent
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         color = Color(0xFF2D2D2D),
                         shape = RoundedCornerShape(6.dp)
                     ) {
+                        val highlightedText = remember(currentContent, currentLang) {
+                            SyntaxHighlighter.highlight(
+                                text = currentContent.trimEnd(),
+                                filename = "code.$currentLang"
+                            )
+                        }
                         Text(
-                            text = codeBlockContent.trimEnd(),
+                            text = highlightedText,
                             fontFamily = FontFamily.Monospace,
                             fontSize = 12.sp,
-                            color = Color(0xFFE0E0E0),
                             modifier = Modifier.padding(8.dp)
                         )
                     }
                     codeBlockContent = ""
+                    codeBlockLang = ""
                     inCodeBlock = false
                 } else {
+                    codeBlockLang = trimmed.substring(3).trim()
                     inCodeBlock = true
                 }
             } else if (inCodeBlock) {
@@ -937,11 +947,16 @@ fun GistPreviewDialog(
                                                     .padding(12.dp)
                                             ) {
                                                 item {
+                                                    val highlightedText = remember(file.content, file.filename) {
+                                                        SyntaxHighlighter.highlight(
+                                                            text = file.content.ifEmpty { "// Empty content" },
+                                                            filename = file.filename
+                                                        )
+                                                    }
                                                     Text(
-                                                        text = file.content.ifEmpty { "// Empty content" },
+                                                        text = highlightedText,
                                                         fontFamily = FontFamily.Monospace,
                                                         fontSize = 12.sp,
-                                                        color = Color(0xFFE0E0E0),
                                                         lineHeight = 16.sp
                                                     )
                                                 }

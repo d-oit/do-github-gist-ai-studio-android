@@ -12,19 +12,27 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudSync
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.entity.GistWithFiles
@@ -38,9 +46,14 @@ import com.example.ui.theme.DarkPurpleText
 fun HomeScreen(
     gists: List<GistWithFiles>,
     searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    selectedTag: String? = null,
+    allTags: List<String> = emptyList(),
+    onSelectedTagChange: (String?) -> Unit = {},
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     onTogglePin: (String) -> Unit,
+    onToggleStar: (String) -> Unit,
     onEdit: (GistWithFiles) -> Unit,
     onDelete: (String) -> Unit,
     onPreview: (GistWithFiles) -> Unit
@@ -50,12 +63,13 @@ fun HomeScreen(
             gists.sortedWith(compareByDescending<GistWithFiles> { it.gist.isPinned }.thenByDescending { it.gist.createdAt })
         } else {
             gists.filter { item ->
-                val filename = item.files.firstOrNull()?.filename ?: ""
                 val desc = item.gist.description ?: ""
-                val content = item.files.firstOrNull()?.content ?: ""
-                filename.contains(searchQuery, ignoreCase = true) ||
-                        desc.contains(searchQuery, ignoreCase = true) ||
-                        content.contains(searchQuery, ignoreCase = true)
+                val matchesDescription = desc.contains(searchQuery, ignoreCase = true)
+                val matchesFiles = item.files.any { file ->
+                    file.filename.contains(searchQuery, ignoreCase = true) ||
+                            file.content.contains(searchQuery, ignoreCase = true)
+                }
+                matchesDescription || matchesFiles
             }.sortedWith(compareByDescending<GistWithFiles> { it.gist.isPinned }.thenByDescending { it.gist.createdAt })
         }
     }
@@ -70,6 +84,80 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
         ) {
+            // Persistent Search Bar
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = onSearchQueryChange,
+                placeholder = { Text("Search gists by filename or description...", fontSize = 14.sp) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search icon",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(
+                            onClick = { onSearchQueryChange("") },
+                            modifier = Modifier.testTag("clear_search_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Clear search",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp, bottom = 4.dp)
+                    .testTag("home_search_bar"),
+                singleLine = true,
+                shape = RoundedCornerShape(24.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                )
+            )
+
+            // Horizontal Scrollable Tag Filters Row
+            if (allTags.isNotEmpty()) {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    item {
+                        FilterChip(
+                            selected = selectedTag == null,
+                            onClick = { onSelectedTagChange(null) },
+                            label = { Text("All", fontSize = 12.sp) },
+                            modifier = Modifier.testTag("tag_filter_all")
+                        )
+                    }
+                    items(allTags) { tag ->
+                        FilterChip(
+                            selected = selectedTag == tag,
+                            onClick = {
+                                if (selectedTag == tag) {
+                                    onSelectedTagChange(null)
+                                } else {
+                                    onSelectedTagChange(tag)
+                                }
+                            },
+                            label = { Text("#$tag", fontSize = 12.sp) },
+                            modifier = Modifier.testTag("tag_filter_$tag")
+                        )
+                    }
+                }
+            }
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -140,6 +228,7 @@ fun HomeScreen(
                         GistCard(
                             item = item,
                             onTogglePin = { onTogglePin(item.gist.id) },
+                            onToggleStar = { onToggleStar(item.gist.id) },
                             onEdit = { onEdit(item) },
                             onDelete = { onDelete(item.gist.id) },
                             onPreview = { onPreview(item) }

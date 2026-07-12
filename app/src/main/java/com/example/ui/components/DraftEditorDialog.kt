@@ -68,11 +68,12 @@ fun DraftEditorDialog(
     show: Boolean,
     editingGistId: String?,
     onDismiss: () -> Unit,
-    onSave: (description: String, files: List<Pair<String, String>>, isPublic: Boolean, isPinned: Boolean) -> Unit,
+    onSave: (description: String, files: List<Pair<String, String>>, isPublic: Boolean, isPinned: Boolean, tags: List<String>) -> Unit,
     initialDescription: String = "",
     initialFiles: List<Pair<String, String>> = emptyList(),
     initialIsPublic: Boolean = true,
     initialIsPinned: Boolean = false,
+    initialTags: List<String> = emptyList(),
     isAnalyzing: Boolean = false,
     aiAnalysis: GistAiAnalysis? = null,
     onAnalyzeClick: (description: String, files: List<Pair<String, String>>) -> Unit = { _, _ -> },
@@ -93,6 +94,7 @@ fun DraftEditorDialog(
     }
     var isPublic by remember { mutableStateOf(initialIsPublic) }
     var isPinned by remember { mutableStateOf(initialIsPinned) }
+    var tagsInput by remember { mutableStateOf(initialTags.joinToString(", ")) }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -168,6 +170,26 @@ fun DraftEditorDialog(
                             keyboardOptions = KeyboardOptions(
                                 capitalization = KeyboardCapitalization.Sentences,
                                 autoCorrectEnabled = true,
+                                keyboardType = KeyboardType.Text
+                            ),
+                            colors = textFieldColors,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                    }
+
+                    // Tags Input Block - Comma separated tags
+                    item {
+                        OutlinedTextField(
+                            value = tagsInput,
+                            onValueChange = { tagsInput = it },
+                            label = { Text("Tags (comma-separated, e.g. kotlin, architecture)") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("editor_tags"),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(
+                                capitalization = KeyboardCapitalization.None,
+                                autoCorrectEnabled = false,
                                 keyboardType = KeyboardType.Text
                             ),
                             colors = textFieldColors,
@@ -255,14 +277,13 @@ fun DraftEditorDialog(
 
                     // Add File Trigger Button
                     item {
-                        val isFirstFileDefaultMd = files.isNotEmpty() && files[0].first == "gistfile1.md"
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Button(
                                 onClick = { files = files + ("" to "") },
-                                enabled = isFirstFileDefaultMd,
+                                enabled = true,
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isFirstFileDefaultMd) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                                    contentColor = if (isFirstFileDefaultMd) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                                 ),
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -272,15 +293,6 @@ fun DraftEditorDialog(
                                 Icon(imageVector = Icons.Default.Add, contentDescription = "Add File")
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text("Add File", fontWeight = FontWeight.Bold)
-                            }
-                            if (!isFirstFileDefaultMd) {
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "First file must be named 'gistfile1.md' to add more files.",
-                                    fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.padding(horizontal = 4.dp)
-                                )
                             }
                         }
                     }
@@ -671,7 +683,10 @@ fun DraftEditorDialog(
                     Spacer(modifier = Modifier.width(12.dp))
                     Button(
                         onClick = {
-                            onSave(description, files, isPublic, isPinned)
+                            val parsedTags = tagsInput.split(",")
+                                .map { it.trim() }
+                                .filter { it.isNotEmpty() }
+                            onSave(description, files, isPublic, isPinned, parsedTags)
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = ActivePurple),
                         shape = RoundedCornerShape(12.dp)
