@@ -415,6 +415,15 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
                 onClearAiClick = {
                     viewModel.clearAiAnalysis()
                 },
+                onAutoSave = { desc, filesList, isPub, isPin, tagList ->
+                    viewModel.saveAutoSavedDraft(editingGistId, desc, filesList, isPub, isPin, tagList)
+                },
+                onLoadAutoSave = {
+                    viewModel.getAutoSavedDraft(editingGistId)
+                },
+                onClearAutoSave = {
+                    viewModel.clearAutoSavedDraft(editingGistId)
+                },
                 onSave = { description, filesList, isPublic, isPinned, tags ->
                     if (editingGistId == null) {
                         viewModel.createGist(

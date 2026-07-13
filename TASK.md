@@ -181,6 +181,14 @@ High-impact features aligning with official GitHub Gist web parity, offline inte
   - [x] Integrated a comma-separated tag input field in `DraftEditorDialog` with custom accessibility parameters and `editor_tags` test tags.
   - [x] Rendered tag badges on the Gist list card prefixed with `#` in modern Material 3 `secondaryContainer` colors.
   - [x] Configured scrollable tag filtering chips below the home screen search bar for instant, zero-latency reactive tag filtering.
+- [x] **Periodic Draft Auto-Save & Recovery**:
+  - [x] Defined `AutoSavedDraft` and `DraftFile` data models inside `ConfigPrefs.kt` with dynamic JSON Moshi reflection support.
+  - [x] Added `saveAutoSavedDraft`, `getAutoSavedDraft`, and `clearAutoSavedDraft` methods to `ConfigPrefs` utilizing MasterKey-protected encrypted preferences fallback.
+  - [x] Implemented `GistViewModel` helpers to load, update, and delete active auto-save sessions, clearing draft states on successful creates or updates.
+  - [x] Built debounced `LaunchedEffect` listener in `DraftEditorDialog` saving current changes after 3 seconds of keystroke/input inactivity.
+  - [x] Formulated modern, highly reassuring "Auto-saved" status check indicators next to the dialog's header title.
+  - [x] Engineered custom Material 3 recovery banner Card with distinct "Restore" and "Discard" actions with unique snake_case test tags.
+  - [x] Authored robust Robolectric unit tests in `AutoSaveDraftTest.kt` verifying serializing, persistent loading, and clearing behaviors.
 
 
 

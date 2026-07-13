@@ -44,10 +44,12 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -77,7 +79,10 @@ fun DraftEditorDialog(
     isAnalyzing: Boolean = false,
     aiAnalysis: GistAiAnalysis? = null,
     onAnalyzeClick: (description: String, files: List<Pair<String, String>>) -> Unit = { _, _ -> },
-    onClearAiClick: () -> Unit = {}
+    onClearAiClick: () -> Unit = {},
+    onAutoSave: (description: String, files: List<Pair<String, String>>, isPublic: Boolean, isPinned: Boolean, tags: List<String>) -> Unit = { _, _, _, _, _ -> },
+    onLoadAutoSave: () -> com.example.data.local.pref.AutoSavedDraft? = { null },
+    onClearAutoSave: () -> Unit = {}
 ) {
     if (!show) return
 
@@ -95,6 +100,68 @@ fun DraftEditorDialog(
     var isPublic by remember { mutableStateOf(initialIsPublic) }
     var isPinned by remember { mutableStateOf(initialIsPinned) }
     var tagsInput by remember { mutableStateOf(initialTags.joinToString(", ")) }
+
+    // Detect if there's an auto-saved draft on open
+    var autoSavedDraft by remember { mutableStateOf<com.example.data.local.pref.AutoSavedDraft?>(null) }
+    var showRestorePrompt by remember { mutableStateOf(false) }
+
+    LaunchedEffect(editingGistId) {
+        val saved = onLoadAutoSave()
+        if (saved != null) {
+            val initialFilesStandardized = if (initialFiles.isEmpty()) listOf("gistfile1.md" to "") else initialFiles
+            val savedFilesMapped = saved.files.map { it.filename to it.content }
+            val hasDiff = saved.description != initialDescription ||
+                    savedFilesMapped != initialFilesStandardized ||
+                    saved.isPublic != initialIsPublic ||
+                    saved.isPinned != initialIsPinned ||
+                    saved.tags != initialTags
+            if (hasDiff) {
+                autoSavedDraft = saved
+                showRestorePrompt = true
+            }
+        }
+    }
+
+    val onRestore = {
+        autoSavedDraft?.let { saved ->
+            description = saved.description
+            files = saved.files.map { it.filename to it.content }
+            isPublic = saved.isPublic
+            isPinned = saved.isPinned
+            tagsInput = saved.tags.joinToString(", ")
+        }
+        showRestorePrompt = false
+    }
+
+    val onDiscard = {
+        onClearAutoSave()
+        showRestorePrompt = false
+    }
+
+    // Keep track of the last saved state to avoid redundant saving
+    val initialKey = remember {
+        val initialFilesStandardized = if (initialFiles.isEmpty()) listOf("gistfile1.md" to "") else initialFiles
+        "$initialDescription|$initialFilesStandardized|$initialIsPublic|$initialIsPinned|${initialTags.joinToString(", ")}"
+    }
+    var lastSavedState by remember { mutableStateOf<String?>(initialKey) }
+    var isSavedIndicatorVisible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(description, files, isPublic, isPinned, tagsInput) {
+        // Debounce of 3 seconds: wait for the user to pause typing before auto-saving
+        delay(3000)
+
+        val currentStateKey = "$description|$files|$isPublic|$isPinned|$tagsInput"
+        if (currentStateKey != lastSavedState) {
+            val parsedTags = tagsInput.split(",")
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+            onAutoSave(description, files, isPublic, isPinned, parsedTags)
+            lastSavedState = currentStateKey
+            isSavedIndicatorVisible = true
+            delay(2000)
+            isSavedIndicatorVisible = false
+        }
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -123,14 +190,97 @@ fun DraftEditorDialog(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = if (editingGistId == null) "New Local Draft" else "Edit Local Draft",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        Text(
+                            text = if (editingGistId == null) "New Local Draft" else "Edit Local Draft",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        if (isSavedIndicatorVisible) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Auto-saved",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Text(
+                                    text = "Auto-saved",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
                     IconButton(onClick = onDismiss) {
                         Icon(imageVector = Icons.Default.Close, contentDescription = "Close")
+                    }
+                }
+
+                if (showRestorePrompt && autoSavedDraft != null) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                            .testTag("autosave_banner"),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Auto-saved draft found",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Would you like to restore your unsaved edits?",
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                                )
+                            }
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                TextButton(
+                                    onClick = onDiscard,
+                                    modifier = Modifier.testTag("autosave_discard")
+                                ) {
+                                    Text("Discard", fontSize = 13.sp)
+                                }
+                                Button(
+                                    onClick = onRestore,
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary
+                                    ),
+                                    modifier = Modifier.testTag("autosave_restore")
+                                ) {
+                                    Text("Restore", fontSize = 13.sp)
+                                }
+                            }
+                        }
                     }
                 }
 

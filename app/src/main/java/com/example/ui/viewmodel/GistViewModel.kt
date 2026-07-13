@@ -306,6 +306,7 @@ class GistViewModel(
                 isPinned = isPinned,
                 tags = tags
             )
+            clearAutoSavedDraft(null)
             _statusMessage.value = "Draft created successfully"
         }
     }
@@ -348,6 +349,7 @@ class GistViewModel(
                 isPinned = isPinned,
                 tags = tags
             )
+            clearAutoSavedDraft(id)
             _statusMessage.value = "Local changes saved"
         }
     }
@@ -503,6 +505,35 @@ class GistViewModel(
                 }
             }
         }
+    }
+
+    fun getAutoSavedDraft(editingGistId: String?): com.example.data.local.pref.AutoSavedDraft? {
+        return configPrefs.getAutoSavedDraft(editingGistId)
+    }
+
+    fun saveAutoSavedDraft(
+        editingGistId: String?,
+        description: String,
+        files: List<Pair<String, String>>,
+        isPublic: Boolean,
+        isPinned: Boolean,
+        tags: List<String>
+    ) {
+        val draftFiles = files.map { com.example.data.local.pref.DraftFile(it.first, it.second) }
+        val draft = com.example.data.local.pref.AutoSavedDraft(
+            editingGistId = editingGistId,
+            description = description,
+            files = draftFiles,
+            isPublic = isPublic,
+            isPinned = isPinned,
+            tags = tags,
+            timestamp = System.currentTimeMillis()
+        )
+        configPrefs.saveAutoSavedDraft(draft)
+    }
+
+    fun clearAutoSavedDraft(editingGistId: String?) {
+        configPrefs.clearAutoSavedDraft(editingGistId)
     }
 
     class Factory(

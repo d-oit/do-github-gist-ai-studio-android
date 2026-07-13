@@ -4,9 +4,26 @@ import android.content.Context
 import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+
+data class DraftFile(
+    val filename: String,
+    val content: String
+)
+
+data class AutoSavedDraft(
+    val editingGistId: String?,
+    val description: String,
+    val files: List<DraftFile>,
+    val isPublic: Boolean,
+    val isPinned: Boolean,
+    val tags: List<String>,
+    val timestamp: Long
+)
 
 @Singleton
 class ConfigPrefs @Inject constructor(
@@ -176,5 +193,35 @@ class ConfigPrefs @Inject constructor(
         } catch (e: Exception) {
             Log.e("ConfigPrefs", "Failed to clear secure preferences", e)
         }
+    }
+
+    private val draftMoshi by lazy {
+        Moshi.Builder()
+            .addLast(KotlinJsonAdapterFactory())
+            .build()
+    }
+
+    fun saveAutoSavedDraft(draft: AutoSavedDraft) {
+        val key = "autosave_draft_" + (draft.editingGistId ?: "new")
+        val adapter = draftMoshi.adapter(AutoSavedDraft::class.java)
+        val json = adapter.toJson(draft)
+        prefs.edit().putString(key, json).apply()
+    }
+
+    fun getAutoSavedDraft(editingGistId: String?): AutoSavedDraft? {
+        val key = "autosave_draft_" + (editingGistId ?: "new")
+        val json = prefs.getString(key, null) ?: return null
+        return try {
+            val adapter = draftMoshi.adapter(AutoSavedDraft::class.java)
+            adapter.fromJson(json)
+        } catch (e: Exception) {
+            Log.e("ConfigPrefs", "Failed to parse auto-saved draft", e)
+            null
+        }
+    }
+
+    fun clearAutoSavedDraft(editingGistId: String?) {
+        val key = "autosave_draft_" + (editingGistId ?: "new")
+        prefs.edit().remove(key).apply()
     }
 }
