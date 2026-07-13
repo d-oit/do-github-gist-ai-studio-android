@@ -189,6 +189,10 @@ High-impact features aligning with official GitHub Gist web parity, offline inte
   - [x] Formulated modern, highly reassuring "Auto-saved" status check indicators next to the dialog's header title.
   - [x] Engineered custom Material 3 recovery banner Card with distinct "Restore" and "Discard" actions with unique snake_case test tags.
   - [x] Authored robust Robolectric unit tests in `AutoSaveDraftTest.kt` verifying serializing, persistent loading, and clearing behaviors.
-
+- [x] **Friendly Empty-State Placeholders & Fetch CTA**:
+  - [x] Implemented high-fidelity empty-state placeholders inside `HomeScreen.kt` distinguishing between an empty local cache (`gists.isEmpty()`) and empty search/filter results (`filtered.isEmpty()`).
+  - [x] Integrated a beautifully styled, Material 3-compliant "Fetch from GitHub" call-to-action button in the primary empty state with a loading state spinner (`CircularProgressIndicator`) and `"fetch_from_github_btn"` test tag.
+  - [x] Implemented a "Reset Search & Filters" button in the search-empty state with the `"reset_filters_btn"` test tag.
+  - [x] Aligned empty state visuals with "Clean Minimalism" guidelines, utilizing generous negative space, custom styled icon circles (`ActivePurpleContainer`), and polished secondary captions.
 
 

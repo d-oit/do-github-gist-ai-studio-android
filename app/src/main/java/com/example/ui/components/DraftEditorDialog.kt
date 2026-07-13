@@ -450,308 +450,100 @@ fun DraftEditorDialog(
                     // spelling, grammar, and link checkers suggestions
                     if (qualitySuggestions.isNotEmpty()) {
                         item {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(MaterialTheme.colorScheme.secondaryContainer, shape = RoundedCornerShape(12.dp))
-                                    .border(1.dp, MaterialTheme.colorScheme.outline, shape = RoundedCornerShape(12.dp))
-                                    .padding(12.dp)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Info,
-                                        contentDescription = "Quality Checkers",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Text(
-                                        text = "Content Quality Assistant",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 14.sp,
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Text(
-                                    text = "Spell, grammar, and external links are analyzed live. Click 'Fix' to apply corrections instantly.",
-                                    fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
-                                )
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    qualitySuggestions.forEach { suggestion ->
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .background(MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(8.dp))
-                                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape = RoundedCornerShape(8.dp))
-                                                .padding(8.dp),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Column(modifier = Modifier.weight(1f)) {
-                                                Row(
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                                ) {
-                                                    Text(
-                                                        text = if (suggestion.targetField == "description") "In Description" else "In ${suggestion.targetField}",
-                                                        fontSize = 10.sp,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = MaterialTheme.colorScheme.primary
-                                                    )
-                                                    Text(
-                                                        text = "•",
-                                                        fontSize = 10.sp,
-                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                    )
-                                                    Text(
-                                                        text = suggestion.type,
-                                                        fontSize = 10.sp,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = when (suggestion.type) {
-                                                            "Spelling" -> MaterialTheme.colorScheme.error
-                                                            "External Link" -> ActivePurple
-                                                            else -> MaterialTheme.colorScheme.primary
-                                                        }
-                                                    )
-                                                }
-                                                Spacer(modifier = Modifier.height(2.dp))
-                                                Text(
-                                                    text = suggestion.explanation,
-                                                    fontSize = 12.sp,
-                                                    fontWeight = FontWeight.Medium,
-                                                    color = MaterialTheme.colorScheme.onSurface
-                                                )
-                                                Spacer(modifier = Modifier.height(2.dp))
-                                                Row(
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                                ) {
-                                                    Text(
-                                                        text = suggestion.original,
-                                                        fontSize = 11.sp,
-                                                        style = androidx.compose.ui.text.TextStyle(textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough),
-                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                    )
-                                                    Icon(
-                                                        imageVector = Icons.Default.Check,
-                                                        contentDescription = "to",
-                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                        modifier = Modifier.size(10.dp)
-                                                    )
-                                                    Text(
-                                                        text = suggestion.replacement,
-                                                        fontSize = 12.sp,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = MaterialTheme.colorScheme.primary
-                                                    )
-                                                }
-                                            }
-                                            Button(
-                                                onClick = {
-                                                    if (suggestion.targetField == "description") {
-                                                        description = description.replaceFirst(suggestion.original, suggestion.replacement)
-                                                    } else {
-                                                        files = files.map { (name, content) ->
-                                                            if (name == suggestion.targetField || content.contains(suggestion.original)) {
-                                                                name to content.replaceFirst(suggestion.original, suggestion.replacement)
-                                                            } else {
-                                                                name to content
-                                                            }
-                                                        }
-                                                    }
-                                                },
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                                ),
-                                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                                                modifier = Modifier
-                                                    .height(28.dp)
-                                                    .testTag("fix_suggestion_btn_${suggestion.original}"),
-                                                shape = RoundedCornerShape(6.dp)
-                                            ) {
-                                                Text("Fix", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            ContentQualityAssistantView(
+                                qualitySuggestions = qualitySuggestions,
+                                onFixSuggestion = { suggestion ->
+                                    if (suggestion.targetField == "description") {
+                                        description = description.replaceFirst(suggestion.original, suggestion.replacement)
+                                    } else {
+                                        files = files.map { (name, content) ->
+                                            if (name == suggestion.targetField || content.contains(suggestion.original)) {
+                                                name to content.replaceFirst(suggestion.original, suggestion.replacement)
+                                            } else {
+                                                name to content
                                             }
                                         }
                                     }
+                                },
+                                onFixAllSuggestions = {
+                                    var currentDesc = description
+                                    var currentFiles = files
+                                    qualitySuggestions.forEach { suggestion ->
+                                        if (suggestion.targetField == "description") {
+                                            currentDesc = currentDesc.replaceFirst(suggestion.original, suggestion.replacement)
+                                        } else {
+                                            currentFiles = currentFiles.map { (name, content) ->
+                                                if (name == suggestion.targetField || content.contains(suggestion.original)) {
+                                                    name to content.replaceFirst(suggestion.original, suggestion.replacement)
+                                                } else {
+                                                    name to content
+                                                }
+                                            }
+                                        }
+                                    }
+                                    description = currentDesc
+                                    files = currentFiles
                                 }
-                            }
+                            )
                         }
                     }
 
                     // Hybrid Local LLM Gist AI Assistant Card
                     item {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(12.dp))
-                                .border(1.dp, MaterialTheme.colorScheme.outline, shape = RoundedCornerShape(12.dp))
-                                .padding(12.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Bolt,
-                                        contentDescription = "Gist AI",
-                                        tint = ActivePurple,
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                    Text(
-                                        text = "Gist AI Assistant",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 14.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                        GistAiAssistantCardView(
+                            isAnalyzing = isAnalyzing,
+                            aiAnalysis = aiAnalysis,
+                            onAnalyzeClick = { onAnalyzeClick(description, files) },
+                            onClearAiClick = onClearAiClick,
+                            onAppendRecommendedTag = { tag ->
+                                if (!description.contains(tag)) {
+                                    description = if (description.isBlank()) tag else "$description $tag"
                                 }
-                                if (aiAnalysis != null) {
-                                    TextButton(onClick = onClearAiClick) {
-                                        Text("Clear", fontSize = 11.sp, color = MaterialTheme.colorScheme.error)
+                            },
+                            onApplyFixes = {
+                                var currentDesc = description
+                                var currentFiles = files
+
+                                val hasPrintFix = aiAnalysis?.optimizationSuggestions?.any { it.contains("Remove debug print/log") } == true
+                                val hasStateFix = aiAnalysis?.optimizationSuggestions?.any { it.contains("mutableStateOf") } == true
+                                val hasExtensionFix = aiAnalysis?.optimizationSuggestions?.any { it.contains("files do not have an extension") || it.contains("do not have an extension") } == true
+
+                                currentFiles = currentFiles.map { (name, content) ->
+                                    var fixedContent = content
+                                    if (hasPrintFix) {
+                                        fixedContent = fixedContent.lines().filter { line ->
+                                            !line.contains("println(") &&
+                                            !line.contains("System.out.print") &&
+                                            !line.contains("Log.d(") &&
+                                            !line.contains("Log.e(")
+                                        }.joinToString("\n")
+                                    }
+                                    if (hasStateFix) {
+                                        val mutableStateRegex = Regex("(?<!remember\\s*\\{\\s*)mutableStateOf\\((.*?)\\)")
+                                        fixedContent = mutableStateRegex.replace(fixedContent) { matchResult ->
+                                            "remember { mutableStateOf(${matchResult.groupValues[1]}) }"
+                                        }
+                                    }
+                                    var fixedName = name
+                                    if (hasExtensionFix) {
+                                        val nonExtensionSpecialNames = setOf("makefile", "dockerfile", "license", "jenkinsfile", "vagrantfile", "readme")
+                                        if (!name.contains(".") && !nonExtensionSpecialNames.contains(name.lowercase())) {
+                                            fixedName = if (fixedContent.contains("@Composable") || fixedContent.contains("fun ")) "$name.kt" else "$name.txt"
+                                        }
+                                    }
+                                    fixedName to fixedContent
+                                }
+
+                                aiAnalysis?.recommendedTags?.forEach { tag ->
+                                    if (!currentDesc.contains(tag)) {
+                                        currentDesc = if (currentDesc.isBlank()) tag else "$currentDesc $tag"
                                     }
                                 }
+
+                                description = currentDesc
+                                files = currentFiles
                             }
-
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "Uses a lightweight on-device analyzer (Simulated Local LLM) with online Gemini Flash deep support if credentials exist.",
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                            )
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            if (isAnalyzing) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.Center,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Local LLM model computing metrics...", fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                                }
-                            } else if (aiAnalysis != null) {
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    // Summary Box
-                                    Text(
-                                        text = "✨ Summary & Insights:",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = ActivePurple
-                                    )
-                                    Text(
-                                        text = aiAnalysis.summary,
-                                        fontSize = 12.sp,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-
-                                    // Score indicators
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                    ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text("Complexity Level", fontSize = 10.sp, color = GraySecondary)
-                                            Text(
-                                                text = "${aiAnalysis.complexityLevel} (${aiAnalysis.complexityScore}/10)",
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = if (aiAnalysis.complexityScore > 6) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                                            )
-                                        }
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text("Maintainability Index", fontSize = 10.sp, color = GraySecondary)
-                                            Text(
-                                                text = aiAnalysis.maintainabilityIndex,
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = ActivePurple
-                                            )
-                                        }
-                                    }
-
-                                    // Recommended Tags
-                                    Text(
-                                        text = "🏷️ Recommended Tags (tap to append):",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        aiAnalysis.recommendedTags.forEach { tag ->
-                                            Button(
-                                                onClick = {
-                                                    if (!description.contains(tag)) {
-                                                        description = if (description.isBlank()) tag else "$description $tag"
-                                                    }
-                                                },
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                                ),
-                                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                                                modifier = Modifier.height(26.dp),
-                                                shape = RoundedCornerShape(4.dp)
-                                            ) {
-                                                Text(tag, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                            }
-                                        }
-                                    }
-
-                                    // Recommendations
-                                    Text(
-                                        text = "🚀 Performance & Clean Code Proposals:",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    aiAnalysis.optimizationSuggestions.forEach { proposal ->
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                            verticalAlignment = Alignment.Top
-                                        ) {
-                                            Text("•", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = ActivePurple)
-                                            Text(proposal, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface)
-                                        }
-                                    }
-
-                                    Text(
-                                        text = if (aiAnalysis.isOnlineGenerated) "Generated using Gemini Pro Online Model" else "Generated fully offline on-device",
-                                        fontSize = 9.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
-                            } else {
-                                Button(
-                                    onClick = { onAnalyzeClick(description, files) },
-                                    colors = ButtonDefaults.buttonColors(containerColor = ActivePurple),
-                                    shape = RoundedCornerShape(8.dp),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(40.dp)
-                                        .testTag("analyze_gist_btn")
-                                ) {
-                                    Icon(imageVector = Icons.Default.Bolt, contentDescription = "AI")
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Analyze with Gist AI", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                }
-                            }
-                        }
+                        )
                     }
 
                     // Metadata visibility configurations (Public & Pinned)
