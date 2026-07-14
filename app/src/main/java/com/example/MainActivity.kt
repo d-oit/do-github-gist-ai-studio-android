@@ -13,19 +13,18 @@ import com.example.ui.viewmodel.GistViewModel
 
 class MainActivity : ComponentActivity() {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    enableEdgeToEdge()
 
-        val app = applicationContext as DoGistHubApp
-        val viewModelFactory = GistViewModel.Factory(app.repository, app.configPrefs)
+    val app = applicationContext as DoGistHubApp
+    val viewModelFactory =
+      GistViewModel.Factory(app.repository, app.configPrefs, app.appConfiguration)
 
-        setContent {
-            val viewModel: GistViewModel by viewModels { viewModelFactory }
-            val appTheme by viewModel.appTheme.collectAsState()
-            MyApplicationTheme(themeMode = appTheme) {
-                GistHubAppScreen(viewModel)
-            }
-        }
+    setContent {
+      val viewModel: GistViewModel by viewModels { viewModelFactory }
+      val appTheme by viewModel.appTheme.collectAsState()
+      MyApplicationTheme(themeMode = appTheme) { GistHubAppScreen(viewModel) }
     }
+  }
 }

@@ -44,183 +44,179 @@ import com.example.ui.theme.GraySecondary
 
 @Composable
 fun VaultScreen(
-    gists: List<GistWithFiles>,
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
-    onTogglePin: (String) -> Unit,
-    onToggleStar: (String) -> Unit,
-    onEdit: (GistWithFiles) -> Unit,
-    onDelete: (String) -> Unit,
-    onCreateDraftClick: () -> Unit,
-    onPreview: (GistWithFiles) -> Unit
+  gists: List<GistWithFiles>,
+  searchQuery: String,
+  onSearchQueryChange: (String) -> Unit,
+  onTogglePin: (String) -> Unit,
+  onToggleStar: (String) -> Unit,
+  onEdit: (GistWithFiles) -> Unit,
+  onDelete: (String) -> Unit,
+  onCreateDraftClick: () -> Unit,
+  onPreview: (GistWithFiles) -> Unit
 ) {
-    val draftGists = remember(gists) {
-        gists.filter { it.gist.isLocalOnly || it.gist.isDirty }
-    }
+  val draftGists = remember(gists) { gists.filter { it.gist.isLocalOnly || it.gist.isDirty } }
 
-    val filtered = remember(draftGists, searchQuery) {
-        if (searchQuery.isBlank()) {
-            draftGists.sortedWith(compareByDescending<GistWithFiles> { it.gist.isPinned }.thenByDescending { it.gist.createdAt })
-        } else {
-            draftGists.filter { item ->
-                val desc = item.gist.description ?: ""
-                val matchesDescription = desc.contains(searchQuery, ignoreCase = true)
-                val matchesFiles = item.files.any { file ->
-                    file.filename.contains(searchQuery, ignoreCase = true) ||
-                            file.content.contains(searchQuery, ignoreCase = true)
-                }
-                matchesDescription || matchesFiles
-            }.sortedWith(compareByDescending<GistWithFiles> { it.gist.isPinned }.thenByDescending { it.gist.createdAt })
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
-    ) {
-        // Persistent Search Bar
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = onSearchQueryChange,
-            placeholder = { Text("Search drafts by filename or description...", fontSize = 14.sp) },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search icon",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            trailingIcon = {
-                if (searchQuery.isNotEmpty()) {
-                    IconButton(
-                        onClick = { onSearchQueryChange("") },
-                        modifier = Modifier.testTag("clear_vault_search_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Clear search",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp, bottom = 4.dp)
-                .testTag("vault_search_bar"),
-            singleLine = true,
-            shape = RoundedCornerShape(24.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-            )
+  val filtered =
+    remember(draftGists, searchQuery) {
+      if (searchQuery.isBlank()) {
+        draftGists.sortedWith(
+          compareByDescending<GistWithFiles> { it.gist.isPinned }
+            .thenByDescending { it.gist.createdAt }
         )
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Unsaved Drafts & Local Vault",
-                fontSize = 12.sp,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                color = ActivePurple,
-                letterSpacing = 1.sp
-            )
-            Box(
-                modifier = Modifier
-                    .background(ActivePurpleContainer, RoundedCornerShape(10.dp))
-                    .padding(horizontal = 8.dp, vertical = 2.dp)
-            ) {
-                Text(
-                    text = "${filtered.size} Unsynced",
-                    fontSize = 11.sp,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                    color = DarkPurpleText
-                )
-            }
-        }
-
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item {
-                // Dashed Add Card
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
-                        .clickable(onClick = onCreateDraftClick)
-                        .padding(vertical = 24.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.surface),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "Add Draft",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "New Local Draft",
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "Auto-tracks with isLocalOnly: true",
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-
-            if (filtered.isEmpty()) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 40.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "No offline changes or local drafts.",
-                            fontSize = 13.sp,
-                            color = GraySecondary
-                        )
-                    }
-                }
-            } else {
-                items(filtered, key = { it.gist.id }) { item ->
-                    GistCard(
-                        item = item,
-                        onTogglePin = { onTogglePin(item.gist.id) },
-                        onToggleStar = { onToggleStar(item.gist.id) },
-                        onEdit = { onEdit(item) },
-                        onDelete = { onDelete(item.gist.id) },
-                        onPreview = { onPreview(item) }
-                    )
-                }
-            }
-            item { Spacer(modifier = Modifier.height(80.dp)) }
-        }
+      } else {
+        draftGists
+          .filter { item ->
+            val desc = item.gist.description ?: ""
+            val matchesDescription = desc.contains(searchQuery, ignoreCase = true)
+            val matchesFiles =
+              item.files.any { file ->
+                file.filename.contains(searchQuery, ignoreCase = true) ||
+                  file.content.contains(searchQuery, ignoreCase = true)
+              }
+            matchesDescription || matchesFiles
+          }
+          .sortedWith(
+            compareByDescending<GistWithFiles> { it.gist.isPinned }
+              .thenByDescending { it.gist.createdAt }
+          )
+      }
     }
+
+  Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
+    // Persistent Search Bar
+    OutlinedTextField(
+      value = searchQuery,
+      onValueChange = onSearchQueryChange,
+      placeholder = { Text("Search drafts by filename or description...", fontSize = 14.sp) },
+      leadingIcon = {
+        Icon(
+          imageVector = Icons.Default.Search,
+          contentDescription = "Search icon",
+          tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+      },
+      trailingIcon = {
+        if (searchQuery.isNotEmpty()) {
+          IconButton(
+            onClick = { onSearchQueryChange("") },
+            modifier = Modifier.testTag("clear_vault_search_button")
+          ) {
+            Icon(
+              imageVector = Icons.Default.Close,
+              contentDescription = "Clear search",
+              tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+          }
+        }
+      },
+      modifier =
+        Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp).testTag("vault_search_bar"),
+      singleLine = true,
+      shape = RoundedCornerShape(24.dp),
+      colors =
+        OutlinedTextFieldDefaults.colors(
+          focusedBorderColor = MaterialTheme.colorScheme.primary,
+          unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+          focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+          unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+        )
+    )
+
+    Row(
+      modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+      horizontalArrangement = Arrangement.SpaceBetween,
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      Text(
+        text = "Unsaved Drafts & Local Vault",
+        fontSize = 12.sp,
+        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+        color = ActivePurple,
+        letterSpacing = 1.sp
+      )
+      Box(
+        modifier =
+          Modifier.background(ActivePurpleContainer, RoundedCornerShape(10.dp))
+            .padding(horizontal = 8.dp, vertical = 2.dp)
+      ) {
+        Text(
+          text = "${filtered.size} Unsynced",
+          fontSize = 11.sp,
+          fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+          color = DarkPurpleText
+        )
+      }
+    }
+
+    LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+      item {
+        // Dashed Add Card
+        Box(
+          modifier =
+            Modifier.fillMaxWidth()
+              .clip(RoundedCornerShape(16.dp))
+              .background(MaterialTheme.colorScheme.surfaceVariant)
+              .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
+              .clickable(onClick = onCreateDraftClick)
+              .padding(vertical = 24.dp),
+          contentAlignment = Alignment.Center
+        ) {
+          Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+              modifier =
+                Modifier.size(40.dp)
+                  .clip(CircleShape)
+                  .background(MaterialTheme.colorScheme.surface),
+              contentAlignment = Alignment.Center
+            ) {
+              Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = "Add Draft",
+                tint = MaterialTheme.colorScheme.primary
+              )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+              text = "New Local Draft",
+              fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+              fontSize = 14.sp,
+              color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+              text = "Auto-tracks with isLocalOnly: true",
+              fontSize = 11.sp,
+              color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+          }
+        }
+      }
+
+      if (filtered.isEmpty()) {
+        item {
+          Box(
+            modifier = Modifier.fillMaxWidth().padding(top = 40.dp),
+            contentAlignment = Alignment.Center
+          ) {
+            Text(
+              text = "No offline changes or local drafts.",
+              fontSize = 13.sp,
+              color = GraySecondary
+            )
+          }
+        }
+      } else {
+        items(filtered, key = { it.gist.id }) { item ->
+          GistCard(
+            item = item,
+            onTogglePin = { onTogglePin(item.gist.id) },
+            onToggleStar = { onToggleStar(item.gist.id) },
+            onEdit = { onEdit(item) },
+            onDelete = { onDelete(item.gist.id) },
+            onPreview = { onPreview(item) }
+          )
+        }
+      }
+      item { Spacer(modifier = Modifier.height(80.dp)) }
+    }
+  }
 }

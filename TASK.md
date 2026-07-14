@@ -1,198 +1,278 @@
 # Task Board: Do Gist Hub
 
-An offline-first GitHub Gist client utilizing **Jetpack Compose**, a local **Room SQLite cache**, reactive **WorkManager synchronization**, and **manual constructor injection**. This dashboard tracks the development progress of implemented modules and pending feature requirements.
+An offline-first GitHub Gist client utilizing **Jetpack Compose**, a local **Room SQLite cache**, reactive **WorkManager synchronization**, and **manual constructor injection**. This board tracks the production-ready implementation milestones.
 
 ---
 
-## 📊 Project Status Summary
+## 📂 1. Harness and Local Developer Quality Gate
 
-| Subsystem | Progress | Status |
-| :--- | :---: | :--- |
-| **Architecture & Core Framework** | 100% | ![Completed](https://img.shields.io/badge/Status-Completed-success?style=flat-square) |
-| **Offline-First Sync Engine** | 100% | ![Completed](https://img.shields.io/badge/Status-Completed-success?style=flat-square) |
-| **Visual Theming & User Interface** | 100% | ![Completed](https://img.shields.io/badge/Status-Completed-success?style=flat-square) |
-| **Credential Management & Storage** | 100% | ![Completed](https://img.shields.io/badge/Status-Completed-success?style=flat-square) |
-| **Developer Workflow & Testing** | 100% | ![Completed](https://img.shields.io/badge/Status-Completed-success?style=flat-square) |
-
----
-
-## 📂 1. Architecture & Core Framework
-
-Architectural blueprints ensuring clean data flow and dependency decoupling.
-
-- [x] **Unidirectional Data Flow (UDF)**: Compose screens reactively observe read-only `StateFlow` from `GistViewModel` collected via `collectAsStateWithLifecycle()`.
-- [x] **Manual Constructor Injection**: Strict avoidance of Hilt annotations (`@Inject`, `@HiltViewModel`, etc.). All dependencies (database, repository, preferences) are manually wired in `DoGistHubApp.kt` and passed explicitly to `GistViewModel.Factory`.
-- [x] **Relational Schema Design**: Local Room cache mapping a one-to-many relationship of one `GistEntity` to multiple `GistFileEntity` records.
-- [x] **Repository Mediation Pattern**: `GistRepository` acts as the single source of truth, mediating between the local Room SQLite cache and the remote GitHub Gist API.
+- **Goal**: Establish a unified, POSIX-compliant script as the single local and CI quality gate.
+- **Files expected to change**: `harness.sh`
+- **Implementation checklist**:
+  - [x] Create POSIX-compatible Bash script (`#!/usr/bin/env bash`, `set -euo pipefail`).
+  - [x] Implement subcommands: `help`, `verify`, `unit`, `lint`, `format-check`, `build`, `test`, `clean`.
+  - [x] Verify that `./gradlew` is used exclusively and its execution permission is resolved automatically.
+  - [x] Handle step headings, error logging, and exit codes.
+- **Verification command(s)**:
+  - `chmod +x harness.sh`
+  - `./harness.sh help`
+- **Definition of done**: Script is fully executable, POSIX compliant, runs on macOS/Linux, and cleanly delegates to Gradle task wrappers.
+- **Explicit non-goals**: We do not support running the harness on pure native Windows Command Prompt without a bash-compatible environment (like Git Bash or WSL).
 
 ---
 
-## 🔄 2. Offline-First Sync Protocol
+## 📂 2. Gradle Build Reproducibility and Static Analysis
 
-Advanced synchronization engine supporting seamless offline work states.
-
-- [x] **Sync State Machine Flags**: Correct transitions and tracking of state flags on `GistEntity`:
-  - `isLocalOnly = true`: Local draft offline-created snippet.
-  - `isDirty = true`: Unsynced local edits on an existing remote snippet.
-  - `isDeleted = true`: Pending deletion synced when online.
-- [x] **Reactive Sync Observation**: `DoGistHubApp` observes the repository's `unsynchronizedGists` flow and triggers `GistSyncWorker` reactively instead of VM/UI layers calling sync.
-- [x] **WorkManager Background Sync**: `GistSyncWorker` handles background network pushing of local drafts and updates.
-- [x] **Conflict Avoidance**: Fetching from remote API never overwrites active local edits (`isLocalOnly` or `isDirty`).
-
----
-
-## 🎨 3. Visual Theming & User Interface
-
-Material Design 3 visual layouts paired with "Clean Minimalism" aesthetic styles.
-
-- [x] **M3 Custom Color Palette**:
-  - `SlateBg` (`#FDFBFF`) as primary background.
-  - `SlateBorder` (`#CAC4D0`) for containers and separators.
-  - `ActivePurple` (`#6750A4`) as primary accent color.
-  - `GraySecondary` (`#49454F`) & `GrayTertiary` (`#938F99`) for text density and annotations.
-- [x] **Navigation Setup**: Multi-tab interface (Home, Vault, Sync, Config) embedded cleanly inside a unified `Scaffold` layout.
-- [x] **Touch Target Compliance**: Ensuring all interactive clickables have a minimum size of `48.dp x 48.dp`.
-- [x] **Interactive Components**:
-  - Gist Search/Filter query field matching filenames, content, and descriptions.
-  - Full-screen Code Preview modal using dark developer style terminal backgrounds.
-  - Interactive Spelling & Grammar helper dialog suggesting corrections directly inside drafts.
-  - Pinning UI system to favorite specific Gists locally.
+- **Goal**: Streamline Gradle builds, enable caching, and integrate static analysis tools (Spotless, Detekt, Android Lint).
+- **Files expected to change**: `gradle.properties`, `build.gradle.kts`, `app/build.gradle.kts`, `gradle/libs.versions.toml`, `config/detekt/detekt.yml`
+- **Implementation checklist**:
+  - [x] Optimize `gradle.properties` with caching (`org.gradle.caching=true`), parallel execution, and Kotlin incremental compilation (`kotlin.incremental=true`).
+  - [x] Add Spotless Gradle plugin with `ktfmt` support.
+  - [x] Add Detekt Gradle plugin with a practical configuration base.
+  - [x] Configure Android Lint with fatal issues enabled for CI.
+- **Verification command(s)**:
+  - `./harness.sh format-check`
+  - `./harness.sh lint`
+- **Definition of done**: The static verification tasks succeed, and Spotless/Detekt can be executed locally and in CI.
+- **Explicit non-goals**: Standardizing third-party library updates beyond standard catalog definition or introducing extreme lint rule sets that generate excessive noise.
 
 ---
 
-## 🔒 4. Credential Management & Storage
+## Task Group 3: Codacy Integration
 
-Secure, local user state initialization.
-
-- [x] **Personal Access Token (PAT) Cache**: Safe management of GitHub authorization headers using private SharedPreferences.
-- [x] **User Profiles Autoload**: Automated profile loading and profile picture (avatar) caching on startup.
-- [x] **Config Maintenance**: Complete configuration reset mechanics ("Clear Configuration") wiping local cache data and state flows cleanly.
-
----
-
-## 🧪 5. Developer Harness & Verification Loop
-
-Continuous quality verification pipeline ensuring strict adherence to the Fowler developer harness model.
-
-- [x] **Graduated Pipeline Tasks (`./harness.sh`)**:
-  - `check`: Static analysis and Android Lint checking to catch formatting/structural anomalies.
-  - `build`: Compiler level verification to guarantee correct application incremental builds.
-  - `test`: Automated JVM unit testing.
-- [x] **Robolectric Integration Testing**: Full mock-ready local unit and E2E simulation testing under `src/test/` to verify ViewModel, repositories, and preferences without real network or emulator overhead.
-- [x] **Roborazzi Visual Screenshot Tests**: Automated pixel-perfect snapshot verification to catch UI regressions on layout adjustments.
-- [x] **Instrumentation Block**: Absolute avoidance of slow, flaky emulator-based `androidTest/` suites.
-
----
-
-## 📝 Running Validation Pipelines
-
-To run validation checks and update project status:
-
+### 3.1 JaCoCo coverage report configuration
+**Goal:** Produce a JaCoCo XML report from unit tests that Codacy can consume.
+**Files:** `app/build.gradle.kts`
+**Checklist:**
+- [x] Apply the `jacoco` Gradle plugin to the app module.
+- [x] Pin `jacoco.toolVersion` to `"0.8.12"` or align with version catalog.
+- [x] Register a `jacocoTestReportDebug` task depending on `testDebugUnitTest`.
+- [x] Configure XML output; disable CSV; keep HTML for local inspection.
+- [x] Exclude generated, data-binding, R, BuildConfig, and Manifest classes.
+- [x] Verify execution data path matches AGP output for debug unit tests.
+- [x] `./harness.sh coverage` completes without error.
+**Verification:**
 ```bash
-# 1. Run static code checks and formatting linting
-./harness.sh check
-
-# 2. Compile the debug build of the application
-./harness.sh build
-
-# 3. Execute all unit and Robolectric tests
-./harness.sh test
+./harness.sh coverage
+ls app/build/reports/jacoco/jacocoTestReportDebug/jacocoTestReportDebug.xml
 ```
+**Done when:** XML file exists at the documented path after a clean run.
+**Non-goals:** Connected/instrumented coverage; Kover integration.
+
+### 3.2 `.codacy.yml` project configuration
+**Goal:** Configure Codacy analysis scope to exclude generated and build artifacts.
+**Files:** `.codacy.yml`
+**Checklist:**
+- [x] Exclude `app/build/`, `.gradle/`, `**/generated/`, `**/build/`.
+- [x] Do not disable language detection or tool selection.
+- [x] Validate file is well-formed YAML.
+**Verification:** `python3 -c "import yaml, sys; yaml.safe_load(sys.stdin)" < .codacy.yml`
+**Done when:** `.codacy.yml` exists, is valid YAML, and contains exclusions.
+
+### 3.3 Codacy static-analysis CI workflow
+**Goal:** Run Codacy static analysis on every PR and push using the official action,
+and upload SARIF to GitHub Security.
+**Files:** `.github/workflows/codacy.yml`
+**Checklist:**
+- [x] Triggers: `push` to `main`, `pull_request`, `workflow_dispatch`.
+- [x] Uses `codacy/codacy-analysis-cli-action@v4` (GitHub-verified).
+- [x] Outputs SARIF format.
+- [x] Uploads SARIF via `github/codeql-action/upload-sarif@v3`.
+- [x] Sets `max-allowed-issues: 2147483647` (informational; gate is Codacy PR status).
+- [x] Grants `security-events: write` permission.
+- [x] Concurrency group cancels obsolete in-progress runs.
+- [x] Minimal permissions: `contents: read`, `security-events: write`, `actions: read`.
+**Verification:** YAML is valid; referenced action versions resolve on GitHub Marketplace.
+**Done when:** Workflow file exists and passes YAML lint.
+
+### 3.4 Coverage upload CI step
+**Goal:** Upload JaCoCo coverage to Codacy on every push and PR.
+**Files:** `.github/workflows/ci.yml`
+**Checklist:**
+- [x] After unit-test step, add `./gradlew jacocoTestReportDebug` step.
+- [x] Add `codacy/codacy-coverage-reporter-action@v1` step (GitHub-verified).
+- [x] Provide `project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}`.
+- [x] Provide `coverage-reports:` pointing to the XML output path.
+- [x] Make the step conditional: `if: ${{ secrets.CODACY_PROJECT_TOKEN != '' }}`
+      so fork PRs skip gracefully without failing.
+- [x] Token is not echoed, not in job-level `env:`, not in any log output.
+**Verification:** CI workflow YAML is valid; step is present and conditional.
+**Done when:** Step exists in `ci.yml` and is gated on secret presence.
+
+### 3.5 `harness.sh` coverage and codacy subcommands
+**Goal:** Local developer can generate and upload coverage without the CI workflow.
+**Files:** `harness.sh`
+**Checklist:**
+- [x] `coverage` subcommand runs `jacocoTestReportDebug`.
+- [x] `codacy` subcommand validates token is set, validates report exists, then
+      calls the official Codacy Coverage Reporter bash script.
+- [x] `verify` calls `coverage` + `codacy` only when `CODACY_PROJECT_TOKEN` is set.
+- [x] Token value is never printed.
+**Verification:** `./harness.sh help` lists all subcommands including `coverage` and `codacy`.
+**Done when:** Both subcommands work end-to-end in a configured environment.
+
+### 3.6 `.gitignore` and `.env.example` updates
+**Goal:** Ensure Codacy artifacts and the project token are never committed.
+**Files:** `.gitignore`, `.env.example`
+**Checklist:**
+- [x] `results.sarif` is git-ignored.
+- [x] `.codacy-temp/` is git-ignored.
+- [x] `CODACY_PROJECT_TOKEN=` placeholder is present in `.env.example` with an
+      empty value and a comment directing to the Codacy dashboard.
+- [x] Real token is never present in `.env.example`.
+**Done when:** Entries exist in both files.
+
+### 3.7 README Codacy documentation
+**Goal:** Document onboarding, local usage, and badge.
+**Files:** `README.md`
+**Checklist:**
+- [x] Add a Codacy grade badge using the official badge URL pattern:
+      `https://app.codacy.com/project/badge/Grade/<PROJECT_UUID>`
+      Use a placeholder UUID with a TODO comment until the real one is available.
+- [x] Add "Code Quality" section with onboarding steps (see section 9 below).
+- [x] Document `./harness.sh coverage` and `./harness.sh codacy`.
+- [x] State that `CODACY_PROJECT_TOKEN` must never be committed.
+**Done when:** README section is present, accurate, and badge renders.
 
 ---
 
-## 🚀 6. Advanced Parity & Local AI Features
+## 📂 4. Safe Debug/Release Signing and Configuration
 
-High-impact features aligning with official GitHub Gist web parity, offline intelligence, and interactive checkers.
+- **Goal**: Configure standard debug signing by default, and provide opt-in release signing via environment variables/Gradle properties.
+- **Files expected to change**: `app/build.gradle.kts`, `.env.example`
+- **Implementation checklist**:
+  - [x] Ensure debug builds use standard debug Keystores without requiring manual edits.
+  - [x] Implement opt-in release signing resolving from `RELEASE_STORE_FILE`, `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS`, and `RELEASE_KEY_PASSWORD`.
+  - [x] Define safe placeholders in `.env.example`.
+- **Verification command(s)**:
+  - `./harness.sh build`
+- **Definition of done**: Running standard build commands compiles a debug APK successfully without requiring release keys or manual code changes.
+- **Explicit non-goals**: Storing actual keystore passwords or certificate assets in source code or committing private key files.
 
-- [x] **Multi-File Draft Editing**: Allow creating, editing, and deleting multiple files inside a single Gist draft with dynamic file cards stacked inside the editor.
-- [x] **Advanced Content Quality Checkers**:
-  - **Spell Checker**: Dictionary lookup covering core developer concepts and standard typos.
-  - **Grammar Checker**: Find duplicate words, improper sentence capitalization, and punctuation spacing.
-  - **External Link Checker**: Parse URLs in description and content; flag insecure HTTP links and provide instant upgrade-to-HTTPS corrections.
-- [x] **Hybrid Local LLM Assistant**:
-  - **Offline Intelligence**: Evaluate cyclomatic complexity, estimate maintainability, create summaries, and suggest optimization actions 100% locally.
-  - **Online API Integration**: If online and API key is present, communicate with `gemini-3.5-flash` using a REST client for deeper insights, with automatic offline fallback.
-- [x] **Developer Loop Verification**: Verify compile and test targets using the harness, ensuring 100% compliance.
-- [x] **High-Fidelity UI/UX Web Parity**:
-  - **Optional Markdown Editor/Preview**: File cards in both `DraftEditorDialog` and `GistPreviewDialog` allow toggling between raw code writing/display and highly styled real-time Markdown preview rendering (Write vs Preview Markdown) resembling the GitHub web UI.
-  - **Full Description Visibility & Raised Field Height**: Description lines are fully visible without truncation on the main Gist card and preview screen, and the editor's description field has raised minimum height with multi-line input.
-  - **Persistent User Credentials**: Persistent storage of the user profile avatar and login together with the Personal Access Token, auto-loading user details from GitHub on startup if absent.
-  - **Detailed Gist Creation Info**: Displays complete metadata (avatar, login handle, formatted Created At and Updated At timestamps, public/secret status badge, and copyable Web URL link) in the preview dialog.
-- [x] **GitHub-Parity Rich Markdown Editor & Formatting Toolbar (Gist Content & Comments Scope Only)**:
-  - [x] Implement dual-tab horizontal navigation (`Write` vs `Preview`) with bottom line indicator and neutral placeholder texts for file contents and gist comments.
-  - [x] Render a specialized 12-action formatting toolbar containing standard vector iconography (`H`, `B`, `I`, quote, code, link, numbered list, bulleted list, task list, attachment, mention, and quote reply).
-  - [x] Wire syntax helpers to inject appropriate markdown tags and templates at the active selection or text end of gist file contents or comments.
-  - [x] Design decorative status footers containing left-aligned "Markdown is supported" logo indicator and right-aligned "Paste, drop, or click to add files" interactive attachment hint.
-  - [x] Enforce Material 3 touch target compliance (minimum 48dp) and annotate components with custom accessibility semantics and `snake_case` test tags.
-- [x] **Live GitHub API Gists Explorer**:
-  - [x] Added `fetchGistsDirectly()` to `GistRepository` performing secure raw REST queries to the GitHub Gists API endpoint with the stored personal access token (PAT).
-  - [x] Wired reactive states (`remoteGists`, `isFetchingRemote`, `remoteError`) in `GistViewModel` to cache and load direct cloud records cleanly on startup and demand.
-  - [x] Built the `GitHubGistApiList` Material 3 list component showing Gist titles (resolved filename), descriptions, metadata, visibility badges, file count indicators, and creator avatar/profile references.
-  - [x] Integrated the live explorer directly inside the scrollable container of the Sync tab screen with full refresh and error handling states.
-- [x] **2026 Android Security Best Practices & Compliance**:
-  - [x] Migrated deprecated `MasterKeys` Keystore API to standard unified `MasterKey.Builder` to ensure robust hardware-backed cryptographic co-processor protection (StrongBox/TEE).
-  - [x] Integrated `EncryptedSharedPreferences` for secure preference file storage (`secure_gist_config_prefs`), encrypting stored GitHub Personal Access Tokens and profile values using AES-256 (SIV for keys, GCM for values).
-  - [x] Ensured graceful fallback mechanisms to standard private shared preferences if system cryptographic keystore initialization fails.
-  - [x] Implemented on-boot migration of plaintext configurations to the encrypted storage pool with subsequent plain files cleanups.
-- [x] **Verify Token Dynamic Button State Implementation**:
-  - [x] Declared the structured Kotlin sealed interface `TokenVerificationState` representing Idle, Verifying, Success, and Error states.
-  - [x] Integrated the token verification state machine flow within `GistViewModel.kt` to drive state transitions reactively.
-  - [x] Created dynamic UI string resources in `strings.xml` to avoid hardcoded text strings in source files.
-  - [x] Configured rich Material 3 design transitions on the button layout in `ConfigScreen.kt` using custom color shifts (e.g., Success Green, Error Red) and contextual vector icons.
-  - [x] Wired a success-triggered `LaunchedEffect` to display transient Toast notifications confirming verified token security.
-- [x] **First File Default Filename & Restricted Addition Parity**:
-  - [x] Configured the Gist draft creation and edit initialization flows to prepopulate the first file with the default filename `"gistfile1.md"`.
-  - [x] Lifted restriction of requiring the first file to be named `"gistfile1.md"` to add more files. Users can now rename the first file to anything (e.g., custom code file extensions) and add multi-file drafts unconditionally.
-- [x] **Immediate & Offline-First Gist Starring/Unstarring**:
-  - [x] Expanded `GistEntity` schema to track `isStarred` and `isStarredDirty` fields with versioned database migration support.
-  - [x] Added `checkIsStarred`, `starGist`, and `unstarGist` endpoints to `GitHubApiService` and wired them securely in `GistRepository`.
-  - [x] Designed offline-first and online-proactive starring sync state machine. If online, toggling star pushes instantly to GitHub; if offline, it flags locally and syncs reactively during background Worker cycles.
-  - [x] Integrated star buttons, dynamic status badges, and Material Symbols icons into `GistCard` across `HomeScreen` and `VaultScreen`.
-  - [x] Added rigorous Robolectric JVM integration tests (`test_toggleStar_online_immediate_sync` and `test_toggleStar_offline_delayed_sync`) verifying state flow behaviors.
-- [x] **Gist Revisions & Split/Unified Diff Parity**:
-  - [x] Integrated GitHub Gist revisions API (`GET /gists/{id}` history fields and `GET /gists/{id}/{sha}` for specific revisions).
-  - [x] Added `fetchRemoteGist` and `fetchRemoteGistRevision` to both `GistRepository` and `GistViewModel`.
-  - [x] Added horizontal tab switcher inside `GistPreviewDialog` for `Files` vs `Revisions` navigation.
-  - [x] Formatted and displayed revision lists with author avatar, login, committed timestamp, additions (green `+`), and deletions (red `-`).
-  - [x] Created high-fidelity line-based LCS (Longest Common Subsequence) diff generator in pure Kotlin with aligned side-by-side (Split) or inline (Unified) options.
-  - [x] Managed horizontal scroll states inside side-by-side split cards to support clean mobile viewing without truncation.
-- [x] **Local Persistent Search & Filter Parity**:
-  - [x] Designed and implemented beautiful persistent Material 3-compliant search bars at the top of both `HomeScreen` and `VaultScreen`.
-  - [x] Configured rounded pill-shape text fields featuring leading search icons, trailing close icons with instant query clearing, and customized surface variant container backgrounds.
-  - [x] Refined the search matching algorithm to scan through all files associated with each Gist, matching on any file name or file content in addition to Gist descriptions (case-insensitive).
-  - [x] Annotated search components with standard accessibility descriptors and unique snake_case test tags (`home_search_bar` and `vault_search_bar`) for robust verification.
-- [x] **Full-Fidelity JSON Backup Export**:
-  - [x] Formulated version-controlled `GistBackupPayload`, `GistBackupItem`, and `GistBackupFile` models matching Room relational schemas.
-  - [x] Integrated background `exportBackup` routine utilizing runtime Moshi serialization to construct highly-formatted backup JSON payloads.
-  - [x] Handled Uri resolving robustly across both local `file://` schemes for test isolation and `content://` schemes for official Android System file selection.
-  - [x] Developed custom interactive backup export card UI inside `ConfigScreen` with custom accessibility content descriptions and `config_backup_button` test tags.
-  - [x] Wrote robust Robolectric unit tests to verify database extraction, Moshi formatting, and stream-write operations.
-- [x] **Lightweight Code Syntax Highlighter**:
-  - [x] Designed and implemented a high-performance regex-based syntax tokenizer supporting multiple languages (Kotlin, Java, JavaScript, TypeScript, Python, XML, HTML, CSS, SQL, JSON) with an automatic safe generic fallback.
-  - [x] Embedded the custom code highlighter inside the Gist preview modal in `GistPreviewDialog.kt`, automatically styling tokens with modern, readable color palettes on dark containers.
-  - [x] Integrated syntax highlighting for code blocks inside markdown previews (e.g. ````kotlin` or ````json`), parsing language tags automatically.
-  - [x] Coded memory-efficient caching using Compose `remember(content, lang)` blocks to avoid unnecessary parsing during state recomposition.
-  - [x] Authored robust Robolectric unit tests inside `SyntaxHighlighterTest.kt` verifying exact token mapping, italicised comments, and fallback behaviors.
-- [x] **Local Gists Tagging & Grouping System**:
-  - [x] Modified `GistEntity` database schema to support a list of tags (`tags: List<String> = emptyList()`) with fallback destructive migrations handling automatically.
-  - [x] Implemented local database queries in `GistDao` to update tags for Gists dynamically.
-  - [x] Added persistent tagging support in `GistRepository` during Gist draft creation and local modification, preserving tags on remote sync response writes.
-  - [x] Integrated a comma-separated tag input field in `DraftEditorDialog` with custom accessibility parameters and `editor_tags` test tags.
-  - [x] Rendered tag badges on the Gist list card prefixed with `#` in modern Material 3 `secondaryContainer` colors.
-  - [x] Configured scrollable tag filtering chips below the home screen search bar for instant, zero-latency reactive tag filtering.
-- [x] **Periodic Draft Auto-Save & Recovery**:
-  - [x] Defined `AutoSavedDraft` and `DraftFile` data models inside `ConfigPrefs.kt` with dynamic JSON Moshi reflection support.
-  - [x] Added `saveAutoSavedDraft`, `getAutoSavedDraft`, and `clearAutoSavedDraft` methods to `ConfigPrefs` utilizing MasterKey-protected encrypted preferences fallback.
-  - [x] Implemented `GistViewModel` helpers to load, update, and delete active auto-save sessions, clearing draft states on successful creates or updates.
-  - [x] Built debounced `LaunchedEffect` listener in `DraftEditorDialog` saving current changes after 3 seconds of keystroke/input inactivity.
-  - [x] Formulated modern, highly reassuring "Auto-saved" status check indicators next to the dialog's header title.
-  - [x] Engineered custom Material 3 recovery banner Card with distinct "Restore" and "Discard" actions with unique snake_case test tags.
-  - [x] Authored robust Robolectric unit tests in `AutoSaveDraftTest.kt` verifying serializing, persistent loading, and clearing behaviors.
-- [x] **Friendly Empty-State Placeholders & Fetch CTA**:
-  - [x] Implemented high-fidelity empty-state placeholders inside `HomeScreen.kt` distinguishing between an empty local cache (`gists.isEmpty()`) and empty search/filter results (`filtered.isEmpty()`).
-  - [x] Integrated a beautifully styled, Material 3-compliant "Fetch from GitHub" call-to-action button in the primary empty state with a loading state spinner (`CircularProgressIndicator`) and `"fetch_from_github_btn"` test tag.
-  - [x] Implemented a "Reset Search & Filters" button in the search-empty state with the `"reset_filters_btn"` test tag.
-  - [x] Aligned empty state visuals with "Clean Minimalism" guidelines, utilizing generous negative space, custom styled icon circles (`ActivePurpleContainer`), and polished secondary captions.
+---
 
+## 📂 5. Secure Credential Storage and Privacy Redaction
+
+- **Goal**: Secure personal access tokens using Android Keystore-backed encryption, and sanitize sensitive information from application logs.
+- **Files expected to change**: Secure credential storage implementations, logging classes, view models, logout routines.
+- **Implementation checklist**:
+  - [x] Implement `CredentialStore` utilizing MasterKey-based `EncryptedSharedPreferences` with safe fallback.
+  - [x] Ensure Personal Access Token is redacted in `toString()`, logs, UI error displays, and exceptions.
+  - [x] Ensure logout / configuration reset wipes all cached credentials, profile metadata, and Room tables completely.
+- **Verification command(s)**:
+  - `./harness.sh test`
+- **Definition of done**: Unit tests confirm stored credentials cannot be leaked in logs or error payloads and logout fully erases all local state.
+- **Explicit non-goals**: Supporting multiple active GitHub user profiles simultaneously.
+
+---
+
+## 📂 6. App State, Data Boundaries, and Error-State Modeling
+
+- **Goal**: Define domain boundaries and model application UI states with robust error classifications.
+- **Files expected to change**: Models, ViewModels, repository interfaces.
+- **Implementation checklist**:
+  - [x] Refine/implement `GistRepository` and underlying service/local interfaces to return domain-level models.
+  - [x] Expose state as read-only, immutable `StateFlow` from ViewModels using `collectAsStateWithLifecycle()` in UI.
+  - [x] Explicitly model state variations: Loading, Content, Empty, Offline cached content, Recoverable error, Authentication expired.
+  - [x] Create user-safe error classification models.
+- **Verification command(s)**:
+  - `./harness.sh test`
+- **Definition of done**: ViewModel transitions are fully tested, and Compose views reactively render the appropriate UI depending on state.
+- **Explicit non-goals**: Splitting the existing monolithic module into multiple standalone Gradle submodules in this change set.
+
+---
+
+## 📂 7. Cache, Conditional Refresh, Pagination, and Offline Behavior
+
+- **Goal**: Optimize cache hits, implement conditional refreshes using ETags, and support paginated list loading.
+- **Files expected to change**: `GistRepository`, `GistDao`, entities, HTTP clients.
+- **Implementation checklist**:
+  - [x] Emit cached content immediately to UI, then fetch remote updates asynchronously.
+  - [x] Support conditional requests with headers (ETag, Last-Modified) where applicable.
+  - [x] Implement pagination with structured limits.
+  - [x] Retain cached content and display warning banners on network timeout or connection failure.
+- **Verification command(s)**:
+  - `./harness.sh test`
+- **Definition of done**: Cache emits immediately on startup, list loads more elements on scroll, and offline modes are gracefully handled.
+- **Explicit non-goals**: Implementing complex peer-to-peer offline database merging.
+
+---
+
+## 📂 8. Performance Diagnostics, Baseline Profiles, and Benchmarks
+
+- **Goal**: Scaffold Baseline Profile generation and macrobenchmark frameworks to optimize startup performance.
+- **Files expected to change**: `app/build.gradle.kts`, `gradle/libs.versions.toml`, Baseline Profile module scaffolding.
+- **Implementation checklist**:
+  - [x] Enable StrictMode checks in debug builds to catch thread-policy violations.
+  - [x] Scaffold Baseline Profile generator rules covering cold starts and main lists.
+  - [x] Scaffold Macrobenchmark tests for startup timing diagnostics.
+- **Verification command(s)**:
+  - `./harness.sh verify` (Scaffold compiles cleanly)
+- **Definition of done**: Scaffolding modules compile successfully on JVM unit tests, and instructions are clearly documented.
+- **Explicit non-goals**: Full hardware-dependent device execution of macrobenchmarks (marked as "Scaffolded" since local emulators are unavailable).
+
+---
+
+## 📂 9. CI Pull-Request Gate
+
+- **Goal**: Setup an automated GitHub Actions pipeline validating all pull requests before merge.
+- **Files expected to change**: `.github/workflows/ci.yml`
+- **Implementation checklist**:
+  - [x] Define triggering paths (`pull_request`, `push` to main).
+  - [x] Run graduated pipeline checks: Format -> Lint -> Unit -> Build.
+  - [x] Configure dependency caches to optimize CI duration.
+  - [x] Upload static analysis and test reports on build failures.
+- **Verification command(s)**:
+  - CI pipeline execution on branch push.
+- **Definition of done**: All tests, formatting rules, and lints must pass in CI environment.
+- **Explicit non-goals**: Automatically applying auto-fixes or commits on behalf of the user in CI.
+
+---
+
+## 📂 10. Signed GitHub Release Workflow
+
+- **Goal**: Automate secure release builds generating signed APKs and computing checksums.
+- **Files expected to change**: `.github/workflows/release.yml`
+- **Implementation checklist**:
+  - [x] Configure trigger on tag matching `v*`.
+  - [x] Map GitHub secrets to Gradle properties for secure signing.
+  - [x] Build signed release APK and compute SHA-256 checksums.
+  - [x] Publish official GitHub Release attaching signed binaries and changelogs.
+- **Verification command(s)**:
+  - Trigger release action manually or via tag push.
+- **Definition of done**: Tag pushes automatically yield an authenticated, checksum-secured production release.
+- **Explicit non-goals**: Publishing directly to Google Play Console.
+
+---
+
+## 📂 11. Documentation, Tests, and Final Verification
+
+- **Goal**: Maintain detailed setup documentation, ensure test coverage, and perform a full harness validation.
+- **Files expected to change**: `README.md`, test directories.
+- **Implementation checklist**:
+  - [x] Document local setup steps and configuration requirements.
+  - [x] List secure variables, formatting, lint, and unit-test execution tasks.
+  - [x] Ensure 100% test coverage over core repository, mapping, state, and verification logic.
+  - [x] Run final `./harness.sh verify` to assert quality.
+- **Verification command(s)**:
+  - `./harness.sh verify`
+- **Definition of done**: Harness successfully passes all levels with green status indicators.
+- **Explicit non-goals**: Eliminating all generic project documentation in favor of extensive architectural guides.
+
+---
+
+## 📂 12. Create Gist Composable Screen & Database Integration
+
+- **Goal**: Implement a fully featured dedicated Composable screen for creating new Gists and persist them locally via Room `GistDao`.
+- **Files expected to change**: `CreateGistScreen.kt`, `GistHubAppScreen.kt`, `GistRepository.kt`, `GistViewModel.kt`
+- **Implementation checklist**:
+  - [x] Create a dedicated screen `CreateGistScreen.kt` with fields for description, public status, filename, and file content.
+  - [x] Integrate Material 3 input fields and clean validations.
+  - [x] Assign `testTag` identifiers to all input fields, buttons, and switches for testing.
+  - [x] Wire the submit action directly to `GistDao.upsertGistWithFiles(...)` inside a coroutine scope.
+  - [x] Expose local-only sync flags (`isLocalOnly = true`) on database entries.
+  - [x] Integrate the creation screen seamlessly with navigation and entry points in `GistHubAppScreen.kt`.
+- **Verification command(s)**:
+  - `./harness.sh verify`
+- **Definition of done**: Selecting the "New Draft" floating action button opens the new screen, validates inputs, and persists a local-only draft directly in the SQLite cache using Room.
 

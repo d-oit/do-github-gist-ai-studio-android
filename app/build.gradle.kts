@@ -7,7 +7,12 @@ plugins {
   alias(libs.plugins.roborazzi)
   alias(libs.plugins.secrets)
   alias(libs.plugins.google.services)
+  alias(libs.plugins.spotless)
+  alias(libs.plugins.detekt)
+  jacoco
 }
+
+jacoco { toolVersion = "0.8.12" }
 
 android {
   namespace = "com.example"
@@ -24,18 +29,43 @@ android {
   }
 
   signingConfigs {
-    create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-      storeFile = file(keystorePath)
-      storePassword = System.getenv("STORE_PASSWORD")
-      keyAlias = "upload"
-      keyPassword = System.getenv("KEY_PASSWORD")
+    // Release signing is completely optional/opt-in via Gradle properties or environment variables
+    val releaseStoreFile =
+      project.findProperty("RELEASE_STORE_FILE") as? String ?: System.getenv("RELEASE_STORE_FILE")
+    val releaseStorePassword =
+      project.findProperty("RELEASE_STORE_PASSWORD") as? String
+        ?: System.getenv("RELEASE_STORE_PASSWORD")
+    val releaseKeyAlias =
+      project.findProperty("RELEASE_KEY_ALIAS") as? String ?: System.getenv("RELEASE_KEY_ALIAS")
+    val releaseKeyPassword =
+      project.findProperty("RELEASE_KEY_PASSWORD") as? String
+        ?: System.getenv("RELEASE_KEY_PASSWORD")
+
+    val hasReleaseSigning =
+      !releaseStoreFile.isNullOrEmpty() &&
+        !releaseStorePassword.isNullOrEmpty() &&
+        !releaseKeyAlias.isNullOrEmpty() &&
+        !releaseKeyPassword.isNullOrEmpty()
+
+    if (hasReleaseSigning) {
+      create("release") {
+        storeFile = file(releaseStoreFile!!)
+        storePassword = releaseStorePassword
+        keyAlias = releaseKeyAlias
+        keyPassword = releaseKeyPassword
+      }
     }
-    create("debugConfig") {
-      storeFile = file("${rootDir}/debug.keystore")
-      storePassword = "android"
-      keyAlias = "androiddebugkey"
-      keyPassword = "android"
+
+    // Default debug signing uses built-in "debug" signing config.
+    // If rootDir's debug.keystore exists, map it; otherwise let standard Gradle defaults apply.
+    getByName("debug") {
+      val localDebugKeystore = file("${rootDir}/debug.keystore")
+      if (localDebugKeystore.exists()) {
+        storeFile = localDebugKeystore
+        storePassword = "android"
+        keyAlias = "androiddebugkey"
+        keyPassword = "android"
+      }
     }
   }
 
@@ -44,11 +74,38 @@ android {
       isCrunchPngs = false
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      signingConfig = signingConfigs.getByName("release")
+
+      val releaseStoreFile =
+        project.findProperty("RELEASE_STORE_FILE") as? String ?: System.getenv("RELEASE_STORE_FILE")
+      val releaseStorePassword =
+        project.findProperty("RELEASE_STORE_PASSWORD") as? String
+          ?: System.getenv("RELEASE_STORE_PASSWORD")
+      val releaseKeyAlias =
+        project.findProperty("RELEASE_KEY_ALIAS") as? String ?: System.getenv("RELEASE_KEY_ALIAS")
+      val releaseKeyPassword =
+        project.findProperty("RELEASE_KEY_PASSWORD") as? String
+          ?: System.getenv("RELEASE_KEY_PASSWORD")
+
+      val hasReleaseSigning =
+        !releaseStoreFile.isNullOrEmpty() &&
+          !releaseStorePassword.isNullOrEmpty() &&
+          !releaseKeyAlias.isNullOrEmpty() &&
+          !releaseKeyPassword.isNullOrEmpty()
+
+      if (hasReleaseSigning) {
+        signingConfig = signingConfigs.getByName("release")
+      } else {
+        // Dynamic check: throw error only when release task is explicitly run without credentials
+        gradle.taskGraph.whenReady {
+          if (hasTask(":app:assembleRelease") || hasTask(":app:bundleRelease")) {
+            throw GradleException(
+              "Release signing credentials missing. Please define RELEASE_STORE_FILE, RELEASE_STORE_PASSWORD, RELEASE_KEY_ALIAS, and RELEASE_KEY_PASSWORD."
+            )
+          }
+        }
+      }
     }
-    debug {
-      signingConfig = signingConfigs.getByName("debugConfig")
-    }
+    debug { signingConfig = signingConfigs.getByName("debug") }
   }
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -59,6 +116,59 @@ android {
     buildConfig = true
   }
   testOptions { unitTests { isIncludeAndroidResources = true } }
+
+  lint {
+    abortOnError = true
+    xmlReport = true
+    htmlReport = true
+    textReport = true
+    textOutput = file("stdout")
+    fatal += "all" // promote all fatal lints to errors
+  }
+}
+
+tasks.register<JacocoReport>("jacocoTestReportDebug") {
+  dependsOn("testDebugUnitTest")
+  group = "Reporting"
+  description = "Generate JaCoCo coverage report for debug unit tests."
+
+  reports {
+    xml.required.set(true)
+    html.required.set(true)
+    csv.required.set(false)
+  }
+
+  val excludes =
+    listOf(
+      "**/R.class",
+      "**/R$*.class",
+      "**/BuildConfig.*",
+      "**/Manifest*.*",
+      "**/*Test*.*",
+      "android/**/*.*",
+      "**/databinding/**",
+      "**/generated/**",
+      "**/*_MembersInjector*.*",
+      "**/*Dagger*.*",
+      "**/*_Factory*.*",
+    )
+
+  // AGP places Kotlin compiled classes here for unit tests:
+  val kotlinClasses =
+    fileTree("${layout.buildDirectory.get()}/tmp/kotlin-classes/debug") { exclude(excludes) }
+
+  sourceDirectories.setFrom(files("${project.projectDir}/src/main/java"))
+  classDirectories.setFrom(files(kotlinClasses))
+
+  // Execution data path produced by AGP for debug unit tests:
+  executionData.setFrom(
+    fileTree(layout.buildDirectory.get()) {
+      include(
+        "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec",
+        "jacoco/testDebugUnitTest.exec",
+      )
+    }
+  )
 }
 
 // Configure the Secrets Gradle Plugin to use .env and .env.example files
@@ -66,12 +176,10 @@ android {
 secrets {
   propertiesFileName = ".env"
   defaultPropertiesFileName = ".env.example"
+  ignoreList.add("CODACY_PROJECT_TOKEN")
 }
 
-googleServices {
-  missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN
-}
-
+googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }
 
 // Some unused dependencies are commented out below instead of being removed.
 // This makes it easy to add them back in the future if needed.
@@ -133,4 +241,23 @@ dependencies {
   implementation(libs.androidx.security.crypto)
 }
 
+spotless {
+  kotlin {
+    target("**/*.kt")
+    targetExclude("**/build/**/*.kt")
+    ktfmt().googleStyle()
+  }
+  kotlinGradle {
+    target("**/*.gradle.kts")
+    ktfmt().googleStyle()
+  }
+}
 
+detekt {
+  toolVersion = libs.versions.detekt.get()
+  config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
+  buildUponDefaultConfig = true
+  allRules = false
+  disableDefaultRuleSets = false
+  parallel = true
+}

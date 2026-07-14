@@ -15,23 +15,17 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object StorageModule {
 
-    @Provides
-    @Singleton
-    fun provideAppDatabase(
-        @ApplicationContext context: Context
-    ): AppDatabase {
-        return Room.databaseBuilder(
-            context,
-            AppDatabase::class.java,
-            "gist_database"
-        )
-        .fallbackToDestructiveMigration(dropAllTables = true)
-        .build()
-    }
+  @Provides
+  @Singleton
+  fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
+    return Room.databaseBuilder(context, AppDatabase::class.java, "gist_database")
+      .fallbackToDestructiveMigration(dropAllTables = true)
+      .build()
+  }
 
-    @Provides
-    @Singleton
-    fun provideGistDao(database: AppDatabase): GistDao {
-        return database.gistDao()
-    }
+  @Provides
+  @Singleton
+  fun provideGistDao(database: AppDatabase): GistDao {
+    return database.gistDao()
+  }
 }

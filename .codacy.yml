@@ -1,0 +1,8 @@
+# Codacy repository analysis configuration.
+# https://docs.codacy.com/repositories-configure/codacy-configuration-file/
+exclude_paths:
+  - "app/build/**"
+  - ".gradle/**"
+  - "**/generated/**"
+  - "**/build/**"
+  - "gradle/wrapper/**"

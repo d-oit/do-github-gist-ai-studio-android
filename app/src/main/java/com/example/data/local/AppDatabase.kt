@@ -8,15 +8,8 @@ import com.example.data.local.dao.GistDao
 import com.example.data.local.entity.GistEntity
 import com.example.data.local.entity.GistFileEntity
 
-@Database(
-    entities = [
-        GistEntity::class,
-        GistFileEntity::class
-    ],
-    version = 4,
-    exportSchema = false
-)
+@Database(entities = [GistEntity::class, GistFileEntity::class], version = 4, exportSchema = false)
 @TypeConverters(RoomConverters::class)
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun gistDao(): GistDao
+  abstract fun gistDao(): GistDao
 }

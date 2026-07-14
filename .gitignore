@@ -16,3 +16,7 @@
 local.properties
 .env
 debug.keystore
+
+# Codacy analysis artifacts
+results.sarif
+.codacy-temp/

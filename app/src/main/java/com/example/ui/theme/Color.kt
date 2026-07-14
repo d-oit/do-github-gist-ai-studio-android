@@ -15,9 +15,11 @@ val LightPinkContainer = Color(0xFFF2B8B5)
 val DarkRedText = Color(0xFF601410)
 
 // Enhanced high-contrast slate grays (2026 APCA and WCAG compliant)
-// GraySecondary: Raised to 14.1:1 contrast ratio against SlateBg for razor-sharp secondary body/labels
-val GraySecondary = Color(0xFF35333A) 
-// GrayTertiary: Raised to 6.4:1 contrast ratio against SlateBg to comfortably exceed the WCAG AA 4.5:1 minimum for captions/placeholders
+// GraySecondary: Raised to 14.1:1 contrast ratio against SlateBg for razor-sharp secondary
+// body/labels
+val GraySecondary = Color(0xFF35333A)
+// GrayTertiary: Raised to 6.4:1 contrast ratio against SlateBg to comfortably exceed the WCAG AA
+// 4.5:1 minimum for captions/placeholders
 val GrayTertiary = Color(0xFF5A5761)
 
 val Purple80 = Color(0xFFD0BCFF)
