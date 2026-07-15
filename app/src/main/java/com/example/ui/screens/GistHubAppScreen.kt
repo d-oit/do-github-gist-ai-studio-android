@@ -386,6 +386,7 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
                 editorFiles = item.files.map { it.filename to it.content }
                 editorIsPublic = item.gist.isPublic
                 editorIsPinned = item.gist.isPinned
+                editorTags = item.gist.tags
                 showEditor = true
               },
               onDelete = { gistIdToDelete = it },

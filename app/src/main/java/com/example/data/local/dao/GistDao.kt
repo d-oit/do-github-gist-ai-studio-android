@@ -69,6 +69,10 @@ interface GistDao {
   )
   fun searchLocalGists(query: String): Flow<List<GistWithFiles>>
 
+  @Transaction
+  @Query("SELECT * FROM gists WHERE isLocalOnly = 0 AND isDeleted = 0")
+  suspend fun getSyncedGists(): List<GistWithFiles>
+
   @Query("DELETE FROM gists") suspend fun deleteAllGists()
 
   @Query("DELETE FROM gist_files") suspend fun deleteAllFiles()

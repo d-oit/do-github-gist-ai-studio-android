@@ -37,6 +37,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.entity.GistWithFiles
 import com.example.ui.theme.ActivePurple
 import com.example.ui.theme.GraySecondary
@@ -68,81 +70,28 @@ fun GistPreviewDialog(
 ) {
   if (!show || item == null) return
 
+  val historyList by viewModel.historyList.collectAsStateWithLifecycle()
+  val isLoadingHistory by viewModel.isLoadingHistory.collectAsStateWithLifecycle()
+  val historyError by viewModel.historyError.collectAsStateWithLifecycle()
+
+  val selectedRevisionSha by viewModel.selectedRevisionSha.collectAsStateWithLifecycle()
+  val currentRevisionGist by viewModel.currentRevisionGist.collectAsStateWithLifecycle()
+  val parentRevisionGist by viewModel.parentRevisionGist.collectAsStateWithLifecycle()
+  val isLoadingRevisionContent by viewModel.isLoadingRevisionContent.collectAsStateWithLifecycle()
+  val revisionContentError by viewModel.revisionContentError.collectAsStateWithLifecycle()
+
   var activeTab by remember { mutableStateOf("files") }
-  var historyList by remember {
-    mutableStateOf<List<com.example.data.remote.model.GistHistoryResponse>?>(null)
-  }
-  var isLoadingHistory by remember { mutableStateOf(false) }
-  var historyError by remember { mutableStateOf<String?>(null) }
-
-  var selectedRevisionSha by remember { mutableStateOf<String?>(null) }
   var diffViewMode by remember { mutableStateOf("unified") } // "unified" or "split"
-
-  var isLoadingRevisionContent by remember { mutableStateOf(false) }
-  var revisionContentError by remember { mutableStateOf<String?>(null) }
-  var currentRevisionGist by remember {
-    mutableStateOf<com.example.data.remote.model.GistResponse?>(null)
-  }
-  var parentRevisionGist by remember {
-    mutableStateOf<com.example.data.remote.model.GistResponse?>(null)
-  }
 
   LaunchedEffect(item.gist.id) {
     if (item.gist.isLocalOnly) {
-      historyError = "Revisions are not available for local-only Gists."
-      return@LaunchedEffect
+      viewModel.clearPreviewRevisionState()
+    } else {
+      viewModel.loadGistHistory(item.gist.id)
     }
-    isLoadingHistory = true
-    historyError = null
-    viewModel
-      .getRemoteGistDetails(item.gist.id)
-      .onSuccess { details ->
-        historyList = details.history
-        if (details.history.isNullOrEmpty()) {
-          historyError = "No revision history found for this Gist."
-        }
-      }
-      .onFailure { err -> historyError = "Failed to load revisions: ${err.message}" }
-    isLoadingHistory = false
   }
 
-  LaunchedEffect(selectedRevisionSha) {
-    val sha = selectedRevisionSha
-    if (sha == null) {
-      currentRevisionGist = null
-      parentRevisionGist = null
-      return@LaunchedEffect
-    }
-
-    isLoadingRevisionContent = true
-    revisionContentError = null
-    currentRevisionGist = null
-    parentRevisionGist = null
-
-    viewModel
-      .getRemoteGistRevision(item.gist.id, sha)
-      .onSuccess { curGist ->
-        currentRevisionGist = curGist
-        val currentIdx = historyList?.indexOfFirst { it.version == sha } ?: -1
-        val parentRev =
-          if (currentIdx != -1 && currentIdx + 1 < (historyList?.size ?: 0)) {
-            historyList?.get(currentIdx + 1)
-          } else {
-            null
-          }
-
-        if (parentRev != null && parentRev.version != null) {
-          viewModel
-            .getRemoteGistRevision(item.gist.id, parentRev.version)
-            .onSuccess { parGist -> parentRevisionGist = parGist }
-            .onFailure { parentRevisionGist = null }
-        } else {
-          parentRevisionGist = null
-        }
-      }
-      .onFailure { err -> revisionContentError = "Failed to load revision files: ${err.message}" }
-    isLoadingRevisionContent = false
-  }
+  DisposableEffect(item.gist.id) { onDispose { viewModel.clearPreviewRevisionState() } }
 
   val filesToCompare =
     remember(currentRevisionGist, parentRevisionGist) {
@@ -206,7 +155,7 @@ fun GistPreviewDialog(
                     .clickable {
                       activeTab = tabName.lowercase()
                       if (tabName.lowercase() == "revisions") {
-                        selectedRevisionSha = null
+                        viewModel.selectRevision(item.gist.id, null)
                       }
                     }
                     .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -406,7 +355,7 @@ fun GistPreviewDialog(
                   RevisionHistoryListView(
                     historyList = hist,
                     defaultOwnerLogin = item.gist.ownerLogin,
-                    onSelectRevision = { selectedRevisionSha = it }
+                    onSelectRevision = { viewModel.selectRevision(item.gist.id, it) }
                   )
                 }
               }
@@ -421,7 +370,7 @@ fun GistPreviewDialog(
                 isLoadingRevisionContent = isLoadingRevisionContent,
                 revisionContentError = revisionContentError,
                 filesToCompare = filesToCompare,
-                onBack = { selectedRevisionSha = null }
+                onBack = { viewModel.selectRevision(item.gist.id, null) }
               )
             }
           }

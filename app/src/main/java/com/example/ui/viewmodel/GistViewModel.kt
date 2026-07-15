@@ -430,15 +430,108 @@ class GistViewModel(
     }
   }
 
-  suspend fun getRemoteGistDetails(id: String): Result<com.example.data.remote.model.GistResponse> {
-    return repository.fetchRemoteGist(id)
+  // Gist Revision/History States for Preview Dialog
+  private val _historyList =
+    MutableStateFlow<List<com.example.data.remote.model.GistHistoryResponse>?>(null)
+  val historyList: StateFlow<List<com.example.data.remote.model.GistHistoryResponse>?> =
+    _historyList.asStateFlow()
+
+  private val _isLoadingHistory = MutableStateFlow(false)
+  val isLoadingHistory: StateFlow<Boolean> = _isLoadingHistory.asStateFlow()
+
+  private val _historyError = MutableStateFlow<String?>(null)
+  val historyError: StateFlow<String?> = _historyError.asStateFlow()
+
+  private val _selectedRevisionSha = MutableStateFlow<String?>(null)
+  val selectedRevisionSha: StateFlow<String?> = _selectedRevisionSha.asStateFlow()
+
+  private val _currentRevisionGist =
+    MutableStateFlow<com.example.data.remote.model.GistResponse?>(null)
+  val currentRevisionGist: StateFlow<com.example.data.remote.model.GistResponse?> =
+    _currentRevisionGist.asStateFlow()
+
+  private val _parentRevisionGist =
+    MutableStateFlow<com.example.data.remote.model.GistResponse?>(null)
+  val parentRevisionGist: StateFlow<com.example.data.remote.model.GistResponse?> =
+    _parentRevisionGist.asStateFlow()
+
+  private val _isLoadingRevisionContent = MutableStateFlow(false)
+  val isLoadingRevisionContent: StateFlow<Boolean> = _isLoadingRevisionContent.asStateFlow()
+
+  private val _revisionContentError = MutableStateFlow<String?>(null)
+  val revisionContentError: StateFlow<String?> = _revisionContentError.asStateFlow()
+
+  fun loadGistHistory(gistId: String) {
+    _historyError.value = null
+    _isLoadingHistory.value = true
+    _historyList.value = null
+    viewModelScope.launch {
+      repository
+        .fetchRemoteGist(gistId)
+        .onSuccess { details ->
+          _historyList.value = details.history ?: emptyList()
+          if (details.history.isNullOrEmpty()) {
+            _historyError.value = "No revision history found for this Gist."
+          }
+        }
+        .onFailure { err -> _historyError.value = "Failed to load revisions: ${err.message}" }
+      _isLoadingHistory.value = false
+    }
   }
 
-  suspend fun getRemoteGistRevision(
-    id: String,
-    sha: String
-  ): Result<com.example.data.remote.model.GistResponse> {
-    return repository.fetchRemoteGistRevision(id, sha)
+  fun selectRevision(gistId: String, sha: String?) {
+    _selectedRevisionSha.value = sha
+    if (sha == null) {
+      _currentRevisionGist.value = null
+      _parentRevisionGist.value = null
+      _revisionContentError.value = null
+      return
+    }
+
+    _isLoadingRevisionContent.value = true
+    _revisionContentError.value = null
+    _currentRevisionGist.value = null
+    _parentRevisionGist.value = null
+
+    viewModelScope.launch {
+      repository
+        .fetchRemoteGistRevision(gistId, sha)
+        .onSuccess { curGist ->
+          _currentRevisionGist.value = curGist
+          val history = _historyList.value
+          val currentIdx = history?.indexOfFirst { it.version == sha } ?: -1
+          val parentRev =
+            if (currentIdx != -1 && currentIdx + 1 < (history?.size ?: 0)) {
+              history?.get(currentIdx + 1)
+            } else {
+              null
+            }
+
+          if (parentRev?.version != null) {
+            repository
+              .fetchRemoteGistRevision(gistId, parentRev.version)
+              .onSuccess { parGist -> _parentRevisionGist.value = parGist }
+              .onFailure { _parentRevisionGist.value = null }
+          } else {
+            _parentRevisionGist.value = null
+          }
+        }
+        .onFailure { err ->
+          _revisionContentError.value = "Failed to load revision files: ${err.message}"
+        }
+      _isLoadingRevisionContent.value = false
+    }
+  }
+
+  fun clearPreviewRevisionState() {
+    _historyList.value = null
+    _isLoadingHistory.value = false
+    _historyError.value = null
+    _selectedRevisionSha.value = null
+    _currentRevisionGist.value = null
+    _parentRevisionGist.value = null
+    _isLoadingRevisionContent.value = false
+    _revisionContentError.value = null
   }
 
   fun exportBackup(
@@ -482,7 +575,10 @@ class GistViewModel(
             )
           }
 
-        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+        val sdf =
+          SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+          }
         val exportedAt = sdf.format(Date())
 
         val payload =

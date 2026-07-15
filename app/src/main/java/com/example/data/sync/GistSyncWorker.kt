@@ -2,6 +2,7 @@ package com.example.data.sync
 
 import android.content.Context
 import android.util.Log
+import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -11,19 +12,20 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.example.DoGistHubApp
 import java.util.concurrent.TimeUnit
 
 /**
  * A WorkManager CoroutineWorker that synchronizes unsaved/unsynced local Gists to GitHub using the
  * [com.example.data.repository.GistRepository]. It requires a valid network connection.
  */
-class GistSyncWorker(context: Context, workerParams: WorkerParameters) :
-  CoroutineWorker(context, workerParams) {
+class GistSyncWorker(
+  context: Context,
+  workerParams: WorkerParameters,
+  private val repository: com.example.data.repository.GistRepository
+) : CoroutineWorker(context, workerParams) {
 
   override suspend fun doWork(): Result {
     Log.d(TAG, "Starting background Gist synchronization...")
-    val repository = DoGistHubApp.instance.repository
 
     return try {
       val syncResult = repository.syncWithGitHub()
@@ -62,7 +64,10 @@ class GistSyncWorker(context: Context, workerParams: WorkerParameters) :
           Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
 
         val syncRequest =
-          OneTimeWorkRequestBuilder<GistSyncWorker>().setConstraints(constraints).build()
+          OneTimeWorkRequestBuilder<GistSyncWorker>()
+            .setConstraints(constraints)
+            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 10, TimeUnit.SECONDS)
+            .build()
 
         WorkManager.getInstance(context)
           .enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.REPLACE, syncRequest)
@@ -84,6 +89,7 @@ class GistSyncWorker(context: Context, workerParams: WorkerParameters) :
         val periodicRequest =
           PeriodicWorkRequestBuilder<GistSyncWorker>(15, TimeUnit.MINUTES)
             .setConstraints(constraints)
+            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 10, TimeUnit.SECONDS)
             .build()
 
         WorkManager.getInstance(context)

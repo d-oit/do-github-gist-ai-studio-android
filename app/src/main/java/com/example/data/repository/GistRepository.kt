@@ -13,23 +13,20 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
-@Singleton
-class GistRepository
-@Inject
-constructor(
+class GistRepository(
   val gistDao: GistDao,
   private val apiService: GitHubApiService,
   private val configPrefs: ConfigPrefs
 ) {
-  val allGists: Flow<List<GistWithFiles>> = gistDao.observeAllGists()
+  val allGists: Flow<List<GistWithFiles>> =
+    gistDao.observeAllGists().map { list -> list.filter { !it.gist.isDeleted } }
   val unsynchronizedGists: Flow<List<GistWithFiles>> = gistDao.observeUnsynchronizedGists()
 
   fun searchLocalGists(query: String): Flow<List<GistWithFiles>> {
-    return gistDao.searchLocalGists(query)
+    return gistDao.searchLocalGists(query).map { list -> list.filter { !it.gist.isDeleted } }
   }
 
   fun observeGist(id: String): Flow<GistWithFiles?> {
@@ -216,7 +213,10 @@ constructor(
     tags: List<String> = emptyList()
   ): String {
     val tempId = "draft_" + UUID.randomUUID().toString()
-    val now = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(Date())
+    val now =
+      SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+        .apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }
+        .format(Date())
 
     val gistEntity =
       GistEntity(
@@ -264,7 +264,10 @@ constructor(
     tags: List<String> = emptyList()
   ) {
     val previous = gistDao.getGistById(id) ?: return
-    val now = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(Date())
+    val now =
+      SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+        .apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }
+        .format(Date())
 
     val gistEntity =
       previous.gist.copy(
@@ -393,37 +396,66 @@ constructor(
             failCount++
           }
         } else if (item.gist.isLocalOnly) {
-          // Create new gist on GitHub
-          val fileRequests =
-            item.files.associate { file ->
-              file.filename to GistFileRequest(content = file.content)
+          // Check if there is an existing remote/synced Gist that matches this description and
+          // files
+          val syncedGists = gistDao.getSyncedGists()
+          val matchingGist =
+            syncedGists.find { synced ->
+              val descMatches =
+                (synced.gist.description ?: "").trim() == (item.gist.description ?: "").trim()
+              val filesMatch =
+                if (synced.files.size == item.files.size) {
+                  val syncedFilesMap = synced.files.associate { it.filename to it.content }
+                  item.files.all { localFile ->
+                    syncedFilesMap[localFile.filename] == localFile.content
+                  }
+                } else false
+              descMatches && filesMatch
             }
-          val request =
-            GistRequest(
-              description = item.gist.description,
-              isPublic = item.gist.isPublic,
-              files = fileRequests
+
+          if (matchingGist != null) {
+            // Graceful deduplication merge: merge pinning & starring status
+            val updatedSyncedGist =
+              matchingGist.gist.copy(
+                isPinned = item.gist.isPinned || matchingGist.gist.isPinned,
+                isStarred = item.gist.isStarred || matchingGist.gist.isStarred
+              )
+            gistDao.deleteGistById(item.gist.id)
+            gistDao.insertGist(updatedSyncedGist)
+            successCount++
+          } else {
+            // Create new gist on GitHub
+            val fileRequests =
+              item.files.associate { file ->
+                file.filename to GistFileRequest(content = file.content)
+              }
+            val request =
+              GistRequest(
+                description = item.gist.description,
+                isPublic = item.gist.isPublic,
+                files = fileRequests
+              )
+            val response = apiService.createGist(request)
+
+            // If also starred locally, push that star
+            if (item.gist.isStarred) {
+              try {
+                apiService.starGist(response.id!!)
+              } catch (e: Exception) {}
+            }
+
+            // Delete temporary local draft, save the synchronized response
+            gistDao.deleteGistById(item.gist.id)
+            saveResponseToDb(
+              response = response,
+              isPinned = item.gist.isPinned,
+              isLocalOnly = false,
+              isDirty = false,
+              isStarred = item.gist.isStarred,
+              isStarredDirty = false
             )
-          val response = apiService.createGist(request)
-
-          // If also starred locally, push that star
-          if (item.gist.isStarred) {
-            try {
-              apiService.starGist(response.id!!)
-            } catch (e: Exception) {}
+            successCount++
           }
-
-          // Delete temporary local draft, save the synchronized response
-          gistDao.deleteGistById(item.gist.id)
-          saveResponseToDb(
-            response = response,
-            isPinned = item.gist.isPinned,
-            isLocalOnly = false,
-            isDirty = false,
-            isStarred = item.gist.isStarred,
-            isStarredDirty = false
-          )
-          successCount++
         } else {
           // It already exists on GitHub, check if there are edits (isDirty) or star modifications
           // (isStarredDirty)

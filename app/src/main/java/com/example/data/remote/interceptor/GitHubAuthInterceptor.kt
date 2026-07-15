@@ -1,8 +1,6 @@
 package com.example.data.remote.interceptor
 
 import com.example.data.local.pref.ConfigPrefs
-import javax.inject.Inject
-import javax.inject.Singleton
 import okhttp3.Interceptor
 import okhttp3.Response
 
@@ -10,9 +8,7 @@ import okhttp3.Response
  * An OkHttp Interceptor that dynamically adds the required GitHub API headers and the Bearer token
  * authorization header if configured.
  */
-@Singleton
-class GitHubAuthInterceptor @Inject constructor(private val configPrefs: ConfigPrefs) :
-  Interceptor {
+class GitHubAuthInterceptor(private val configPrefs: ConfigPrefs) : Interceptor {
 
   override fun intercept(chain: Interceptor.Chain): Response {
     val originalRequest = chain.request()

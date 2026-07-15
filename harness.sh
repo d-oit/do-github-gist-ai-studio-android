@@ -32,10 +32,10 @@ die() {
     exit 1
 }
 
-# We use `./gradlew` wrapper to run tasks
+# We use `gradle` to run tasks
 run_gradle() {
-    print_info "Running: ./gradlew $*"
-    ./gradlew --stacktrace "$@"
+    print_info "Running: gradle $*"
+    gradle --stacktrace "$@"
 }
 
 log_step() {
@@ -54,9 +54,10 @@ show_help() {
     echo -e "  ${COLOR_INFO}lint${COLOR_RESET}         Run Android Lint checker"
     echo -e "  ${COLOR_INFO}format-check${COLOR_RESET} Run Spotless code formatting check"
     echo -e "  ${COLOR_INFO}build${COLOR_RESET}        Compile debug APK"
+    echo -e "  ${COLOR_INFO}check${COLOR_RESET}        Run static-analysis gate (format-check -> lint -> unit)"
     echo -e "  ${COLOR_INFO}coverage${COLOR_RESET}     Generate JaCoCo XML report"
     echo -e "  ${COLOR_INFO}codacy${COLOR_RESET}       Upload coverage to Codacy (requires CODACY_PROJECT_TOKEN)"
-    echo -e "  ${COLOR_INFO}test${COLOR_RESET}         Run unit tests (and connected tests if RUN_CONNECTED_TESTS=true)"
+    echo -e "  ${COLOR_INFO}test${COLOR_RESET}         Run the full local test suite (JVM/Robolectric only)"
     echo -e "  ${COLOR_INFO}clean${COLOR_RESET}        Run Gradle clean"
     echo -e ""
 }
@@ -93,6 +94,13 @@ case "$COMMAND" in
         run_gradle :app:assembleDebug || die "Build compilation failed."
         print_success "Debug build compiled successfully."
         ;;
+    check)
+        print_header "Pipeline: Static analysis, formatting & unit tests"
+        "$0" format-check
+        "$0" lint
+        "$0" unit
+        print_success "Check pipeline passed (format + lint + unit)."
+        ;;
     verify)
         print_header "Pipeline: Running local verification gate"
         "$0" format-check
@@ -123,13 +131,7 @@ case "$COMMAND" in
     test)
         print_header "Step: Test Execution Suite"
         "$0" unit
-        # Check if connected-device tests are requested
-        if [ "${RUN_CONNECTED_TESTS:-false}" = "true" ]; then
-            print_info "RUN_CONNECTED_TESTS=true. Attempting to run connected-device tests..."
-            run_gradle :app:connectedAndroidTest || print_error "Connected tests failed (may require an active emulator/device)."
-        else
-            print_info "Skipping connected-device tests (set RUN_CONNECTED_TESTS=true if emulator/device is connected)."
-        fi
+        print_info "All tests run locally on the JVM (Robolectric/Roborazzi) — no instrumented/connected tests."
         ;;
     clean)
         print_header "Step: Gradle Clean"

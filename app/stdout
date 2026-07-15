@@ -10,7 +10,7 @@
 /app/applet/gradle/wrapper/gradle-wrapper.properties:3: Warning: A newer version of Gradle than 9.3.1 is available: 9.6.1 [AndroidGradlePluginVersion]
 distributionUrl=https\://services.gradle.org/distributions/gradle-9.3.1-bin.zip
                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/app/applet/gradle/libs.versions.toml:2: Warning: A newer version of com.android.application than 9.1.1 is available: 9.2.1 [AndroidGradlePluginVersion]
+/app/applet/gradle/libs.versions.toml:2: Warning: A newer version of com.android.application than 9.1.1 is available: 9.3.0 [AndroidGradlePluginVersion]
 agp = "9.1.1"
       ~~~~~~~
 
@@ -92,7 +92,7 @@ securityCrypto = "1.1.0-alpha06"
    However, you may simply not be aware that a more recent version is
    available, and that is what this lint check helps find.
 
-/app/applet/gradle/libs.versions.toml:11: Warning: A newer version of org.jetbrains.kotlin.plugin.compose than 2.2.10 is available: 2.4.0 [NewerVersionAvailable]
+/app/applet/gradle/libs.versions.toml:11: Warning: A newer version of org.jetbrains.kotlin.plugin.compose than 2.2.10 is available: 2.4.10 [NewerVersionAvailable]
 kotlin = "2.2.10"
          ~~~~~~~~
 /app/applet/gradle/libs.versions.toml:18: Warning: A newer version of org.jetbrains.kotlinx:kotlinx-coroutines-test than 1.10.2 is available: 1.11.0 [NewerVersionAvailable]
@@ -227,40 +227,40 @@ detekt = "1.23.6"
    errors where images are either placed in the wrong folder, or icons are
    changed to new sizes but some folders are forgotten.
 
-/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:70: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:66: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
       sp.edit().putString(key, value).apply()
       ~~~~~~~~~
-/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:72: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:68: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
       prefs.edit().putString(key, value).apply()
       ~~~~~~~~~~~~
-/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:88: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:84: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
       sp.edit().putInt(key, value).apply()
       ~~~~~~~~~
-/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:90: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:86: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
       prefs.edit().putInt(key, value).apply()
       ~~~~~~~~~~~~
-/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:108: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:104: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
       prefs.edit().remove("github_token").apply()
       ~~~~~~~~~~~~
-/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:135: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:131: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
       prefs.edit().remove("owner_login").apply()
       ~~~~~~~~~~~~
-/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:153: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:149: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
       prefs.edit().remove("owner_avatar_url").apply()
       ~~~~~~~~~~~~
-/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:171: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:167: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
       prefs.edit().remove("owner_id").apply()
       ~~~~~~~~~~~~
-/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:186: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:182: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
     prefs.edit().putString("app_theme", theme).apply()
     ~~~~~~~~~~~~
-/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:192: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:188: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
       securePrefs?.edit()?.clear()?.apply()
       ~~~~~~~~~~~~~~~~~~~
-/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:204: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:200: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
     prefs.edit().putString(key, json).apply()
     ~~~~~~~~~~~~
-/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:221: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:217: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
     prefs.edit().remove(key).apply()
     ~~~~~~~~~~~~
 

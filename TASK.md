@@ -10,7 +10,7 @@ An offline-first GitHub Gist client utilizing **Jetpack Compose**, a local **Roo
 - **Files expected to change**: `harness.sh`
 - **Implementation checklist**:
   - [x] Create POSIX-compatible Bash script (`#!/usr/bin/env bash`, `set -euo pipefail`).
-  - [x] Implement subcommands: `help`, `verify`, `unit`, `lint`, `format-check`, `build`, `test`, `clean`.
+  - [x] Implement subcommands: `help`, `verify`, `check`, `unit`, `lint`, `format-check`, `build`, `coverage`, `codacy`, `test`, `clean`.
   - [x] Verify that `./gradlew` is used exclusively and its execution permission is resolved automatically.
   - [x] Handle step headings, error logging, and exit codes.
 - **Verification command(s)**:
@@ -122,17 +122,14 @@ and upload SARIF to GitHub Security.
 - [x] Real token is never present in `.env.example`.
 **Done when:** Entries exist in both files.
 
-### 3.7 README Codacy documentation
-**Goal:** Document onboarding, local usage, and badge.
+### 3.7 README Documentation Update
+**Goal:** Document onboarding, local usage, repository structure, and remove obsolete references.
 **Files:** `README.md`
 **Checklist:**
-- [x] Add a Codacy grade badge using the official badge URL pattern:
-      `https://app.codacy.com/project/badge/Grade/<PROJECT_UUID>`
-      Use a placeholder UUID with a TODO comment until the real one is available.
-- [x] Add "Code Quality" section with onboarding steps (see section 9 below).
-- [x] Document `./harness.sh coverage` and `./harness.sh codacy`.
-- [x] State that `CODACY_PROJECT_TOKEN` must never be committed.
-**Done when:** README section is present, accurate, and badge renders.
+- [x] Document repository structure and developer setup instructions using the unified `.env`.
+- [x] Document how to execute local static analysis, auto-formatting, and unit tests using `harness.sh`.
+- [x] Remove all obsolete Codacy mentions, coverage upload workflows, and grade badges.
+**Done when:** README is clean, accurate, has no Codacy badges, and reflects the current repository structure.
 
 ---
 
@@ -154,9 +151,9 @@ and upload SARIF to GitHub Security.
 ## 📂 5. Secure Credential Storage and Privacy Redaction
 
 - **Goal**: Secure personal access tokens using Android Keystore-backed encryption, and sanitize sensitive information from application logs.
-- **Files expected to change**: Secure credential storage implementations, logging classes, view models, logout routines.
+- **Files expected to change**: `ConfigPrefs` (secure credential storage), logging classes, view models, logout routines.
 - **Implementation checklist**:
-  - [x] Implement `CredentialStore` utilizing MasterKey-based `EncryptedSharedPreferences` with safe fallback.
+  - [x] Implement secure credential storage in `ConfigPrefs` utilizing MasterKey-based `EncryptedSharedPreferences` with safe fallback (one-time migration of any pre-existing plaintext values).
   - [x] Ensure Personal Access Token is redacted in `toString()`, logs, UI error displays, and exceptions.
   - [x] Ensure logout / configuration reset wipes all cached credentials, profile metadata, and Room tables completely.
 - **Verification command(s)**:
@@ -269,7 +266,7 @@ and upload SARIF to GitHub Security.
   - [x] Create a dedicated screen `CreateGistScreen.kt` with fields for description, public status, filename, and file content.
   - [x] Integrate Material 3 input fields and clean validations.
   - [x] Assign `testTag` identifiers to all input fields, buttons, and switches for testing.
-  - [x] Wire the submit action directly to `GistDao.upsertGistWithFiles(...)` inside a coroutine scope.
+  - [x] Route the submit action through `GistViewModel.createGist(...)` -> `GistRepository` (which persists via `GistDao.upsertGistWithFiles(...)`), preserving the sync-state flags per AGENTS.md; screens never touch the DAO directly.
   - [x] Expose local-only sync flags (`isLocalOnly = true`) on database entries.
   - [x] Integrate the creation screen seamlessly with navigation and entry points in `GistHubAppScreen.kt`.
 - **Verification command(s)**:

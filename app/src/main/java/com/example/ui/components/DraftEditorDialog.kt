@@ -24,7 +24,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -35,8 +34,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -47,7 +44,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -358,68 +354,25 @@ fun DraftEditorDialog(
 
           items(files.size) { index ->
             val file = files[index]
-
-            Card(
-              modifier = Modifier.fillMaxWidth(),
-              border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-              colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
-              Column(modifier = Modifier.padding(12.dp)) {
-                Row(
-                  modifier = Modifier.fillMaxWidth(),
-                  horizontalArrangement = Arrangement.SpaceBetween,
-                  verticalAlignment = Alignment.CenterVertically
-                ) {
-                  Text(
-                    text = "File #${index + 1}",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.primary
-                  )
-                  if (files.size > 1) {
-                    IconButton(
-                      onClick = { files = files.filterIndexed { idx, _ -> idx != index } },
-                      modifier = Modifier.testTag("remove_file_$index")
-                    ) {
-                      Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Remove File",
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(20.dp)
-                      )
-                    }
+            DraftEditorFileCard(
+              index = index,
+              filename = file.first,
+              content = file.second,
+              totalFiles = files.size,
+              onFilenameChange = { newName ->
+                files =
+                  files.mapIndexed { idx, item ->
+                    if (idx == index) newName to item.second else item
                   }
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                OutlinedTextField(
-                  value = file.first,
-                  onValueChange = { newName ->
-                    files =
-                      files.mapIndexed { idx, item ->
-                        if (idx == index) newName to item.second else item
-                      }
-                  },
-                  label = { Text("Filename (e.g. script.kt)") },
-                  modifier = Modifier.fillMaxWidth().testTag("editor_filename_$index"),
-                  singleLine = true,
-                  colors = textFieldColors,
-                  shape = RoundedCornerShape(8.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                GitHubMarkdownEditor(
-                  value = file.second,
-                  onValueChange = { newContent ->
-                    files =
-                      files.mapIndexed { idx, item ->
-                        if (idx == index) item.first to newContent else item
-                      }
-                  },
-                  placeholder = "Leave a comment or Gist file content...",
-                  testTagPrefix = "editor_content_$index"
-                )
-              }
-            }
+              },
+              onContentChange = { newContent ->
+                files =
+                  files.mapIndexed { idx, item ->
+                    if (idx == index) item.first to newContent else item
+                  }
+              },
+              onRemove = { files = files.filterIndexed { idx, _ -> idx != index } }
+            )
           }
 
           // Add File Trigger Button
@@ -580,55 +533,21 @@ fun DraftEditorDialog(
 
           // Metadata visibility configurations (Public & Pinned)
           item {
-            Row(
-              modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-              horizontalArrangement = Arrangement.SpaceBetween,
-              verticalAlignment = Alignment.CenterVertically
-            ) {
-              Column(modifier = Modifier.weight(1f)) {
-                Text(text = "Public Gist", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text(
-                  text = "Decides visibility status of your snippet.",
-                  fontSize = 11.sp,
-                  color = GraySecondary
-                )
-              }
-              Switch(
-                checked = isPublic,
-                onCheckedChange = { isPublic = it },
-                colors =
-                  SwitchDefaults.colors(
-                    checkedThumbColor = Color.White,
-                    checkedTrackColor = ActivePurple
-                  )
-              )
-            }
+            DraftEditorSwitchRow(
+              title = "Public Gist",
+              description = "Decides visibility status of your snippet.",
+              checked = isPublic,
+              onCheckedChange = { isPublic = it }
+            )
           }
 
           item {
-            Row(
-              modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-              horizontalArrangement = Arrangement.SpaceBetween,
-              verticalAlignment = Alignment.CenterVertically
-            ) {
-              Column(modifier = Modifier.weight(1f)) {
-                Text(text = "Pin to Favorites", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text(
-                  text = "Pin this gist locally on top of your vault list.",
-                  fontSize = 11.sp,
-                  color = GraySecondary
-                )
-              }
-              Switch(
-                checked = isPinned,
-                onCheckedChange = { isPinned = it },
-                colors =
-                  SwitchDefaults.colors(
-                    checkedThumbColor = Color.White,
-                    checkedTrackColor = ActivePurple
-                  )
-              )
-            }
+            DraftEditorSwitchRow(
+              title = "Pin to Favorites",
+              description = "Pin this gist locally on top of your vault list.",
+              checked = isPinned,
+              onCheckedChange = { isPinned = it }
+            )
           }
         }
 

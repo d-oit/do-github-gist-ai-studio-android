@@ -6,9 +6,6 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
 
 data class DraftFile(val filename: String, val content: String)
 
@@ -22,8 +19,7 @@ data class AutoSavedDraft(
   val timestamp: Long
 )
 
-@Singleton
-class ConfigPrefs @Inject constructor(@param:ApplicationContext private val context: Context) {
+class ConfigPrefs(private val context: Context) {
   private val prefs = context.getSharedPreferences("gist_config_prefs", Context.MODE_PRIVATE)
 
   private val masterKey by lazy {

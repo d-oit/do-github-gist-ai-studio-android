@@ -36,16 +36,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.data.local.entity.GistEntity
-import com.example.data.local.entity.GistFileEntity
 import com.example.ui.viewmodel.GistViewModel
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.UUID
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -196,47 +188,14 @@ fun CreateGistScreen(viewModel: GistViewModel, onBack: () -> Unit, onSaveSuccess
 
           if (!hasError) {
             scope.launch {
-              val tempId = "draft_" + UUID.randomUUID().toString()
-              val now = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(Date())
-
-              val gistEntity =
-                GistEntity(
-                  id = tempId,
-                  description = description.ifBlank { null },
-                  htmlUrl = "",
-                  url = "",
-                  createdAt = now,
-                  updatedAt = now,
-                  nodeId = "",
-                  isPublic = isPublic,
-                  isPinned = false,
-                  isLocalOnly = true,
-                  isDirty = false,
-                  isDeleted = false,
-                  isStarred = false,
-                  isStarredDirty = false,
-                  tags = emptyList(),
-                  ownerLogin = ownerLogin.ifBlank { "anonymous" },
-                  ownerId = 0, // default placeholder
-                  ownerAvatarUrl = ownerAvatarUrl
-                )
-
-              val fileEntity =
-                GistFileEntity(
-                  fileId = UUID.randomUUID().toString(),
-                  gistId = tempId,
-                  filename = filename,
-                  type = "text/plain",
-                  language = viewModel.detectLanguage(filename),
-                  rawUrl = "",
-                  size = content.length.toLong(),
-                  content = content
-                )
-
-              withContext(Dispatchers.IO) {
-                viewModel.gistDao.upsertGistWithFiles(gistEntity, listOf(fileEntity))
-              }
-
+              viewModel.createGist(
+                description = description,
+                filename = filename,
+                content = content,
+                isPublic = isPublic,
+                isPinned = false,
+                tags = emptyList()
+              )
               onSaveSuccess()
             }
           }
