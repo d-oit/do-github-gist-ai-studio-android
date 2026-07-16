@@ -10,6 +10,8 @@ jobs:
   validate:
     name: Validate and Build
     runs-on: ubuntu-latest
+    env:
+      ANDROID_HOME: ${{ github.workspace }}/android-sdk
     steps:
       - name: Checkout Code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -22,10 +24,7 @@ jobs:
           cache: 'gradle'
 
       - name: Set up Android SDK
-        env:
-          ANDROID_HOME: ${{ github.workspace }}/android-sdk
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
           mkdir -p "$ANDROID_HOME/cmdline-tools"
           curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdtools.zip
           unzip -q cmdtools.zip -d "$ANDROID_HOME/cmdline-tools"
