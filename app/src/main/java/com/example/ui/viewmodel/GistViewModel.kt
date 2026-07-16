@@ -7,17 +7,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.core.config.AppConfiguration
 import com.example.data.local.dao.GistDao
-import com.example.data.local.entity.GistBackupFile
-import com.example.data.local.entity.GistBackupItem
-import com.example.data.local.entity.GistBackupPayload
 import com.example.data.local.entity.GistWithFiles
 import com.example.data.local.pref.ConfigPrefs
 import com.example.data.repository.GistRepository
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -68,6 +60,8 @@ class GistViewModel(
 
   private val _errorMessage = MutableStateFlow<String?>(null)
   val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+  val syncStatus: StateFlow<com.example.data.repository.SyncStatus> = repository.syncStatus
 
   // Config form states
   private val _token = MutableStateFlow(configPrefs.getGithubToken())
@@ -258,11 +252,24 @@ class GistViewModel(
     viewModelScope.launch {
       _isRefreshing.value = true
       clearMessages()
+      repository.updateSyncStatus(com.example.data.repository.SyncStatus.Syncing)
       val result = repository.fetchFromRemote()
       result
-        .onSuccess { _statusMessage.value = "Gists updated successfully" }
+        .onSuccess {
+          repository.updateSyncStatus(
+            com.example.data.repository.SyncStatus.Success(
+              "Gists updated successfully",
+              System.currentTimeMillis()
+            )
+          )
+          _statusMessage.value = "Gists updated successfully"
+        }
         .onFailure { error ->
-          _errorMessage.value = "Refresh failed: ${error.localizedMessage ?: "Unknown error"}"
+          val classified = com.example.core.error.SyncErrorHandler.classifyError(error)
+          repository.updateSyncStatus(
+            com.example.data.repository.SyncStatus.Error(classified, System.currentTimeMillis())
+          )
+          _errorMessage.value = classified
         }
       _isRefreshing.value = false
     }
@@ -332,9 +339,7 @@ class GistViewModel(
     isPublic: Boolean,
     isPinned: Boolean,
     tags: List<String> = emptyList()
-  ) {
-    createGist(description, listOf(filename to content), isPublic, isPinned, tags)
-  }
+  ) = createGist(description, listOf(filename to content), isPublic, isPinned, tags)
 
   fun updateGist(
     id: String,
@@ -376,9 +381,7 @@ class GistViewModel(
     isPublic: Boolean,
     isPinned: Boolean,
     tags: List<String> = emptyList()
-  ) {
-    updateGist(id, description, listOf(filename to content), isPublic, isPinned, tags)
-  }
+  ) = updateGist(id, description, listOf(filename to content), isPublic, isPinned, tags)
 
   fun togglePin(id: String) {
     viewModelScope.launch { repository.togglePin(id) }
@@ -406,13 +409,50 @@ class GistViewModel(
     viewModelScope.launch {
       _isSyncing.value = true
       clearMessages()
+      repository.updateSyncStatus(com.example.data.repository.SyncStatus.Syncing)
       val result = repository.syncWithGitHub()
       result
-        .onSuccess { msg -> _statusMessage.value = msg }
+        .onSuccess { msg ->
+          repository.updateSyncStatus(
+            com.example.data.repository.SyncStatus.Success(msg, System.currentTimeMillis())
+          )
+          _statusMessage.value = msg
+        }
         .onFailure { error ->
-          _errorMessage.value = "Sync failed: ${error.localizedMessage ?: "Unknown error"}"
+          val classified = com.example.core.error.SyncErrorHandler.classifyError(error)
+          repository.updateSyncStatus(
+            com.example.data.repository.SyncStatus.Error(classified, System.currentTimeMillis())
+          )
+          _errorMessage.value = classified
         }
       _isSyncing.value = false
+    }
+  }
+
+  fun dismissSyncError() {
+    repository.clearSyncStatus()
+  }
+
+  private val _isForking = MutableStateFlow<String?>(null)
+  val isForking: StateFlow<String?> = _isForking.asStateFlow()
+
+  fun forkGist(id: String) {
+    viewModelScope.launch {
+      _isForking.value = id
+      repository.forkGist(id)
+        .onSuccess {
+          repository.updateSyncStatus(
+            com.example.data.repository.SyncStatus.Success("Successfully forked and saved locally!", System.currentTimeMillis())
+          )
+          fetchRemoteGistsDirectly()
+        }
+        .onFailure { error ->
+          val classified = com.example.core.error.SyncErrorHandler.classifyError(error)
+          repository.updateSyncStatus(
+            com.example.data.repository.SyncStatus.Error(classified, System.currentTimeMillis())
+          )
+        }
+      _isForking.value = null
     }
   }
 
@@ -540,72 +580,14 @@ class GistViewModel(
     ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
     onResult: (Boolean, String) -> Unit
   ) {
-    viewModelScope.launch(ioDispatcher) {
-      try {
-        val localGists = gists.value
-        val backupItems =
-          localGists.map { item ->
-            GistBackupItem(
-              id = item.gist.id,
-              description = item.gist.description,
-              htmlUrl = item.gist.htmlUrl,
-              url = item.gist.url,
-              createdAt = item.gist.createdAt,
-              updatedAt = item.gist.updatedAt,
-              isPublic = item.gist.isPublic,
-              isPinned = item.gist.isPinned,
-              isLocalOnly = item.gist.isLocalOnly,
-              isDirty = item.gist.isDirty,
-              isDeleted = item.gist.isDeleted,
-              isStarred = item.gist.isStarred,
-              isStarredDirty = item.gist.isStarredDirty,
-              ownerLogin = item.gist.ownerLogin,
-              ownerId = item.gist.ownerId,
-              ownerAvatarUrl = item.gist.ownerAvatarUrl,
-              files =
-                item.files.map { file ->
-                  GistBackupFile(
-                    filename = file.filename,
-                    content = file.content,
-                    type = file.type,
-                    language = file.language,
-                    size = file.size
-                  )
-                }
-            )
-          }
-
-        val sdf =
-          SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
-            timeZone = java.util.TimeZone.getTimeZone("UTC")
-          }
-        val exportedAt = sdf.format(Date())
-
-        val payload =
-          GistBackupPayload(backupVersion = 1, exportedAt = exportedAt, gists = backupItems)
-
-        val moshi = Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()
-        val adapter = moshi.adapter(GistBackupPayload::class.java).indent("  ")
-        val jsonString = adapter.toJson(payload)
-
-        if (uri.scheme == "file") {
-          val file = java.io.File(uri.path ?: throw Exception("Invalid file path"))
-          file.outputStream().use { outputStream ->
-            outputStream.write(jsonString.toByteArray(Charsets.UTF_8))
-          }
-        } else {
-          context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-            outputStream.write(jsonString.toByteArray(Charsets.UTF_8))
-          } ?: throw Exception("Failed to open output stream")
-        }
-
-        launch(Dispatchers.Main) { onResult(true, "Backup completed successfully") }
-      } catch (e: Exception) {
-        launch(Dispatchers.Main) {
-          onResult(false, e.localizedMessage ?: e.message ?: "Failed to save backup")
-        }
-      }
-    }
+    BackupExporter.exportBackup(
+      scope = viewModelScope,
+      localGists = gists.value,
+      context = context,
+      uri = uri,
+      ioDispatcher = ioDispatcher,
+      onResult = onResult
+    )
   }
 
   fun getAutoSavedDraft(editingGistId: String?): com.example.data.local.pref.AutoSavedDraft? {

@@ -65,7 +65,7 @@ fun HomeScreen(
   onPreview: (GistWithFiles) -> Unit
 ) {
   val filtered =
-    remember(gists, searchQuery) {
+    remember(gists, searchQuery, selectedTag) {
       if (searchQuery.isBlank()) {
         gists.sortedWith(
           compareByDescending<GistWithFiles> { it.gist.isPinned }

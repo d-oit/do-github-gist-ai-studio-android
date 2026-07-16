@@ -14,6 +14,9 @@ import java.util.Date
 import java.util.Locale
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 
 class GistRepository(
@@ -21,25 +24,53 @@ class GistRepository(
   private val apiService: GitHubApiService,
   private val configPrefs: ConfigPrefs
 ) {
+  private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
+  val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
+
+  init {
+    val lastError = configPrefs.getLastSyncError()
+    val lastTime = configPrefs.getLastSyncTime()
+    if (lastError != null) {
+      _syncStatus.value = SyncStatus.Error(lastError, lastTime)
+    } else if (lastTime > 0) {
+      _syncStatus.value = SyncStatus.Success("Synced", lastTime)
+    }
+  }
+
+  fun updateSyncStatus(status: SyncStatus) {
+    _syncStatus.value = status
+    when (status) {
+      is SyncStatus.Error -> {
+        configPrefs.setLastSyncError(status.errorMessage)
+        configPrefs.setLastSyncTime(status.timestamp)
+      }
+      is SyncStatus.Success -> {
+        configPrefs.setLastSyncError(null)
+        configPrefs.setLastSyncTime(status.timestamp)
+      }
+      else -> {}
+    }
+  }
+
+  fun clearSyncStatus() {
+    _syncStatus.value = SyncStatus.Idle
+    configPrefs.setLastSyncError(null)
+  }
+
   val allGists: Flow<List<GistWithFiles>> =
     gistDao.observeAllGists().map { list -> list.filter { !it.gist.isDeleted } }
   val unsynchronizedGists: Flow<List<GistWithFiles>> = gistDao.observeUnsynchronizedGists()
 
-  fun searchLocalGists(query: String): Flow<List<GistWithFiles>> {
-    return gistDao.searchLocalGists(query).map { list -> list.filter { !it.gist.isDeleted } }
-  }
+  suspend fun getUnsynchronizedGists(): List<GistWithFiles> = gistDao.getUnsynchronizedGists()
 
-  fun observeGist(id: String): Flow<GistWithFiles?> {
-    return gistDao.observeGistById(id)
-  }
+  fun searchLocalGists(query: String): Flow<List<GistWithFiles>> =
+    gistDao.searchLocalGists(query).map { list -> list.filter { !it.gist.isDeleted } }
 
-  suspend fun getGist(id: String): GistWithFiles? {
-    return gistDao.getGistById(id)
-  }
+  fun observeGist(id: String): Flow<GistWithFiles?> = gistDao.observeGistById(id)
 
-  suspend fun updateGistTags(id: String, tags: List<String>) {
-    gistDao.updateTags(id, tags)
-  }
+  suspend fun getGist(id: String): GistWithFiles? = gistDao.getGistById(id)
+
+  suspend fun updateGistTags(id: String, tags: List<String>) = gistDao.updateTags(id, tags)
 
   suspend fun fetchUserProfile(): Result<com.example.data.remote.model.GistOwnerResponse> {
     val token = configPrefs.getGithubToken().trim()
@@ -538,42 +569,52 @@ class GistRepository(
     val tags = existing?.gist?.tags ?: emptyList()
 
     val entity =
-      GistEntity(
+      GistMapper.mapToEntity(
+        response = response,
         id = id,
-        description = response.description,
-        htmlUrl = response.htmlUrl ?: "",
-        url = response.url ?: "",
-        createdAt = response.createdAt ?: "",
-        updatedAt = response.updatedAt ?: "",
-        nodeId = response.nodeId ?: "",
-        isPublic = response.isPublic ?: true,
         isPinned = isPinned,
         isLocalOnly = isLocalOnly,
         isDirty = isDirty,
-        isDeleted = false,
         isStarred = isStarred,
         isStarredDirty = isStarredDirty,
         tags = tags,
-        ownerLogin = response.owner?.login ?: configPrefs.getOwnerLogin(),
-        ownerId = response.owner?.id ?: configPrefs.getOwnerId(),
-        ownerAvatarUrl = response.owner?.avatarUrl ?: configPrefs.getOwnerAvatarUrl()
+        ownerLogin = configPrefs.getOwnerLogin(),
+        ownerId = configPrefs.getOwnerId(),
+        ownerAvatarUrl = configPrefs.getOwnerAvatarUrl()
       )
 
-    val fileEntities =
-      response.files?.map { (name, file) ->
-        GistFileEntity(
-          fileId = UUID.randomUUID().toString(),
-          gistId = id,
-          filename = name,
-          type = file.type ?: "text/plain",
-          language = file.language ?: detectLanguage(name),
-          rawUrl = file.rawUrl ?: "",
-          size = file.size ?: 0L,
-          content = file.content ?: ""
-        )
-      } ?: emptyList()
+    val fileEntities = GistMapper.mapToFiles(response, id) { detectLanguage(it) }
 
     gistDao.upsertGistWithFiles(entity, fileEntities)
+  }
+
+  suspend fun forkGist(id: String): Result<Unit> {
+    if (configPrefs.getGithubToken().trim().isEmpty()) {
+      return Result.failure(Exception("GitHub token is not configured"))
+    }
+    return try {
+      val response = apiService.forkGist(id)
+      val newId = response.id ?: return Result.failure(Exception("Forked Gist response has no ID"))
+      
+      // Fetch details for the newly created fork to get the full contents of the files
+      val fullGist = try {
+        apiService.getGist(newId)
+      } catch (e: Exception) {
+        response
+      }
+
+      saveResponseToDb(
+        response = fullGist,
+        isPinned = false,
+        isLocalOnly = false,
+        isDirty = false,
+        isStarred = false,
+        isStarredDirty = false
+      )
+      Result.success(Unit)
+    } catch (e: Exception) {
+      Result.failure(e)
+    }
   }
 
   suspend fun clearAllLocalData() {
@@ -581,29 +622,6 @@ class GistRepository(
   }
 
   fun detectLanguage(filename: String): String {
-    val lower = filename.lowercase()
-    return when {
-      lower.endsWith(".kt") || lower.endsWith(".kts") -> "Kotlin"
-      lower.endsWith(".java") -> "Java"
-      lower.endsWith(".py") -> "Python"
-      lower.endsWith(".js") || lower.endsWith(".jsx") || lower.endsWith(".mjs") -> "JavaScript"
-      lower.endsWith(".ts") || lower.endsWith(".tsx") -> "TypeScript"
-      lower.endsWith(".json") -> "JSON"
-      lower.endsWith(".xml") -> "XML"
-      lower.endsWith(".html") -> "HTML"
-      lower.endsWith(".css") || lower.endsWith(".scss") -> "CSS"
-      lower.endsWith(".md") || lower.endsWith(".markdown") -> "Markdown"
-      lower.endsWith(".yml") || lower.endsWith(".yaml") -> "YAML"
-      lower.endsWith(".toml") -> "TOML"
-      lower.endsWith(".rs") -> "Rust"
-      lower.endsWith(".go") -> "Go"
-      lower.endsWith(".swift") -> "Swift"
-      lower.endsWith(".rb") -> "Ruby"
-      lower.endsWith(".sql") -> "SQL"
-      lower.endsWith(".sh") || lower.endsWith(".bash") || lower.endsWith(".zsh") -> "Shell"
-      lower == "makefile" -> "Makefile"
-      lower == "dockerfile" -> "Dockerfile"
-      else -> "Text"
-    }
+    return LanguageDetector.detectLanguage(filename)
   }
 }

@@ -28,23 +28,41 @@ class GistSyncWorker(
     Log.d(TAG, "Starting background Gist synchronization...")
 
     return try {
+      repository.updateSyncStatus(com.example.data.repository.SyncStatus.Syncing)
       val syncResult = repository.syncWithGitHub()
       if (syncResult.isSuccess) {
-        Log.d(TAG, "Gist synchronization succeeded: ${syncResult.getOrNull()}")
+        val successMsg = syncResult.getOrNull() ?: "Successfully synchronized"
+        Log.d(TAG, "Gist synchronization succeeded: $successMsg")
+        repository.updateSyncStatus(
+          com.example.data.repository.SyncStatus.Success(successMsg, System.currentTimeMillis())
+        )
         Result.success()
       } else {
-        val errorMsg = syncResult.exceptionOrNull()?.message ?: "Unknown error"
+        val throwable = syncResult.exceptionOrNull()
+        val errorMsg = com.example.core.error.SyncErrorHandler.classifyError(throwable)
         Log.e(TAG, "Gist synchronization failed: $errorMsg")
+        repository.updateSyncStatus(
+          com.example.data.repository.SyncStatus.Error(errorMsg, System.currentTimeMillis())
+        )
 
         // If it is due to an unconfigured token, don't keep retrying
-        if (errorMsg.contains("token", ignoreCase = true)) {
+        if (
+          errorMsg.contains("token", ignoreCase = true) ||
+            errorMsg.contains("auth", ignoreCase = true) ||
+            errorMsg.contains("credential", ignoreCase = true) ||
+            errorMsg.contains("config", ignoreCase = true)
+        ) {
           Result.failure()
         } else {
           Result.retry()
         }
       }
     } catch (e: Exception) {
+      val classified = com.example.core.error.SyncErrorHandler.classifyError(e)
       Log.e(TAG, "Gist synchronization failed with exception", e)
+      repository.updateSyncStatus(
+        com.example.data.repository.SyncStatus.Error(classified, System.currentTimeMillis())
+      )
       Result.retry()
     }
   }

@@ -182,6 +182,23 @@ class ConfigPrefs(private val context: Context) {
     prefs.edit().putString("app_theme", theme).apply()
   }
 
+  fun getLastSyncError(): String? {
+    val err = prefs.getString("last_sync_error", null)
+    return if (err.isNullOrBlank()) null else err
+  }
+
+  fun setLastSyncError(error: String?) {
+    prefs.edit().putString("last_sync_error", error).apply()
+  }
+
+  fun getLastSyncTime(): Long {
+    return prefs.getLong("last_sync_time", 0L)
+  }
+
+  fun setLastSyncTime(time: Long) {
+    prefs.edit().putLong("last_sync_time", time).apply()
+  }
+
   fun clear() {
     prefs.edit().clear().apply()
     try {

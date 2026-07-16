@@ -436,6 +436,57 @@ class GistAppE2ETest {
       tempFile.delete()
     }
 
+  @Test
+  fun test_forkGist_createsFork_andSavesLocally() =
+    runTest(testDispatcher) {
+      // Step 1: Add a public Gist to fakeApiService that belongs to someone else
+      val otherUserGist = GistResponse(
+        id = "original_gist_123",
+        description = "This is a public gist to fork",
+        htmlUrl = "https://gist.github.com/otherUser/original_gist_123",
+        url = "https://api.github.com/gists/original_gist_123",
+        createdAt = "2026-07-09T09:00:00Z",
+        updatedAt = "2026-07-09T09:00:00Z",
+        nodeId = "node_id",
+        isPublic = true,
+        owner = GistOwnerResponse(
+          login = "otherUser",
+          id = 67890,
+          avatarUrl = "https://github.com/otherUser.png"
+        ),
+        files = mapOf(
+          "code.py" to com.example.data.remote.model.GistFileResponse(
+            filename = "code.py",
+            type = "text/plain",
+            language = "Python",
+            rawUrl = "https://gist.github.com/raw/original_gist_123/code.py",
+            size = 100L,
+            content = "print('Hello Fork')"
+          )
+        )
+      )
+      fakeApiService.gistsList.add(otherUserGist)
+      configPrefs.setGithubToken("ghp_test_token_123")
+
+      // Step 2: Trigger forkGist from ViewModel
+      viewModel.forkGist("original_gist_123")
+      testDispatcher.scheduler.advanceUntilIdle()
+
+      // Step 3: Verify success state is updated in Repository
+      val currentSyncStatus = repository.syncStatus.value
+      assertTrue("SyncStatus should be Success", currentSyncStatus is com.example.data.repository.SyncStatus.Success)
+      val successMsg = (currentSyncStatus as com.example.data.repository.SyncStatus.Success).message
+      assertTrue("Message should contain success word", successMsg.contains("forked"))
+
+      // Step 4: Verify the newly created fork exists in the local room database
+      val localGists = repository.allGists.first()
+      val forkedLocal = localGists.find { it.gist.description == "This is a public gist to fork" }
+      assertNotNull("Forked Gist should be saved locally", forkedLocal)
+      assertEquals(1, forkedLocal?.files?.size)
+      assertEquals("code.py", forkedLocal?.files?.first()?.filename)
+      assertEquals("print('Hello Fork')", forkedLocal?.files?.first()?.content)
+    }
+
   // --- Fake GitHub API Service Implementation ---
   private class FakeGitHubApiService : GitHubApiService {
     var userResponse =
@@ -542,6 +593,18 @@ class GistAppE2ETest {
     override suspend fun unstarGist(id: String): Response<Unit> {
       starredGistIds.remove(id)
       return Response.success(204, Unit)
+    }
+
+    override suspend fun forkGist(id: String): GistResponse {
+      val original = getGist(id)
+      val newId = "fork_" + UUID.randomUUID().toString()
+      val forked = original.copy(
+        id = newId,
+        htmlUrl = "https://gist.github.com/testUser/$newId",
+        url = "https://api.github.com/gists/$newId"
+      )
+      gistsList.add(forked)
+      return forked
     }
   }
 }

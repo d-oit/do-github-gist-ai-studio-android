@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.automirrored.filled.CallSplit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,6 +35,8 @@ fun GitHubGistApiList(
   isFetching: Boolean,
   error: String?,
   onRefresh: () -> Unit,
+  isForking: String?,
+  onForkClick: (String) -> Unit,
   modifier: Modifier = Modifier
 ) {
   Card(
@@ -243,17 +246,58 @@ fun GitHubGistApiList(
                   horizontalArrangement = Arrangement.SpaceBetween,
                   verticalAlignment = Alignment.CenterVertically
                 ) {
-                  Box(
-                    modifier =
-                      Modifier.background(ActivePurpleContainer, RoundedCornerShape(6.dp))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                  Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                   ) {
-                    Text(
-                      text = "$totalFiles File(s)",
-                      fontSize = 10.sp,
-                      fontWeight = FontWeight.Bold,
-                      color = DarkPurpleText
-                    )
+                    Box(
+                      modifier =
+                        Modifier.background(ActivePurpleContainer, RoundedCornerShape(6.dp))
+                          .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                      Text(
+                        text = "$totalFiles File(s)",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = DarkPurpleText
+                      )
+                    }
+
+                    val gistId = gist.id
+                    if (gistId != null) {
+                      val isThisGistForking = isForking == gistId
+                      OutlinedButton(
+                        onClick = { onForkClick(gistId) },
+                        enabled = isForking == null,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                        modifier = Modifier
+                          .height(28.dp)
+                          .testTag("remote_gist_fork_button_$gistId"),
+                        shape = RoundedCornerShape(6.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                          contentColor = ActivePurple
+                        ),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, ActivePurple.copy(alpha = 0.5f))
+                      ) {
+                        if (isThisGistForking) {
+                          CircularProgressIndicator(
+                            modifier = Modifier.size(12.dp),
+                            strokeWidth = 1.5.dp,
+                            color = ActivePurple
+                          )
+                        } else {
+                          Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                              imageVector = Icons.AutoMirrored.Filled.CallSplit,
+                              contentDescription = "Fork Gist",
+                              modifier = Modifier.size(12.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Fork", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                          }
+                        }
+                      }
+                    }
                   }
 
                   gist.createdAt?.let { dateStr ->

@@ -44,4 +44,7 @@ interface GitHubApiService {
   @PUT("gists/{id}/star") suspend fun starGist(@Path("id") id: String): Response<Unit>
 
   @DELETE("gists/{id}/star") suspend fun unstarGist(@Path("id") id: String): Response<Unit>
+
+  @POST("gists/{id}/forks")
+  suspend fun forkGist(@Path("id") id: String): GistResponse
 }

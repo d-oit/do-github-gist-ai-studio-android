@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.automirrored.filled.CallSplit
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -74,6 +75,8 @@ fun GistDetailScreen(
   onDelete: () -> Unit,
   onTogglePin: () -> Unit,
   onToggleStar: () -> Unit,
+  onFork: (() -> Unit)? = null,
+  isForking: Boolean = false,
   modifier: Modifier = Modifier
 ) {
   Scaffold(
@@ -106,6 +109,24 @@ fun GistDetailScreen(
           }
 
           Row(verticalAlignment = Alignment.CenterVertically) {
+            if (onFork != null) {
+              IconButton(onClick = onFork, modifier = Modifier.testTag("detail_fork_button")) {
+                if (isForking) {
+                  androidx.compose.material3.CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    strokeWidth = 1.5.dp,
+                    color = ActivePurple
+                  )
+                } else {
+                  Icon(
+                    imageVector = Icons.AutoMirrored.Filled.CallSplit,
+                    contentDescription = "Fork Gist",
+                    tint = ActivePurple,
+                    modifier = Modifier.size(22.dp)
+                  )
+                }
+              }
+            }
             IconButton(onClick = onToggleStar, modifier = Modifier.testTag("detail_star_button")) {
               Icon(
                 imageVector =

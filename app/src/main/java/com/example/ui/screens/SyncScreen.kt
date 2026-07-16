@@ -47,7 +47,9 @@ fun SyncScreen(
   remoteGists: List<com.example.data.remote.model.GistResponse>,
   isFetchingRemote: Boolean,
   remoteError: String?,
-  onRefreshRemote: () -> Unit
+  onRefreshRemote: () -> Unit,
+  isForking: String?,
+  onForkClick: (String) -> Unit
 ) {
   val unsynced =
     remember(gists) { gists.filter { it.gist.isLocalOnly || it.gist.isDirty || it.gist.isDeleted } }
@@ -199,6 +201,8 @@ fun SyncScreen(
       isFetching = isFetchingRemote,
       error = remoteError,
       onRefresh = onRefreshRemote,
+      isForking = isForking,
+      onForkClick = onForkClick,
       modifier = Modifier.padding(bottom = 24.dp)
     )
   }

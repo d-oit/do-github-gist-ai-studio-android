@@ -46,6 +46,7 @@ fun CreateGistScreen(viewModel: GistViewModel, onBack: () -> Unit, onSaveSuccess
   var filename by remember { mutableStateOf("gistfile1.md") }
   var content by remember { mutableStateOf("") }
   var isPublic by remember { mutableStateOf(true) }
+  var tagsInput by remember { mutableStateOf("") }
 
   var filenameError by remember { mutableStateOf<String?>(null) }
   var contentError by remember { mutableStateOf<String?>(null) }
@@ -124,6 +125,16 @@ fun CreateGistScreen(viewModel: GistViewModel, onBack: () -> Unit, onSaveSuccess
         maxLines = 3
       )
 
+      // Tags field
+      OutlinedTextField(
+        value = tagsInput,
+        onValueChange = { tagsInput = it },
+        label = { Text("Tags (comma-separated, e.g. kotlin, architecture)") },
+        placeholder = { Text("Enter tags to categorize...") },
+        modifier = Modifier.fillMaxWidth().testTag("create_gist_tags_input"),
+        singleLine = true
+      )
+
       // Public status switch
       Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
@@ -187,6 +198,7 @@ fun CreateGistScreen(viewModel: GistViewModel, onBack: () -> Unit, onSaveSuccess
           }
 
           if (!hasError) {
+            val parsedTags = tagsInput.split(",").map { it.trim() }.filter { it.isNotEmpty() }
             scope.launch {
               viewModel.createGist(
                 description = description,
@@ -194,7 +206,7 @@ fun CreateGistScreen(viewModel: GistViewModel, onBack: () -> Unit, onSaveSuccess
                 content = content,
                 isPublic = isPublic,
                 isPinned = false,
-                tags = emptyList()
+                tags = parsedTags
               )
               onSaveSuccess()
             }

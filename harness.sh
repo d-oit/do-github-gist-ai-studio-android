@@ -76,7 +76,7 @@ case "$COMMAND" in
         ;;
     format-check)
         print_header "Step: Format Check"
-        run_gradle spotlessCheck || die "Format check failed. Run './gradlew spotlessApply' to fix."
+        run_gradle spotlessCheck || die "Format check failed. Run 'gradle spotlessApply' to fix."
         print_success "Format check passed."
         ;;
     lint)

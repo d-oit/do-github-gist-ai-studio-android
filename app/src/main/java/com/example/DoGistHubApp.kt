@@ -24,6 +24,9 @@ class DoGistHubApp : Application() {
   lateinit var appConfiguration: AppConfiguration
     private set
 
+  lateinit var networkConnectivityMonitor: com.example.core.network.NetworkConnectivityMonitor
+    private set
+
   override fun onCreate() {
     if (com.example.BuildConfig.DEBUG) {
       android.os.StrictMode.setThreadPolicy(
@@ -95,5 +98,11 @@ class DoGistHubApp : Application() {
     } catch (e: Exception) {
       // Ignore background scheduling exceptions in test environments
     }
+
+    // Initialize network connectivity monitor to hook internet restored states and periodically
+    // verify connectivity
+    networkConnectivityMonitor =
+      com.example.core.network.NetworkConnectivityMonitor(this, repository)
+    networkConnectivityMonitor.startMonitoring(applicationScope)
   }
 }

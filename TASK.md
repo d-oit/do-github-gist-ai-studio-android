@@ -273,3 +273,56 @@ and upload SARIF to GitHub Security.
   - `./harness.sh verify`
 - **Definition of done**: Selecting the "New Draft" floating action button opens the new screen, validates inputs, and persists a local-only draft directly in the SQLite cache using Room.
 
+---
+
+## 📂 13. Global Sync Error Handling and UI Notifications
+
+- **Goal**: Propagate background synchronization failures (network issues, API errors, authorization expirations) to the UI and display as user-friendly notifications (Snackbars) rather than failing silently.
+- **Files expected to change**: `GistSyncWorker.kt`, `GistRepository.kt`, `SyncStatus.kt`, `SyncErrorHandler.kt`, `ConfigPrefs.kt`, `GistViewModel.kt`, `GistHubAppScreen.kt`
+- **Implementation checklist**:
+  - [x] Create `SyncErrorHandler.kt` to classify various `Throwable` and `HttpException` types into user-friendly strings, utilizing `PrivacySanitizer` to redact sensitive tokens.
+  - [x] Create `SyncStatus.kt` (sealed interface) to model the sync state (Idle, Syncing, Success, Error).
+  - [x] Update `ConfigPrefs.kt` to persist `lastSyncError` and `lastSyncTime` to maintain state across app restarts.
+  - [x] Update `GistRepository.kt` to expose a `StateFlow<SyncStatus>` and initialize it from `ConfigPrefs` on startup.
+  - [x] Update `GistSyncWorker.kt` to update `repository.syncStatus` and run classification logic on error.
+  - [x] Update `GistViewModel` to expose `syncStatus` and handle dismissal of sync errors.
+  - [x] Update `GistHubAppScreen.kt` to observe `syncStatus` and trigger Snackbars.
+- **Verification command(s)**:
+  - `./harness.sh verify`
+- **Definition of done**: Sync states are fully tracked, classified on failure, and reactively trigger polished Material 3 Snackbar alerts on the main UI.
+
+---
+
+## 📂 14. Network Connection Monitoring & Auto Re-Sync Hook
+
+- **Goal**: Implement a background service/hook that periodically checks for internet connectivity and automatically triggers a re-sync of pending local changes to GitHub when restored.
+- **Files expected to change**: `NetworkConnectivityMonitor.kt`, `DoGistHubApp.kt`, `GistRepository.kt`
+- **Implementation checklist**:
+  - [x] Create `NetworkConnectivityMonitor.kt` to monitor internet connections using `ConnectivityManager.NetworkCallback` and run periodic background checks.
+  - [x] Add `getUnsynchronizedGists()` to `GistRepository.kt` to check for unsaved local changes.
+  - [x] Instantiate and start `NetworkConnectivityMonitor` in `DoGistHubApp.kt` on startup.
+  - [x] Verify offline-to-online transitions trigger immediate background synchronization of local-only and dirty gists.
+- **Verification command(s)**:
+  - `./harness.sh test`
+- **Definition of done**: Foreground or background changes in internet connectivity are reactively captured, and any pending offline mutations are pushed to GitHub seamlessly.
+
+---
+
+## 📂 15. Gist Forking System
+
+- **Goal**: Implement a fully integrated fork action to duplicate any public Gist from GitHub to the authenticated user's account and save it locally for offline editing.
+- **Files expected to change**: `GitHubApiService.kt`, `GistRepository.kt`, `GistViewModel.kt`, `GitHubGistApiList.kt`, `GistDetailScreen.kt`, `GistHubAppScreen.kt`
+- **Implementation checklist**:
+  - [x] Add `POST gists/{id}/forks` to `GitHubApiService.kt`.
+  - [x] Implement `forkGist` in `GistRepository.kt` to fork the Gist, retrieve its full details and files, and upsert them locally via `saveResponseToDb`.
+  - [x] Create `forkGist` and `isForking` tracking in `GistViewModel.kt`, wrapping success/failure under the centralized `SyncStatus` system.
+  - [x] Add a responsive "Fork" outlined button on the explorer list (`GitHubGistApiList.kt`) with specific loading spinners.
+  - [x] Add a "Fork Gist" action button in the `GistDetailScreen.kt` top bar next to star/pin actions.
+  - [x] Connect screen callbacks in `GistHubAppScreen.kt`.
+- **Verification command(s)**:
+  - `./harness.sh check`
+  - `./harness.sh test`
+- **Definition of done**: Public Gists can be successfully duplicated to the user's account and saved in the local Room DB with full offline editing capabilities, triggered by high-contrast M3 buttons in both the list and detail views.
+
+
+

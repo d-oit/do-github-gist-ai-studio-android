@@ -254,13 +254,19 @@ detekt = "1.23.6"
 /app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:182: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
     prefs.edit().putString("app_theme", theme).apply()
     ~~~~~~~~~~~~
-/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:188: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:191: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+    prefs.edit().putString("last_sync_error", error).apply()
+    ~~~~~~~~~~~~
+/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:199: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+    prefs.edit().putLong("last_sync_time", time).apply()
+    ~~~~~~~~~~~~
+/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:205: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
       securePrefs?.edit()?.clear()?.apply()
       ~~~~~~~~~~~~~~~~~~~
-/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:200: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:217: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
     prefs.edit().putString(key, json).apply()
     ~~~~~~~~~~~~
-/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:217: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
+/app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:234: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
     prefs.edit().remove(key).apply()
     ~~~~~~~~~~~~
 
@@ -320,4 +326,4 @@ detekt = "1.23.6"
    </lint>
    ```
 
-0 errors, 63 warnings
+0 errors, 65 warnings

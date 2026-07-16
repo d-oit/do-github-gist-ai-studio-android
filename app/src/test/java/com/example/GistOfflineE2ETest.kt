@@ -543,5 +543,18 @@ class GistOfflineE2ETest {
       starredGistIds.remove(id)
       return Response.success(204, Unit)
     }
+
+    override suspend fun forkGist(id: String): GistResponse {
+      checkOffline()
+      val original = getGist(id)
+      val newId = "fork_" + UUID.randomUUID().toString()
+      val forked = original.copy(
+        id = newId,
+        htmlUrl = "https://gist.github.com/testUser/$newId",
+        url = "https://api.github.com/gists/$newId"
+      )
+      gistsList.add(forked)
+      return forked
+    }
   }
 }

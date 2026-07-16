@@ -71,6 +71,7 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
   val isSyncing by viewModel.isSyncing.collectAsState()
   val statusMessage by viewModel.statusMessage.collectAsState()
   val errorMessage by viewModel.errorMessage.collectAsState()
+  val syncStatus by viewModel.syncStatus.collectAsState()
 
   val selectedTag by viewModel.selectedTag.collectAsState()
   val allTags by viewModel.allTags.collectAsState()
@@ -78,6 +79,7 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
   val remoteGists by viewModel.remoteGists.collectAsState()
   val isFetchingRemote by viewModel.isFetchingRemote.collectAsState()
   val remoteError by viewModel.remoteError.collectAsState()
+  val isForking by viewModel.isForking.collectAsState()
 
   var activeTab by remember { mutableStateOf("home") }
   val searchQuery by viewModel.searchQuery.collectAsState()
@@ -120,6 +122,20 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
         snackbarHostState.showSnackbar(it)
         viewModel.clearMessages()
       }
+    }
+  }
+
+  LaunchedEffect(syncStatus) {
+    when (val status = syncStatus) {
+      is com.example.data.repository.SyncStatus.Error -> {
+        scope.launch { snackbarHostState.showSnackbar("Sync Error: ${status.errorMessage}") }
+        viewModel.dismissSyncError()
+      }
+      is com.example.data.repository.SyncStatus.Success -> {
+        scope.launch { snackbarHostState.showSnackbar(status.message) }
+        viewModel.dismissSyncError()
+      }
+      else -> {}
     }
   }
 
@@ -342,7 +358,11 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
           gistIdToDelete = currentItem.gist.id
         },
         onTogglePin = { viewModel.togglePin(selectedDetailGist.gist.id) },
-        onToggleStar = { viewModel.toggleStar(selectedDetailGist.gist.id) }
+        onToggleStar = { viewModel.toggleStar(selectedDetailGist.gist.id) },
+        onFork = if (selectedDetailGist.gist.isPublic) {
+          { viewModel.forkGist(selectedDetailGist.gist.id) }
+        } else null,
+        isForking = isForking == selectedDetailGist.gist.id
       )
     } else {
       Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
@@ -402,7 +422,9 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
               remoteGists = remoteGists,
               isFetchingRemote = isFetchingRemote,
               remoteError = remoteError,
-              onRefreshRemote = { viewModel.fetchRemoteGistsDirectly() }
+              onRefreshRemote = { viewModel.fetchRemoteGistsDirectly() },
+              isForking = isForking,
+              onForkClick = { viewModel.forkGist(it) }
             )
           }
           "config" -> {
