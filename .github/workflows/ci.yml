@@ -24,6 +24,9 @@ jobs:
       - name: Make Harness Executable
         run: chmod +x harness.sh
 
+      - name: Validate Gradle Wrapper Integrity
+        run: ./harness.sh wrapper-check
+
       - name: Run Quality Gate Pipeline
         run: ./harness.sh verify
 

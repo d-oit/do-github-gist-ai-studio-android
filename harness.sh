@@ -59,6 +59,7 @@ show_help() {
     echo -e "  ${COLOR_INFO}codacy${COLOR_RESET}       Upload coverage to Codacy (requires CODACY_PROJECT_TOKEN)"
     echo -e "  ${COLOR_INFO}test${COLOR_RESET}         Run the full local test suite (JVM/Robolectric only)"
     echo -e "  ${COLOR_INFO}clean${COLOR_RESET}        Run Gradle clean"
+echo -e "  ${COLOR_INFO}wrapper-check${COLOR_RESET} Validate gradle-wrapper.jar integrity (zip + min size)"
     echo -e ""
 }
 
@@ -96,13 +97,15 @@ case "$COMMAND" in
         ;;
     check)
         print_header "Pipeline: Static analysis, formatting & unit tests"
+        "$0" wrapper-check
         "$0" format-check
         "$0" lint
         "$0" unit
-        print_success "Check pipeline passed (format + lint + unit)."
+        print_success "Check pipeline passed (wrapper + format + lint + unit)."
         ;;
     verify)
         print_header "Pipeline: Running local verification gate"
+        "$0" wrapper-check
         "$0" format-check
         "$0" lint
         "$0" unit
@@ -137,6 +140,19 @@ case "$COMMAND" in
         print_header "Step: Gradle Clean"
         run_gradle clean || die "Gradle clean failed."
         print_success "Gradle clean completed."
+        ;;
+    wrapper-check)
+        print_header "Step: Gradle Wrapper Integrity Check"
+        WRAPPER_JAR="gradle/wrapper/gradle-wrapper.jar"
+        [ -f "$WRAPPER_JAR" ] || die "Wrapper jar missing at $WRAPPER_JAR."
+        if ! (unzip -t "$WRAPPER_JAR" >/dev/null 2>&1); then
+            die "Wrapper jar at $WRAPPER_JAR is corrupt or not a valid zip. Regenerate with: rm -f $WRAPPER_JAR && gradle wrapper --gradle-version \$(grep -oP 'gradle-\K[0-9.]+' gradle/wrapper/gradle-wrapper.properties) --no-daemon"
+        fi
+        ACTUAL_BYTES=$(wc -c < "$WRAPPER_JAR")
+        if [ "$ACTUAL_BYTES" -lt 40000 ]; then
+            die "Wrapper jar at $WRAPPER_JAR is suspiciously small (${ACTUAL_BYTES} bytes). It is likely truncated/corrupt."
+        fi
+        print_success "Wrapper jar integrity OK (${ACTUAL_BYTES} bytes)."
         ;;
     *)
         print_error "Unknown command: '$COMMAND'"
