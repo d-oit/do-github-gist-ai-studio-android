@@ -548,11 +548,12 @@ class GistOfflineE2ETest {
       checkOffline()
       val original = getGist(id)
       val newId = "fork_" + UUID.randomUUID().toString()
-      val forked = original.copy(
-        id = newId,
-        htmlUrl = "https://gist.github.com/testUser/$newId",
-        url = "https://api.github.com/gists/$newId"
-      )
+      val forked =
+        original.copy(
+          id = newId,
+          htmlUrl = "https://gist.github.com/testUser/$newId",
+          url = "https://api.github.com/gists/$newId"
+        )
       gistsList.add(forked)
       return forked
     }

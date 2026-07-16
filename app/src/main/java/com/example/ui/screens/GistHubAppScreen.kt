@@ -359,9 +359,10 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
         },
         onTogglePin = { viewModel.togglePin(selectedDetailGist.gist.id) },
         onToggleStar = { viewModel.toggleStar(selectedDetailGist.gist.id) },
-        onFork = if (selectedDetailGist.gist.isPublic) {
-          { viewModel.forkGist(selectedDetailGist.gist.id) }
-        } else null,
+        onFork =
+          if (selectedDetailGist.gist.isPublic) {
+            { viewModel.forkGist(selectedDetailGist.gist.id) }
+          } else null,
         isForking = isForking == selectedDetailGist.gist.id
       )
     } else {

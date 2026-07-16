@@ -187,6 +187,7 @@ class DeleteConfirmationDialogTest {
 
     override suspend fun unstarGist(id: String) = throw Exception()
 
-    override suspend fun forkGist(id: String): com.example.data.remote.model.GistResponse = throw Exception()
+    override suspend fun forkGist(id: String): com.example.data.remote.model.GistResponse =
+      throw Exception()
   }
 }

@@ -45,6 +45,5 @@ interface GitHubApiService {
 
   @DELETE("gists/{id}/star") suspend fun unstarGist(@Path("id") id: String): Response<Unit>
 
-  @POST("gists/{id}/forks")
-  suspend fun forkGist(@Path("id") id: String): GistResponse
+  @POST("gists/{id}/forks") suspend fun forkGist(@Path("id") id: String): GistResponse
 }

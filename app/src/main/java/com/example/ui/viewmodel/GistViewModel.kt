@@ -439,10 +439,14 @@ class GistViewModel(
   fun forkGist(id: String) {
     viewModelScope.launch {
       _isForking.value = id
-      repository.forkGist(id)
+      repository
+        .forkGist(id)
         .onSuccess {
           repository.updateSyncStatus(
-            com.example.data.repository.SyncStatus.Success("Successfully forked and saved locally!", System.currentTimeMillis())
+            com.example.data.repository.SyncStatus.Success(
+              "Successfully forked and saved locally!",
+              System.currentTimeMillis()
+            )
           )
           fetchRemoteGistsDirectly()
         }
