@@ -25,6 +25,7 @@ jobs:
         env:
           ANDROID_HOME: ${{ github.workspace }}/android-sdk
         run: |
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
           mkdir -p "$ANDROID_HOME/cmdline-tools"
           curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdtools.zip
           unzip -q cmdtools.zip -d "$ANDROID_HOME/cmdline-tools"
@@ -32,7 +33,7 @@ jobs:
           export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
           yes | sdkmanager --licenses >/dev/null
           sdkmanager "platforms;android-36" "build-tools;36.0.0"
-          echo "android.sdk.dir=$ANDROID_HOME" > local.properties
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
 
       - name: Make Harness Executable
         run: chmod +x harness.sh
