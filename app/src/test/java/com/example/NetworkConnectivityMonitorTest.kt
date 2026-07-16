@@ -55,7 +55,8 @@ class NetworkConnectivityMonitorTest {
 
     override suspend fun unstarGist(id: String) = retrofit2.Response.success(Unit)
 
-    override suspend fun forkGist(id: String): com.example.data.remote.model.GistResponse = throw Exception()
+    override suspend fun forkGist(id: String): com.example.data.remote.model.GistResponse =
+      throw Exception()
   }
 
   @Before

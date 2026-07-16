@@ -595,13 +595,14 @@ class GistRepository(
     return try {
       val response = apiService.forkGist(id)
       val newId = response.id ?: return Result.failure(Exception("Forked Gist response has no ID"))
-      
+
       // Fetch details for the newly created fork to get the full contents of the files
-      val fullGist = try {
-        apiService.getGist(newId)
-      } catch (e: Exception) {
-        response
-      }
+      val fullGist =
+        try {
+          apiService.getGist(newId)
+        } catch (e: Exception) {
+          response
+        }
 
       saveResponseToDb(
         response = fullGist,

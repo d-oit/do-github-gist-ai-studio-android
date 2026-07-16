@@ -6,11 +6,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.CallSplit
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.automirrored.filled.CallSplit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -270,14 +270,15 @@ fun GitHubGistApiList(
                         onClick = { onForkClick(gistId) },
                         enabled = isForking == null,
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                        modifier = Modifier
-                          .height(28.dp)
-                          .testTag("remote_gist_fork_button_$gistId"),
+                        modifier =
+                          Modifier.height(28.dp).testTag("remote_gist_fork_button_$gistId"),
                         shape = RoundedCornerShape(6.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                          contentColor = ActivePurple
-                        ),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, ActivePurple.copy(alpha = 0.5f))
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = ActivePurple),
+                        border =
+                          androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            ActivePurple.copy(alpha = 0.5f)
+                          )
                       ) {
                         if (isThisGistForking) {
                           CircularProgressIndicator(
