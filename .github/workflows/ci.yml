@@ -12,17 +12,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@3a47a13d04cd997173dbb814010a1f8a61d1b6db # v4.0.0
         with:
           distribution: 'zulu'
           java-version: '17'
           cache: 'gradle'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@21cf03ef7922d9cb35b2e5ef686526e033d4538e # v3.0.0
         with:
           android-version: 36
           build-tools-version: 35.0.0

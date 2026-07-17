@@ -219,6 +219,7 @@ and upload SARIF to GitHub Security.
   - [x] Run graduated pipeline checks: Format -> Lint -> Unit -> Build.
   - [x] Configure dependency caches to optimize CI duration.
   - [x] Upload static analysis and test reports on build failures.
+  - [x] Pin all GitHub Actions to full-length commit SHAs (e.g., checkout, setup-java, setup-android) to satisfy strict repository security policies.
 - **Verification command(s)**:
   - CI pipeline execution on branch push.
 - **Definition of done**: All tests, formatting rules, and lints must pass in CI environment.
