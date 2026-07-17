@@ -15,8 +15,6 @@ jobs:
   build-and-verify:
     name: Build & Verify
     runs-on: ubuntu-latest
-    env:
-      HAS_CODACY_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN != '' }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -31,7 +29,8 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@b29d499edec5ed5036f01da53556c606132714c3 # v3.2.1
         with:
-          packages: 'platform-tools platforms;android-36 build-tools;35.0.0'
+          android-version: 36
+          build-tools-version: 35.0.0
 
       - name: Make Harness Executable
         run: chmod +x harness.sh
@@ -49,4 +48,4 @@ jobs:
         uses: codacy/codacy-coverage-reporter-action@89d6c5132c817bc1260ec5e012290574704b40ee # v1.3.0
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: app/build/reports/jacoco/jacocoTestReportDebug/jacocoTestReportDebug.xml
+          coverage-reports: app/build/reports/jacoco/jacocoTestReportDebug/jacocoTestReportDebug.xml.xml
