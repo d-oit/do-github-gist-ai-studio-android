@@ -62,6 +62,9 @@ import com.example.ui.components.DraftEditorDialog
 import com.example.ui.components.GistPreviewDialog
 import com.example.ui.components.TabButton
 import com.example.ui.viewmodel.GistViewModel
+import com.example.ui.viewmodel.clearAutoSavedDraft
+import com.example.ui.viewmodel.getAutoSavedDraft
+import com.example.ui.viewmodel.saveAutoSavedDraft
 import kotlinx.coroutines.launch
 
 @Composable

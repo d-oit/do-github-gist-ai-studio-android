@@ -12,6 +12,7 @@ import com.example.data.remote.model.GistRequest
 import com.example.data.remote.model.GistResponse
 import com.example.data.repository.GistRepository
 import com.example.ui.viewmodel.GistViewModel
+import com.example.ui.viewmodel.exportBackup
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

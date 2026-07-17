@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.ui.viewmodel.GistViewModel
 import com.example.ui.viewmodel.TokenVerificationState
+import com.example.ui.viewmodel.exportBackup
 
 @Composable
 fun ConfigScreen(viewModel: GistViewModel) {

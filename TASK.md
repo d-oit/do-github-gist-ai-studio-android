@@ -324,5 +324,22 @@ and upload SARIF to GitHub Security.
   - `./harness.sh test`
 - **Definition of done**: Public Gists can be successfully duplicated to the user's account and saved in the local Room DB with full offline editing capabilities, triggered by high-contrast M3 buttons in both the list and detail views.
 
+---
+
+## 📂 16. Gist Sync Visual Indicators
+
+- **Goal**: Add visual indicators (icons/labels) to the Gist list items that represent their current sync status: 'Synced', 'Local Only', or 'Pending'.
+- **Files expected to change**: `GistCard.kt`
+- **Implementation checklist**:
+  - [x] Create three distinct Material 3 badge designs for the different synchronization states ('Synced', 'Local Only', 'Pending').
+  - [x] Use `Icons.Default.CloudOff` for local-only drafts, `Icons.Default.Sync` for pending changes, and `Icons.Default.Check` for fully synced items.
+  - [x] Pair each icon with its matching descriptive label and semantic eye-safe color scheme (green for Synced, red for Local Only, orange for Pending).
+  - [x] Assign unique test tags (`sync_status_local_only`, `sync_status_pending`, `sync_status_synced`) to all state badges.
+- **Verification command(s)**:
+  - `./harness.sh check`
+  - `./harness.sh test`
+- **Definition of done**: Each local Gist item displays an appropriate, beautifully formatted badge with custom icons, color contrast, and tags reflecting its exact synchronization state.
+
+
 
 

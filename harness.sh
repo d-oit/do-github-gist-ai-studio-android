@@ -54,7 +54,8 @@ show_help() {
     echo -e "  ${COLOR_INFO}lint${COLOR_RESET}         Run Android Lint checker"
     echo -e "  ${COLOR_INFO}format-check${COLOR_RESET} Run Spotless code formatting check"
     echo -e "  ${COLOR_INFO}build${COLOR_RESET}        Compile debug APK"
-    echo -e "  ${COLOR_INFO}check${COLOR_RESET}        Run static-analysis gate (format-check -> lint -> unit)"
+    echo -e "  ${COLOR_INFO}check${COLOR_RESET}        Run static-analysis gate (format-check -> detekt -> lint -> unit)"
+    echo -e "  ${COLOR_INFO}detekt${COLOR_RESET}       Run Detekt static analysis"
     echo -e "  ${COLOR_INFO}coverage${COLOR_RESET}     Generate JaCoCo XML report"
     echo -e "  ${COLOR_INFO}codacy${COLOR_RESET}       Upload coverage to Codacy (requires CODACY_PROJECT_TOKEN)"
     echo -e "  ${COLOR_INFO}test${COLOR_RESET}         Run the full local test suite (JVM/Robolectric only)"
@@ -80,6 +81,11 @@ case "$COMMAND" in
         run_gradle spotlessCheck || die "Format check failed. Run 'gradle spotlessApply' to fix."
         print_success "Format check passed."
         ;;
+    detekt)
+        print_header "Step: Detekt Static Analysis"
+        run_gradle detekt || die "Detekt analysis failed."
+        print_success "Detekt static analysis passed."
+        ;;
     lint)
         print_header "Step: Android Lint"
         run_gradle :app:lintDebug || die "Lint check failed."
@@ -99,14 +105,16 @@ case "$COMMAND" in
         print_header "Pipeline: Static analysis, formatting & unit tests"
         "$0" wrapper-check
         "$0" format-check
+        "$0" detekt
         "$0" lint
         "$0" unit
-        print_success "Check pipeline passed (wrapper + format + lint + unit)."
+        print_success "Check pipeline passed (wrapper + format + detekt + lint + unit)."
         ;;
     verify)
         print_header "Pipeline: Running local verification gate"
         "$0" wrapper-check
         "$0" format-check
+        "$0" detekt
         "$0" lint
         "$0" unit
         "$0" build
@@ -146,11 +154,12 @@ case "$COMMAND" in
         WRAPPER_JAR="gradle/wrapper/gradle-wrapper.jar"
         [ -f "$WRAPPER_JAR" ] || die "Wrapper jar missing at $WRAPPER_JAR."
         if ! (unzip -t "$WRAPPER_JAR" >/dev/null 2>&1); then
-            die "Wrapper jar at $WRAPPER_JAR is corrupt or not a valid zip. Regenerate with: rm -f $WRAPPER_JAR && gradle wrapper --gradle-version \$(grep -oP 'gradle-\K[0-9.]+' gradle/wrapper/gradle-wrapper.properties) --no-daemon"
+            die "Wrapper jar at $WRAPPER_JAR is corrupt or not a valid zip. Regenerate with: rm -f $WRAPPER_JAR && gradle wrapper --gradle-version \$(grep -oP 'gradle-\K[0-9.]+' gradle/wrapper/gradle-wrapper.properties)-bin.zip --no-daemon"
         fi
+        MIN_BYTES=35000
         ACTUAL_BYTES=$(wc -c < "$WRAPPER_JAR")
-        if [ "$ACTUAL_BYTES" -lt 40000 ]; then
-            die "Wrapper jar at $WRAPPER_JAR is suspiciously small (${ACTUAL_BYTES} bytes). It is likely truncated/corrupt."
+        if [ "$ACTUAL_BYTES" -lt "$MIN_BYTES" ]; then
+            die "Wrapper jar at $WRAPPER_JAR is suspiciously small (${ACTUAL_BYTES} bytes < ${MIN_BYTES}). It is likely truncated/corrupt."
         fi
         print_success "Wrapper jar integrity OK (${ACTUAL_BYTES} bytes)."
         ;;

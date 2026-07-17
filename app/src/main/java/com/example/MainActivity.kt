@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import com.example.ui.screens.GistHubAppScreen
 import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.viewmodel.GistViewModel
+import com.example.ui.viewmodel.GistViewModelFactory
 
 class MainActivity : ComponentActivity() {
 
@@ -19,7 +20,7 @@ class MainActivity : ComponentActivity() {
 
     val app = applicationContext as DoGistHubApp
     val viewModelFactory =
-      GistViewModel.Factory(app.repository, app.configPrefs, app.appConfiguration)
+      GistViewModelFactory(app.repository, app.configPrefs, app.appConfiguration)
 
     setContent {
       val viewModel: GistViewModel by viewModels { viewModelFactory }

@@ -1,16 +1,13 @@
 package com.example.ui.viewmodel
 
-import android.content.Context
-import android.net.Uri
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.core.config.AppConfiguration
 import com.example.data.local.dao.GistDao
 import com.example.data.local.entity.GistWithFiles
 import com.example.data.local.pref.ConfigPrefs
 import com.example.data.repository.GistRepository
-import kotlinx.coroutines.Dispatchers
+import com.example.data.repository.syncWithGitHub
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -23,9 +20,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class GistViewModel(
-  private val repository: GistRepository,
-  private val configPrefs: ConfigPrefs,
-  private val appConfiguration: AppConfiguration
+  val repository: GistRepository,
+  val configPrefs: ConfigPrefs,
+  val appConfiguration: AppConfiguration
 ) : ViewModel() {
 
   val gistDao: GistDao
@@ -576,69 +573,5 @@ class GistViewModel(
     _parentRevisionGist.value = null
     _isLoadingRevisionContent.value = false
     _revisionContentError.value = null
-  }
-
-  fun exportBackup(
-    context: Context,
-    uri: Uri,
-    ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
-    onResult: (Boolean, String) -> Unit
-  ) {
-    BackupExporter.exportBackup(
-      scope = viewModelScope,
-      localGists = gists.value,
-      context = context,
-      uri = uri,
-      ioDispatcher = ioDispatcher,
-      onResult = onResult
-    )
-  }
-
-  fun getAutoSavedDraft(editingGistId: String?): com.example.data.local.pref.AutoSavedDraft? {
-    return configPrefs.getAutoSavedDraft(editingGistId)
-  }
-
-  fun saveAutoSavedDraft(
-    editingGistId: String?,
-    description: String,
-    files: List<Pair<String, String>>,
-    isPublic: Boolean,
-    isPinned: Boolean,
-    tags: List<String>
-  ) {
-    val draftFiles = files.map { com.example.data.local.pref.DraftFile(it.first, it.second) }
-    val draft =
-      com.example.data.local.pref.AutoSavedDraft(
-        editingGistId = editingGistId,
-        description = description,
-        files = draftFiles,
-        isPublic = isPublic,
-        isPinned = isPinned,
-        tags = tags,
-        timestamp = System.currentTimeMillis()
-      )
-    configPrefs.saveAutoSavedDraft(draft)
-  }
-
-  fun clearAutoSavedDraft(editingGistId: String?) {
-    configPrefs.clearAutoSavedDraft(editingGistId)
-  }
-
-  fun detectLanguage(filename: String): String {
-    return repository.detectLanguage(filename)
-  }
-
-  class Factory(
-    private val repository: GistRepository,
-    private val configPrefs: ConfigPrefs,
-    private val appConfiguration: AppConfiguration
-  ) : ViewModelProvider.Factory {
-    @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-      if (modelClass.isAssignableFrom(GistViewModel::class.java)) {
-        return GistViewModel(repository, configPrefs, appConfiguration) as T
-      }
-      throw IllegalArgumentException("Unknown ViewModel class")
-    }
   }
 }
