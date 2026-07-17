@@ -35,6 +35,3 @@ jobs:
 
       - name: Generate JaCoCo Coverage Report
         run: ./gradlew jacocoTestReportDebug
-
-       secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: app/build/reports/jacoco/jacocoTestReportDebug/jacocoTestReportDebug.xml
