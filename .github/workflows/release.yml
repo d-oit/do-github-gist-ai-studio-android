@@ -1,14 +1,16 @@
-name: CI Pull-Request Gate
+name: Signed GitHub Release Workflow
 
 on:
   push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
 
 jobs:
-  validate:
-    name: Validate and Build
+  release:
+    name: Build & Publish Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -33,5 +35,30 @@ jobs:
       - name: Run Quality Gate Pipeline
         run: ./harness.sh verify
 
-      - name: Generate JaCoCo Coverage Report
-        run: ./gradlew jacocoTestReportDebug
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.RELEASE_STORE_FILE_BASE64 }}" | base64 --decode > app/release.keystore
+
+      - name: Build Signed Release APK
+        run: ./gradlew :app:assembleRelease --no-daemon
+        env:
+          RELEASE_STORE_FILE: release.keystore
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+
+      - name: Compute SHA-256 Checksums
+        run: |
+          cd app/build/outputs/apk/release/
+          sha256sum app-release.apk > app-release.apk.sha256
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@c08a1c97afae2af3df9a1f89bc400b1d3d0f1b6a # v2.0.1
+        with:
+          files: |
+            app/build/outputs/apk/release/app-release.apk
+            app/build/outputs/apk/release/app-release.apk.sha256
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+
