@@ -213,12 +213,12 @@ and upload SARIF to GitHub Security.
 ## 📂 9. CI Pull-Request Gate
 
 - **Goal**: Setup an automated GitHub Actions pipeline validating all pull requests before merge.
-- **Files expected to change**: `.github/workflows/ci.yml`
+- **Files expected to change**: `.github/workflows/ci.yml`, `.github/workflows/_build.yml`
 - **Implementation checklist**:
   - [x] Define triggering paths (`pull_request`, `push` to main).
   - [x] Run graduated pipeline checks: Format -> Lint -> Unit -> Build.
   - [x] Configure dependency caches to optimize CI duration.
-  - [x] Upload static analysis and test reports on build failures.
+  - [x] Extract shared build/verify pipeline into a DRY reusable workflow (`_build.yml`).
   - [x] Pin all GitHub Actions to full-length commit SHAs (e.g., checkout, setup-java, setup-android) to satisfy strict repository security policies.
 - **Verification command(s)**:
   - CI pipeline execution on branch push.
@@ -230,11 +230,13 @@ and upload SARIF to GitHub Security.
 ## 📂 10. Signed GitHub Release Workflow
 
 - **Goal**: Automate secure release builds generating signed APKs and computing checksums.
-- **Files expected to change**: `.github/workflows/release.yml`
+- **Files expected to change**: `.github/workflows/release.yml`, `.github/workflows/cleanup-caches.yml`
 - **Implementation checklist**:
   - [x] Configure trigger on tag matching `v*`.
   - [x] Map GitHub secrets to Gradle properties for secure signing.
   - [x] Build signed release APK and compute SHA-256 checksums.
+  - [x] Optimize release workflow by bypassing redundant, duplicate Quality Gate verification steps.
+  - [x] Implement a dedicated PR closed cache cleanup workflow (`cleanup-caches.yml`) to automatically purge stale caches and keep actions storage well under the 10 GB limit.
   - [x] Publish official GitHub Release attaching signed binaries and changelogs.
 - **Verification command(s)**:
   - Trigger release action manually or via tag push.
