@@ -282,16 +282,22 @@ class GistViewModel(
     viewModelScope.launch {
       _isAnalyzingGist.value = true
       _aiAnalysis.value = null
-      val geminiKey = appConfiguration.geminiApiKeyOrNull() ?: ""
-
-      val result =
-        com.example.ui.components.LocalGistAiModel.analyzeGist(
-          description = description,
-          files = files,
-          apiKey = geminiKey.ifBlank { null }
-        )
-      _aiAnalysis.value = result
-      _isAnalyzingGist.value = false
+      android.util.Log.d("GistViewModel", "Triggered analyzeGistContent. File count: ${files.size}")
+      try {
+        val geminiKey = appConfiguration.geminiApiKeyOrNull() ?: ""
+        val result =
+          com.example.ui.components.LocalGistAiModel.analyzeGist(
+            description = description,
+            files = files,
+            apiKey = geminiKey.ifBlank { null }
+          )
+        _aiAnalysis.value = result
+      } catch (e: Exception) {
+        val sanitizedError = com.example.core.security.PrivacySanitizer.redact(e.message ?: "Unknown error")
+        android.util.Log.e("GistViewModel", "Error in analyzeGistContent: $sanitizedError", e)
+      } finally {
+        _isAnalyzingGist.value = false
+      }
     }
   }
 

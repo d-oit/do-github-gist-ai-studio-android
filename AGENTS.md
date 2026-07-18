@@ -32,6 +32,11 @@ Before executing any structural modifications, feature updates, or database sche
    - All tests must run locally on the JVM via Robolectric and Roborazzi for speed and hermiticity.
    - Do not write or attempt to run any instrumented tests under `/app/src/androidTest/`.
 
+5. **MANDATORY: Always Implement and Run the Test Pyramid (E2E Focus)**:
+   - You **MUST** always design, implement, and run the complete automated Test Pyramid when introducing new features or modifying existing logic.
+   - **Peak E2E & Integration Focus**: Local JVM Robolectric E2E tests (e.g., `GistAppE2ETest.kt` and `GistOfflineE2ETest.kt`) are our highest-fidelity validation gate. Any major feature addition or system change **MUST** include corresponding high-fidelity integration or E2E tests that exercise the entire app slice (UI Views -> ViewModels -> Repository -> Room DB) using hermetic network fakes.
+   - **Never Skip Writing E2E/Integration Tests**: Uncovered business rules, synchronization states, or UI components are unacceptable. All features must be fully verified up to the E2E tier before declaration of completion.
+
 ---
 
 ## 3. Developer Verification Loop (Definition of Done)
@@ -40,7 +45,7 @@ Before declaring any change completed, you MUST execute the following verificati
 
 1. **Lint/Check**: Run `./harness.sh check` to verify static analysis, formatting, and Android Lint guidelines are fully satisfied.
 2. **Build**: Run `./harness.sh build` to ensure the application compiles cleanly.
-3. **Test**: Run `./harness.sh test` to execute the full Robolectric unit and integration test suite.
+3. **E2E / Test Pyramid Run**: Run `./harness.sh test` or `./harness.sh e2e` to execute the full local test suite (including our high-fidelity JVM E2E tests) to ensure zero regressions across the offline-first sync engine.
 4. **Screenshot Verification**: If Compose UI layouts were intentionally changed, verify or re-record Roborazzi screenshot baselines (`gradle :app:verifyRoborazziDebug` / `gradle :app:recordRoborazziDebug`).
 
 ---

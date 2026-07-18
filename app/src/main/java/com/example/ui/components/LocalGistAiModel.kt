@@ -1,8 +1,11 @@
 package com.example.ui.components
 
+import android.util.Log
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -29,6 +32,8 @@ object LocalGistAiModel {
       .writeTimeout(15, TimeUnit.SECONDS)
       .build()
 
+  private const val TAG = "LocalGistAiModel"
+
   /**
    * Analyzes the Gist. Attempts online analysis via Gemini API if apiKey is available and online.
    * Otherwise, falls back instantly to the local on-device heuristics analyzer.
@@ -37,15 +42,25 @@ object LocalGistAiModel {
     description: String,
     files: List<Pair<String, String>>,
     apiKey: String?
-  ): GistAiAnalysis {
+  ): GistAiAnalysis = withContext(Dispatchers.IO) {
+    Log.d(TAG, "Starting Gist AI analysis. Description length: ${description.length}, File count: ${files.size}, API Key configured: ${!apiKey.isNullOrBlank()}")
     if (!apiKey.isNullOrBlank()) {
       try {
-        return analyzeWithGemini(description, files, apiKey)
+        Log.d(TAG, "Attempting online generative analysis via Gemini API (gemini-3.5-flash)...")
+        val onlineResult = analyzeWithGemini(description, files, apiKey)
+        Log.d(TAG, "Gemini online analysis completed successfully.")
+        return@withContext onlineResult
       } catch (e: Exception) {
-        // Fail gracefully and fall back to local analysis
+        Log.e(TAG, "Gemini online analysis failed: ${e.message}. Falling back to offline heuristics...", e)
       }
+    } else {
+      Log.d(TAG, "No API Key configured. Skipping online analysis.")
     }
-    return analyzeOffline(description, files)
+
+    Log.d(TAG, "Running local offline code-parsing heuristic engine...")
+    val offlineResult = analyzeOffline(description, files)
+    Log.d(TAG, "Local offline heuristics completed. Score: ${offlineResult.complexityScore}/10 (${offlineResult.complexityLevel}), Maintainability: ${offlineResult.maintainabilityIndex}")
+    offlineResult
   }
 
   /**

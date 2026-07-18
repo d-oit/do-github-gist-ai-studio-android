@@ -495,6 +495,30 @@ class GistAppE2ETest {
       assertEquals("print('Hello Fork')", forkedLocal?.files?.first()?.content)
     }
 
+  @Test
+  fun test_forkGist_failsWith422_showsHelpfulError() =
+    runTest(testDispatcher) {
+      // Step 1: Force fork API to fail with 422 Unprocessable Entity
+      fakeApiService.shouldFailForkWith422 = true
+      configPrefs.setGithubToken("ghp_test_token_123")
+
+      // Step 2: Trigger forkGist
+      viewModel.forkGist("some_gist_id")
+      testDispatcher.scheduler.advanceUntilIdle()
+
+      // Step 3: Verify the sync status is updated to Error with the mapped 422 message
+      val currentSyncStatus = repository.syncStatus.value
+      assertTrue(
+        "SyncStatus should be Error",
+        currentSyncStatus is com.example.data.repository.SyncStatus.Error
+      )
+      val errorMsg = (currentSyncStatus as com.example.data.repository.SyncStatus.Error).errorMessage
+      assertTrue(
+        "Error message should clearly state they cannot fork their own gist",
+        errorMsg.contains("cannot fork your own Gist", ignoreCase = true)
+      )
+    }
+
   // --- Fake GitHub API Service Implementation ---
   private class FakeGitHubApiService : GitHubApiService {
     var userResponse =
@@ -505,6 +529,7 @@ class GistAppE2ETest {
       )
     val gistsList = mutableListOf<GistResponse>()
     var shouldFailUser = false
+    var shouldFailForkWith422 = false
 
     override suspend fun getGists(page: Int?, perPage: Int?): List<GistResponse> = gistsList
 
@@ -604,6 +629,17 @@ class GistAppE2ETest {
     }
 
     override suspend fun forkGist(id: String): GistResponse {
+      if (shouldFailForkWith422) {
+        throw retrofit2.HttpException(
+          retrofit2.Response.error<Any>(
+            422,
+            okhttp3.ResponseBody.create(
+              null,
+              "{\"message\": \"Validation Failed\", \"errors\": [{\"message\": \"You cannot fork your own gist.\"}]}"
+            )
+          )
+        )
+      }
       val original = getGist(id)
       val newId = "fork_" + UUID.randomUUID().toString()
       val forked =

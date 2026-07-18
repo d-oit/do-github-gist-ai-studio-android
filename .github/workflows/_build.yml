@@ -44,8 +44,8 @@ jobs:
         run: ./harness.sh coverage
 
       - name: Upload Coverage to Codacy
-        if: ${{ env.HAS_CODACY_TOKEN == 'true' }}
+        if: ${{ secrets.CODACY_PROJECT_TOKEN != '' }}
         uses: codacy/codacy-coverage-reporter-action@89d6c5132c817bc1260ec5e012290574704b40ee # v1.3.0
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: app/build/reports/jacoco/jacocoTestReportDebug/jacocoTestReportDebug.xml.xml
+          coverage-reports: app/build/reports/jacoco/jacocoTestReportDebug/jacocoTestReportDebug.xml

@@ -90,7 +90,6 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
 
   // Editor form states
   var showEditor by remember { mutableStateOf(false) }
-  var showCreateScreen by remember { mutableStateOf(false) }
   var editingGistId by remember { mutableStateOf<String?>(null) }
   var editorDescription by remember { mutableStateOf("") }
   var editorFiles by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
@@ -142,15 +141,6 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
     }
   }
 
-  if (showCreateScreen) {
-    CreateGistScreen(
-      viewModel = viewModel,
-      onBack = { showCreateScreen = false },
-      onSaveSuccess = { showCreateScreen = false }
-    )
-    return
-  }
-
   Scaffold(
     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
     topBar = {
@@ -179,11 +169,11 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
                     .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
               ) {
-                Icon(
-                  imageVector = Icons.Default.Code,
+                androidx.compose.foundation.Image(
+                  painter = androidx.compose.ui.res.painterResource(id = com.example.R.drawable.img_app_logo),
                   contentDescription = "Gist Logo",
-                  tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                  modifier = Modifier.size(22.dp)
+                  modifier = Modifier.size(40.dp),
+                  contentScale = androidx.compose.ui.layout.ContentScale.Crop
                 )
               }
               Spacer(modifier = Modifier.width(12.dp))
@@ -328,7 +318,15 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
     floatingActionButton = {
       if (selectedDetailGist == null && (activeTab == "home" || activeTab == "vault")) {
         androidx.compose.material3.FloatingActionButton(
-          onClick = { showCreateScreen = true },
+          onClick = {
+            editingGistId = null
+            editorDescription = ""
+            editorFiles = emptyList()
+            editorIsPublic = true
+            editorIsPinned = false
+            editorTags = emptyList()
+            showEditor = true
+          },
           containerColor = MaterialTheme.colorScheme.primary,
           contentColor = MaterialTheme.colorScheme.onPrimary,
           shape = RoundedCornerShape(16.dp),
@@ -414,7 +412,15 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
                 showEditor = true
               },
               onDelete = { gistIdToDelete = it },
-              onCreateDraftClick = { showCreateScreen = true },
+              onCreateDraftClick = {
+                editingGistId = null
+                editorDescription = ""
+                editorFiles = emptyList()
+                editorIsPublic = true
+                editorIsPinned = false
+                editorTags = emptyList()
+                showEditor = true
+              },
               onPreview = { selectedDetailGistId = it.gist.id }
             )
           }

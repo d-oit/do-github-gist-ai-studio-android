@@ -263,18 +263,18 @@ and upload SARIF to GitHub Security.
 
 ## 📂 12. Create Gist Composable Screen & Database Integration
 
-- **Goal**: Implement a fully featured dedicated Composable screen for creating new Gists and persist them locally via Room `GistDao`.
-- **Files expected to change**: `CreateGistScreen.kt`, `GistHubAppScreen.kt`, `GistRepository.kt`, `GistViewModel.kt`
+- **Goal**: Implement a fully featured unified editor/creation dialog for creating new Gists and editing drafts, with rich markdown support, and persist them locally via Room `GistDao`.
+- **Files expected to change**: `DraftEditorDialog.kt`, `GistHubAppScreen.kt`, `GistRepository.kt`, `GistViewModel.kt`
 - **Implementation checklist**:
-  - [x] Create a dedicated screen `CreateGistScreen.kt` with fields for description, public status, filename, and file content.
+  - [x] Create a dedicated dialog `DraftEditorDialog.kt` with fields for description, public status, list of files (filenames and content), and rich markdown edit/preview capabilities.
   - [x] Integrate Material 3 input fields and clean validations.
   - [x] Assign `testTag` identifiers to all input fields, buttons, and switches for testing.
   - [x] Route the submit action through `GistViewModel.createGist(...)` -> `GistRepository` (which persists via `GistDao.upsertGistWithFiles(...)`), preserving the sync-state flags per AGENTS.md; screens never touch the DAO directly.
   - [x] Expose local-only sync flags (`isLocalOnly = true`) on database entries.
-  - [x] Integrate the creation screen seamlessly with navigation and entry points in `GistHubAppScreen.kt`.
+  - [x] Integrate the creation dialog seamlessly with navigation and entry points in `GistHubAppScreen.kt` for both creation and editing.
 - **Verification command(s)**:
   - `./harness.sh verify`
-- **Definition of done**: Selecting the "New Draft" floating action button opens the new screen, validates inputs, and persists a local-only draft directly in the SQLite cache using Room.
+- **Definition of done**: Selecting the "New Draft" floating action button or "New Local Draft" button opens the unified dialog with rich markdown rendering, validates inputs, and persists a local-only draft directly in the SQLite cache using Room.
 
 ---
 
@@ -313,19 +313,21 @@ and upload SARIF to GitHub Security.
 
 ## 📂 15. Gist Forking System
 
-- **Goal**: Implement a fully integrated fork action to duplicate any public Gist from GitHub to the authenticated user's account and save it locally for offline editing.
-- **Files expected to change**: `GitHubApiService.kt`, `GistRepository.kt`, `GistViewModel.kt`, `GitHubGistApiList.kt`, `GistDetailScreen.kt`, `GistHubAppScreen.kt`
+- **Goal**: Implement a fully integrated fork action to duplicate any public Gist from GitHub to the authenticated user's account and save it locally for offline editing, with proper 422 self-forking error classification.
+- **Files expected to change**: `GitHubApiService.kt`, `GistRepository.kt`, `GistViewModel.kt`, `GitHubGistApiList.kt`, `GistDetailScreen.kt`, `GistHubAppScreen.kt`, `SyncErrorHandler.kt`, `GistAppE2ETest.kt`
 - **Implementation checklist**:
   - [x] Add `POST gists/{id}/forks` to `GitHubApiService.kt`.
   - [x] Implement `forkGist` in `GistRepository.kt` to fork the Gist, retrieve its full details and files, and upsert them locally via `saveResponseToDb`.
   - [x] Create `forkGist` and `isForking` tracking in `GistViewModel.kt`, wrapping success/failure under the centralized `SyncStatus` system.
+  - [x] Map HTTP 422 self-forking/unprocessable errors to a user-friendly guidance message in `SyncErrorHandler.kt`.
+  - [x] Add a dedicated E2E unit/integration test `test_forkGist_failsWith422_showsHelpfulError` in `GistAppE2ETest.kt` to verify error mapping.
   - [x] Add a responsive "Fork" outlined button on the explorer list (`GitHubGistApiList.kt`) with specific loading spinners.
   - [x] Add a "Fork Gist" action button in the `GistDetailScreen.kt` top bar next to star/pin actions.
   - [x] Connect screen callbacks in `GistHubAppScreen.kt`.
 - **Verification command(s)**:
   - `./harness.sh check`
   - `./harness.sh test`
-- **Definition of done**: Public Gists can be successfully duplicated to the user's account and saved in the local Room DB with full offline editing capabilities, triggered by high-contrast M3 buttons in both the list and detail views.
+- **Definition of done**: Public Gists can be successfully duplicated to the user's account and saved in the local Room DB with full offline editing capabilities, triggered by high-contrast M3 buttons in both the list and detail views, with self-forking 422 errors clearly communicated to the user.
 
 ---
 
@@ -342,6 +344,22 @@ and upload SARIF to GitHub Security.
   - `./harness.sh check`
   - `./harness.sh test`
 - **Definition of done**: Each local Gist item displays an appropriate, beautifully formatted badge with custom icons, color contrast, and tags reflecting its exact synchronization state.
+
+---
+
+## 📂 17. Clickable Gist Browser Links
+
+- **Goal**: Enable users to view Gists directly on GitHub's website by tapping on Web URL elements displayed inside the application.
+- **Files expected to change**: `DetailedGistMetadata.kt`
+- **Implementation checklist**:
+  - [x] Implement `androidx.compose.ui.platform.LocalUriHandler.current` inside `DetailedCreationInfoCard`.
+  - [x] Wrap the Web URL information row in a Material-ripple `clickable` container with an explicit minimum touch-target height of `48.dp`.
+  - [x] Assign `testTag("detail_web_url_row")` for automated target testing.
+  - [x] Gracefully catch any URI launch exception.
+- **Verification command(s)**:
+  - `./harness.sh check`
+  - `./harness.sh test`
+- **Definition of done**: Tapping on the Web URL field in the Gist details view launches the system browser and navigates directly to the Gist's GitHub webpage.
 
 
 

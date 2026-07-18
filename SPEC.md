@@ -195,7 +195,7 @@ To deliver a desktop-class experience mirroring the GitHub web interface:
 - **Optional Markdown Editor/Preview**: Both the draft editor (`DraftEditorDialog`) and preview screens (`GistPreviewDialog`) support real-time Markdown rendering with an inline-formatting parser (Write vs Preview Markdown tabs) resembling the official GitHub web UI.
 - **Full Description Visibility**: Gist descriptions are fully visible without truncation on the main Gist card and preview screen. The editor's description input field utilizes an enhanced, multi-line container with a raised minimum height (`100.dp`).
 - **Persistent User Credentials**: The persistent storage subsystem saves the user profile avatar, login handle, and secure API personal access token together. On startup, user details are automatically loaded and hydrated.
-- **Detailed Gist Creation Info**: Displays complete metadata in a dedicated card, including the owner's avatar, login handle, formatted Created At and Updated At ISO timestamps, public/secret status badge, and copyable Web URL link.
+- **Detailed Gist Creation Info**: Displays complete metadata in a dedicated card, including the owner's avatar, login handle, formatted Created At and Updated At ISO timestamps, public/secret status badge, and clickable, copyable Web URL link that launches the system browser.
 
 ---
 
@@ -258,9 +258,46 @@ To deliver absolute visual and functional clarity, the "Verify Token" button tra
 
 ---
 
-## 15. Quality, Testing, and Delivery Gate
+## 15. Quality, Testing, and Delivery Gate: The Automated Test Pyramid (E2E Focus)
 
-- **Deterministic Gates**: Pull requests must pass formatting (`spotlessCheck`), static analysis (`detekt`), unit tests (`testDebugUnitTest`), and debug assembly (`assembleDebug`).
+Do Gist Hub enforces a highly reliable, regression-proof environment by adhering to a strict **Test Pyramid** model. Because traditional emulator/ADB instrumented testing is not available in our developer workspace, our peak testing tier is implemented via **local high-fidelity JVM Robolectric E2E tests**.
+
+```
+                ┌───────────────────────────────────┐
+                │             Tier 1:               │
+                │        Local JVM E2E              │
+                │     Robolectric (Peak)            │
+                ├───────────────────────────────────┤
+                │             Tier 2:               │
+                │    Integration & Feature Tests    │
+                │      (Robolectric & Roborazzi)    │
+                ├───────────────────────────────────┤
+                │             Tier 3:               │
+                │        Unit & Logic Tests         │
+                │          (Pure JUnit)             │
+                └───────────────────────────────────┘
+```
+
+### 15.1 Testing Pyramid Tiers
+1. **Tier 1: Local JVM E2E Tests (Peak Fidelity)**
+   - **Scope**: Exercises entire end-to-end user flows spanning UI screens, navigation, ViewModels, repository synchronizers, and the real Room SQLite database.
+   - **Mechanism**: Robolectric with custom network fakes simulating real-world offline, slow connection, rate limit, and conflict synchronization states.
+   - **Key Targets**: Complete app-wide flows, such as local-only draft creation, state transition triggers on sync events, login/logout account resetting, and conflict management (`GistAppE2ETest`, `GistOfflineE2ETest`).
+   - **Requirement**: **Every new major user-facing feature must include a Tier 1 E2E test.**
+
+2. **Tier 2: Component, Feature, & Screenshot Tests**
+   - **Scope**: Exercises isolated composable views, editor validation forms, real-time suggestion engines, or token storage components.
+   - **Mechanism**: Robolectric for Android resources verification + Roborazzi NATIVE graphics mode for pixel-perfect screenshot verification.
+   - **Key Targets**: Draft validation dialogs (`DraftEditorAiSuggestionsTest`), spell checkers, custom Material 3 markdown formatting toolbars, and dynamic token verification buttons (`TokenVerificationState`).
+
+3. **Tier 3: Unit & Isolation Logic Tests**
+   - **Scope**: Verifies isolated business logic, data structures, formatting functions, network token redactors, or utility files.
+   - **Mechanism**: Pure Kotlin JVM JUnit tests with mock components where needed.
+   - **Key Targets**: Markdown regex parsers, API interceptors (`GitHubAuthInterceptorTest`), and syntax highlighters (`SyntaxHighlighterTest`).
+
+### 15.2 Mandatory Testing Policies
+- **Always Implement**: Developers/agents are strictly required to write corresponding tests across the pyramid for any added or modified feature.
+- **Deterministic Gates**: Pull requests must pass formatting (`spotlessCheck`), static analysis (`detekt`), all unit/E2E tests (`testDebugUnitTest`), and debug assembly (`assembleDebug`).
 - **Release Verification**: Signed release builds are driven entirely via secure Gradle parameters mapped from environment variables or local ignored properties.
 - **Release Assets**: CI automated releases generate and publish APKs, SHA-256 checksums, and version metadata cleanly on tag creation.
 - **Targeted Test Coverage**: Every business repository, network mapper, ViewModel state transition, and error path requires corresponding Robolectric/JVM local unit tests.

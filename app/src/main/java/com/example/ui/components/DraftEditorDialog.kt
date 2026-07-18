@@ -453,8 +453,28 @@ fun DraftEditorDialog(
               onAnalyzeClick = { onAnalyzeClick(description, files) },
               onClearAiClick = onClearAiClick,
               onAppendRecommendedTag = { tag ->
-                if (!description.contains(tag)) {
-                  description = if (description.isBlank()) tag else "$description $tag"
+                val cleanTag = tag.replace("#", "").trim()
+                if (cleanTag.isNotEmpty()) {
+                  val existingTags = tagsInput.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
+                  if (!existingTags.any { it.equals(cleanTag, ignoreCase = true) }) {
+                    existingTags.add(cleanTag)
+                    tagsInput = existingTags.joinToString(", ")
+                  }
+                }
+              },
+              onAppendAllTags = {
+                val tagsToAppend = aiAnalysis?.recommendedTags ?: emptyList()
+                val existingTags = tagsInput.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
+                var updated = false
+                tagsToAppend.forEach { tag ->
+                  val cleanTag = tag.replace("#", "").trim()
+                  if (cleanTag.isNotEmpty() && !existingTags.any { it.equals(cleanTag, ignoreCase = true) }) {
+                    existingTags.add(cleanTag)
+                    updated = true
+                  }
+                }
+                if (updated) {
+                  tagsInput = existingTags.joinToString(", ")
                 }
               },
               onApplyFixes = {
@@ -519,10 +539,19 @@ fun DraftEditorDialog(
                     fixedName to fixedContent
                   }
 
+                val existingTags = tagsInput.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
+                println("DEBUG_APPLY - existingTags: $existingTags")
+                var tagsUpdated = false
                 aiAnalysis?.recommendedTags?.forEach { tag ->
-                  if (!currentDesc.contains(tag)) {
-                    currentDesc = if (currentDesc.isBlank()) tag else "$currentDesc $tag"
+                  val cleanTag = tag.replace("#", "").trim()
+                  println("DEBUG_APPLY - checking cleanTag: $cleanTag")
+                  if (cleanTag.isNotEmpty() && !existingTags.any { it.equals(cleanTag, ignoreCase = true) }) {
+                    existingTags.add(cleanTag)
+                    tagsUpdated = true
                   }
+                }
+                if (tagsUpdated) {
+                  tagsInput = existingTags.joinToString(", ")
                 }
 
                 description = currentDesc

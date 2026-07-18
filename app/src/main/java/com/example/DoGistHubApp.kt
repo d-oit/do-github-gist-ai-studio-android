@@ -28,6 +28,15 @@ class DoGistHubApp : Application() {
     private set
 
   override fun onCreate() {
+    // Install global uncaught exception handler to safely log all crashes with privacy redaction
+    Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+      val rawMessage = throwable.localizedMessage ?: ""
+      val stackTraceStr = android.util.Log.getStackTraceString(throwable)
+      val sanitizedMsg = com.example.core.security.PrivacySanitizer.redact(rawMessage)
+      val sanitizedStack = com.example.core.security.PrivacySanitizer.redact(stackTraceStr)
+      android.util.Log.e("DoGistHubApp", "CRITICAL GLOBAL EXCEPTION on thread ${thread.name}: $sanitizedMsg\n$sanitizedStack")
+    }
+
     if (com.example.BuildConfig.DEBUG) {
       android.os.StrictMode.setThreadPolicy(
         android.os.StrictMode.ThreadPolicy.Builder()

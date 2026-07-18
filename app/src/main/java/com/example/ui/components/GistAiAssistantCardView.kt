@@ -39,6 +39,7 @@ fun GistAiAssistantCardView(
   onAnalyzeClick: () -> Unit,
   onClearAiClick: () -> Unit,
   onAppendRecommendedTag: (String) -> Unit,
+  onAppendAllTags: () -> Unit = {},
   onApplyFixes: () -> Unit
 ) {
   Column(
@@ -143,12 +144,25 @@ fun GistAiAssistantCardView(
         }
 
         // Recommended Tags
-        Text(
-          text = "🏷️ Recommended Tags (tap to append):",
-          fontSize = 12.sp,
-          fontWeight = FontWeight.Bold,
-          color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          Text(
+            text = "🏷️ Recommended Tags (tap to append):",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+          )
+          TextButton(
+            onClick = onAppendAllTags,
+            modifier = Modifier.height(28.dp).testTag("append_all_tags_btn"),
+            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+          ) {
+            Text("Append All", fontSize = 11.sp, color = ActivePurple)
+          }
+        }
         Row(
           modifier = Modifier.fillMaxWidth(),
           horizontalArrangement = Arrangement.spacedBy(6.dp)

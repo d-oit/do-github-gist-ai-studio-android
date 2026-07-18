@@ -53,6 +53,8 @@ object SyncErrorHandler {
       404 -> "Not Found: The requested Gist could not be found on GitHub. It may have been deleted."
       409 ->
         "Conflict Detected: Local edits conflict with remote modifications. Please refresh your Gists to reconcile."
+      422 ->
+        "Validation Failed (422): You cannot fork your own Gist or the request is unprocessable."
       in 500..599 ->
         "GitHub Server Error: The GitHub Gist service is temporarily experiencing issues. Please try again later."
       else -> "API Error ($code): ${PrivacySanitizer.redact(message)}"
@@ -78,6 +80,12 @@ object SyncErrorHandler {
       }
       lower.contains("404") || lower.contains("not found", ignoreCase = true) -> {
         "Not Found: One or more Gists could not be found on GitHub."
+      }
+      lower.contains("409") || lower.contains("conflict", ignoreCase = true) -> {
+        "Conflict Detected: Local edits conflict with remote modifications."
+      }
+      lower.contains("422") || lower.contains("unprocessable", ignoreCase = true) -> {
+        "Validation Failed: You cannot fork your own Gist or the request is unprocessable."
       }
       lower.contains("500") ||
         lower.contains("502") ||

@@ -50,7 +50,8 @@ show_help() {
     echo -e "  ${COLOR_INFO}help${COLOR_RESET}         Show this usage information guide"
     echo -e "  ${COLOR_INFO}verify${COLOR_RESET}       Run the complete local verification pipeline:"
     echo -e "                     (format-check -> lint -> unit -> build)"
-    echo -e "  ${COLOR_INFO}unit${COLOR_RESET}         Run local JVM and Robolectric unit tests"
+    echo -e "  ${COLOR_INFO}unit${COLOR_RESET}         Run local JVM and Robolectric unit tests (Tier 3)"
+    echo -e "  ${COLOR_INFO}e2e${COLOR_RESET}          Run ONLY local high-fidelity JVM E2E tests (Tier 1)"
     echo -e "  ${COLOR_INFO}lint${COLOR_RESET}         Run Android Lint checker"
     echo -e "  ${COLOR_INFO}format-check${COLOR_RESET} Run Spotless code formatting check"
     echo -e "  ${COLOR_INFO}build${COLOR_RESET}        Compile debug APK"
@@ -58,7 +59,7 @@ show_help() {
     echo -e "  ${COLOR_INFO}detekt${COLOR_RESET}       Run Detekt static analysis"
     echo -e "  ${COLOR_INFO}coverage${COLOR_RESET}     Generate JaCoCo XML report"
     echo -e "  ${COLOR_INFO}codacy${COLOR_RESET}       Upload coverage to Codacy (requires CODACY_PROJECT_TOKEN)"
-    echo -e "  ${COLOR_INFO}test${COLOR_RESET}         Run the full local test suite (JVM/Robolectric only)"
+    echo -e "  ${COLOR_INFO}test${COLOR_RESET}         Run the full local test pyramid (E2E, Integration, & Unit)"
     echo -e "  ${COLOR_INFO}clean${COLOR_RESET}        Run Gradle clean"
 echo -e "  ${COLOR_INFO}wrapper-check${COLOR_RESET} Validate gradle-wrapper.jar integrity (zip + min size)"
     echo -e ""
@@ -139,9 +140,17 @@ case "$COMMAND" in
         fi
         bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r "$REPORT"
         ;;
+    e2e)
+        print_header "Step: End-to-End (E2E) Test Execution (Tier 1)"
+        print_info "Running peak-tier high-fidelity local JVM E2E tests (*E2ETest)..."
+        run_gradle :app:testDebugUnitTest --tests "*E2ETest" || die "E2E tests failed."
+        print_success "All local JVM E2E tests passed successfully!"
+        ;;
     test)
-        print_header "Step: Test Execution Suite"
+        print_header "Step: Full Test Pyramid Execution"
+        print_info "Executing all levels: Tier 1 (E2E), Tier 2 (Integration), & Tier 3 (Unit)..."
         "$0" unit
+        print_success "The complete local Test Pyramid built & passed successfully."
         print_info "All tests run locally on the JVM (Robolectric/Roborazzi) — no instrumented/connected tests."
         ;;
     clean)
