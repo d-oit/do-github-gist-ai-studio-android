@@ -44,9 +44,10 @@ Before executing any structural modifications, feature updates, or database sche
 Before declaring any change completed, you MUST execute the following verification pipeline using the workflow harness:
 
 1. **Lint/Check**: Run `./harness.sh check` to verify static analysis, formatting, and Android Lint guidelines are fully satisfied.
-2. **Build**: Run `./harness.sh build` to ensure the application compiles cleanly.
-3. **E2E / Test Pyramid Run**: Run `./harness.sh test` or `./harness.sh e2e` to execute the full local test suite (including our high-fidelity JVM E2E tests) to ensure zero regressions across the offline-first sync engine.
-4. **Screenshot Verification**: If Compose UI layouts were intentionally changed, verify or re-record Roborazzi screenshot baselines (`gradle :app:verifyRoborazziDebug` / `gradle :app:recordRoborazziDebug`).
+2. **Spotless Formatting (MANDATORY)**: Run `gradle spotlessApply` to automatically resolve and format all files before committing. The CI strictly checks styling and will fail on any formatting discrepancy.
+3. **Build**: Run `./harness.sh build` to ensure the application compiles cleanly.
+4. **E2E / Test Pyramid Run**: Run `./harness.sh test` or `./harness.sh e2e` to execute the full local test suite (including our high-fidelity JVM E2E tests) to ensure zero regressions across the offline-first sync engine.
+5. **Screenshot Verification**: If Compose UI layouts were intentionally changed, verify or re-record Roborazzi screenshot baselines (`gradle :app:verifyRoborazziDebug` / `gradle :app:recordRoborazziDebug`).
 
 ---
 
@@ -72,4 +73,7 @@ Before declaring any change completed, you MUST execute the following verificati
 3. **Always Use Latest Best Practices**:
    - Always adhere to modern Android, Kotlin Coroutines, Flow, Jetpack Compose, and Room development standards.
    - If modern best-practice guidelines for a specific framework or tool (e.g., API migrations, Compose performance techniques) do not exist or are outdated, **perform a web search** to reference the official Android developer documentation and latest patterns.
+
+4. **Strict Spotless & ktlint Compliance (CRITICAL)**:
+   - All changed files **MUST** conform to Ktlint styling rules. Always run `gradle spotlessApply` to automatically format your code before pushing or completing a task. Never submit files that fail `gradle spotlessCheck` as they will break the CI pipeline.
 

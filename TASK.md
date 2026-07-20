@@ -379,6 +379,21 @@ and upload SARIF to GitHub Security.
   - `./harness.sh build`
 - **Definition of done**: The application starts up beautifully with zero asset-loading crashes, displays the correct modern vector launcher and brand logos, accurately names the "Gemini 3.5-Flash Online Model" on-screen, and automatically creates the corresponding Pull Request on GitHub.
 
+---
+
+## 📂 19. PR CI Formatting Fix and Developer Guardrails
+- **Goal**: Resolve the CI check failures on Pull Request #25 caused by Spotless ktlint formatting discrepancies and prevent future occurrences by adding strict developer guardrails in `AGENTS.md`.
+- **Files expected to change**: `AGENTS.md`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Run `./harness.sh check` to pinpoint Spotless formatting discrepancies on the code edits in `GistHubAppScreen.kt`.
+  - [x] Execute `gradle spotlessApply` to automatically format all files to align perfectly with the ktlint styling standards.
+  - [x] Re-run the local verification quality gate to ensure detekt, lint, unit/integration tests, and formatting checks pass 100%.
+  - [x] Commit and push the spotless-formatted changes to the remote branch `fix/gemini-label-and-logo-crash`.
+  - [x] Update `AGENTS.md` to establish strict formatting rules in both the "Developer Verification Loop" and "Code Quality & Best Practices" sections, ensuring all future code edits undergo spotless checks before submission.
+- **Verification command(s)**:
+  - `./harness.sh check`
+- **Definition of done**: The pull request CI workflow runs to 100% completion with a successful "green" status, and `AGENTS.md` contains strict, persistent formatting instructions for future AI developer agents.
+
 
 
 
