@@ -394,6 +394,22 @@ and upload SARIF to GitHub Security.
   - `./harness.sh check`
 - **Definition of done**: The pull request CI workflow runs to 100% completion with a successful "green" status, and `AGENTS.md` contains strict, persistent formatting instructions for future AI developer agents.
 
+---
+
+## 📂 20. Mandatory Git Push, CI Verification & Completion Guidelines
+- **Goal**: Ensure that all developer changes are committed, pushed, verified, and that the pull request CI passes completely without warnings or failures before task completion.
+- **Files expected to change**: `AGENTS.md`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Update `AGENTS.md` to define strict requirements for always committing and pushing modifications to the target PR branch.
+  - [x] Instruct future agents to verify Pull Request CI runs and completely resolve all warnings/failures.
+  - [x] Codify that a task is only complete when all CI checks pass ("green") and all comments on the PR are fully resolved.
+  - [x] Safely repair local Git index/packfile corruption and align local branch with `origin/fix/gemini-label-and-logo-crash`.
+  - [x] Confirm that the PR CI run completes successfully with the newly upgraded JDK 21 environment.
+- **Verification command(s)**:
+  - `git status`
+  - GitHub Actions API checks
+- **Definition of done**: `AGENTS.md` is updated with strict git commit, push, and CI guidelines, and the Pull Request CI runs to success ("green") with no warnings or failures.
+
 
 
 

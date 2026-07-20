@@ -48,6 +48,10 @@ Before declaring any change completed, you MUST execute the following verificati
 3. **Build**: Run `./harness.sh build` to ensure the application compiles cleanly.
 4. **E2E / Test Pyramid Run**: Run `./harness.sh test` or `./harness.sh e2e` to execute the full local test suite (including our high-fidelity JVM E2E tests) to ensure zero regressions across the offline-first sync engine.
 5. **Screenshot Verification**: If Compose UI layouts were intentionally changed, verify or re-record Roborazzi screenshot baselines (`gradle :app:verifyRoborazziDebug` / `gradle :app:recordRoborazziDebug`).
+6. **PR Git Push & CI Verification (MANDATORY)**:
+   - Always `git commit` and `git push` any code/document changes made during development to the Pull Request's branch.
+   - Verify the GitHub Pull Request's CI status. **All CI checks must pass completely** without any failures or warnings. Address all failures and warnings immediately.
+   - **Task Completion Criteria**: A task is only considered completed when all CI checks on the PR pass successfully (fully "green") and all PR review comments are fully resolved. Never declare a task completed until this has been satisfied.
 
 ---
 
