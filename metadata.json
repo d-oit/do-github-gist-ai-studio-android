@@ -1,5 +1,5 @@
 {
-  "name": "Do Gist Hub",
+  "name": "d.o.Gist Hub",
   "description": "An offline-first GitHub Gist client with local sync state tracking.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

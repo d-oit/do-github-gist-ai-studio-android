@@ -1,4 +1,4 @@
-# Do Gist Hub
+# d.o.Gist Hub
 
 An offline-first, reactive GitHub Gist client built using **Kotlin**, **Jetpack Compose**, **Room SQLite**, and a local/remote synchronization engine.
 
