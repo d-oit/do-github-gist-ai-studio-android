@@ -361,6 +361,25 @@ and upload SARIF to GitHub Security.
   - `./harness.sh test`
 - **Definition of done**: Tapping on the Web URL field in the Gist details view launches the system browser and navigates directly to the Gist's GitHub webpage.
 
+---
+
+## 📂 18. App Logo Crash Fix, Gemini Model Label Corrections & PR Creation
+
+- **Goal**: Resolve the critical startup crash due to the missing `img_app_logo.jpg` drawable asset, correct the Gemini model designation labels to accurately reflect Gemini 3.5-Flash, and automate committing, pushing, and creating the GitHub Pull Request.
+- **Files expected to change**: `GistHubAppScreen.kt`, `ic_launcher_foreground.xml`, `GistAiAssistantCardView.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Fix the `ResourceResolutionException` crash by refactoring `GistHubAppScreen.kt` to load a beautiful Material-styled programmatic gradient container with a vector code symbol (`Icons.Default.Code`) instead of referencing the missing `img_app_logo.jpg`.
+  - [x] Re-architect the launcher icon foreground `ic_launcher_foreground.xml` to use a high-contrast vector code bracket drawing instead of the missing rasterized image asset.
+  - [x] Correct the confusing online AI analysis label in `GistAiAssistantCardView.kt` from "Gemini Pro" to "Gemini 3.5-Flash Online Model" to perfectly align with the underlying REST integration code.
+  - [x] Successfully commit and push all code changes to a secure fix branch: `fix/gemini-label-and-logo-crash`.
+  - [x] Programmatically open a Pull Request (`#25`) on GitHub using the repository's access token via the GitHub REST API.
+- **Verification command(s)**:
+  - `./harness.sh check`
+  - `./harness.sh test`
+  - `./harness.sh build`
+- **Definition of done**: The application starts up beautifully with zero asset-loading crashes, displays the correct modern vector launcher and brand logos, accurately names the "Gemini 3.5-Flash Online Model" on-screen, and automatically creates the corresponding Pull Request on GitHub.
+
+
 
 
 
