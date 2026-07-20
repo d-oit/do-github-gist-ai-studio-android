@@ -228,7 +228,7 @@ fun GistAiAssistantCardView(
 
         Text(
           text =
-            if (aiAnalysis.isOnlineGenerated) "Generated using Gemini Pro Online Model"
+            if (aiAnalysis.isOnlineGenerated) "Generated using Gemini 3.5-Flash Online Model"
             else "Generated fully offline on-device",
           fontSize = 9.sp,
           color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),

@@ -361,6 +361,56 @@ and upload SARIF to GitHub Security.
   - `./harness.sh test`
 - **Definition of done**: Tapping on the Web URL field in the Gist details view launches the system browser and navigates directly to the Gist's GitHub webpage.
 
+---
+
+## 📂 18. App Logo Crash Fix, Gemini Model Label Corrections & PR Creation
+
+- **Goal**: Resolve the critical startup crash due to the missing `img_app_logo.jpg` drawable asset, correct the Gemini model designation labels to accurately reflect Gemini 3.5-Flash, and automate committing, pushing, and creating the GitHub Pull Request.
+- **Files expected to change**: `GistHubAppScreen.kt`, `ic_launcher_foreground.xml`, `GistAiAssistantCardView.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Fix the `ResourceResolutionException` crash by refactoring `GistHubAppScreen.kt` to load a beautiful Material-styled programmatic gradient container with a vector code symbol (`Icons.Default.Code`) instead of referencing the missing `img_app_logo.jpg`.
+  - [x] Re-architect the launcher icon foreground `ic_launcher_foreground.xml` to use a high-contrast vector code bracket drawing instead of the missing rasterized image asset.
+  - [x] Correct the confusing online AI analysis label in `GistAiAssistantCardView.kt` from "Gemini Pro" to "Gemini 3.5-Flash Online Model" to perfectly align with the underlying REST integration code.
+  - [x] Successfully commit and push all code changes to a secure fix branch: `fix/gemini-label-and-logo-crash`.
+  - [x] Programmatically open a Pull Request (`#25`) on GitHub using the repository's access token via the GitHub REST API.
+- **Verification command(s)**:
+  - `./harness.sh check`
+  - `./harness.sh test`
+  - `./harness.sh build`
+- **Definition of done**: The application starts up beautifully with zero asset-loading crashes, displays the correct modern vector launcher and brand logos, accurately names the "Gemini 3.5-Flash Online Model" on-screen, and automatically creates the corresponding Pull Request on GitHub.
+
+---
+
+## 📂 19. PR CI Formatting Fix and Developer Guardrails
+- **Goal**: Resolve the CI check failures on Pull Request #25 caused by Spotless ktlint formatting discrepancies and prevent future occurrences by adding strict developer guardrails in `AGENTS.md`.
+- **Files expected to change**: `AGENTS.md`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Run `./harness.sh check` to pinpoint Spotless formatting discrepancies on the code edits in `GistHubAppScreen.kt`.
+  - [x] Execute `gradle spotlessApply` to automatically format all files to align perfectly with the ktlint styling standards.
+  - [x] Re-run the local verification quality gate to ensure detekt, lint, unit/integration tests, and formatting checks pass 100%.
+  - [x] Commit and push the spotless-formatted changes to the remote branch `fix/gemini-label-and-logo-crash`.
+  - [x] Update `AGENTS.md` to establish strict formatting rules in both the "Developer Verification Loop" and "Code Quality & Best Practices" sections, ensuring all future code edits undergo spotless checks before submission.
+- **Verification command(s)**:
+  - `./harness.sh check`
+- **Definition of done**: The pull request CI workflow runs to 100% completion with a successful "green" status, and `AGENTS.md` contains strict, persistent formatting instructions for future AI developer agents.
+
+---
+
+## 📂 20. Mandatory Git Push, CI Verification & Completion Guidelines
+- **Goal**: Ensure that all developer changes are committed, pushed, verified, and that the pull request CI passes completely without warnings or failures before task completion.
+- **Files expected to change**: `AGENTS.md`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Update `AGENTS.md` to define strict requirements for always committing and pushing modifications to the target PR branch.
+  - [x] Instruct future agents to verify Pull Request CI runs and completely resolve all warnings/failures.
+  - [x] Codify that a task is only complete when all CI checks pass ("green") and all comments on the PR are fully resolved.
+  - [x] Safely repair local Git index/packfile corruption and align local branch with `origin/fix/gemini-label-and-logo-crash`.
+  - [x] Confirm that the PR CI run completes successfully with the newly upgraded JDK 21 environment.
+- **Verification command(s)**:
+  - `git status`
+  - GitHub Actions API checks
+- **Definition of done**: `AGENTS.md` is updated with strict git commit, push, and CI guidelines, and the Pull Request CI runs to success ("green") with no warnings or failures.
+
+
 
 
 
