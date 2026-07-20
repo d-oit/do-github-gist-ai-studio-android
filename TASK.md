@@ -410,6 +410,21 @@ and upload SARIF to GitHub Security.
   - GitHub Actions API checks
 - **Definition of done**: `AGENTS.md` is updated with strict git commit, push, and CI guidelines, and the Pull Request CI runs to success ("green") with no warnings or failures.
 
+---
+
+## 📂 21. Coding Workflow & Verification Improvements (Harness Engineering)
+- **Goal**: Optimize the developer inner-loop, automate local formatting, and enforce repository standards via automated Git hooks and formal custom agent skills.
+- **Files expected to change**: `harness.sh`, `AGENTS.md`, `TASK.md`, `/.agents/skills/do-gist-hub-dev-workflow/SKILL.md`
+- **Implementation checklist**:
+  - [x] Add `./harness.sh format` subcommand mapping to Spotless ktlint formatting to easily auto-fix codebase style issues.
+  - [x] Add `./harness.sh setup-hooks` subcommand to automatically configure a Git `pre-push` hook executing `./harness.sh check`, blocking broken pushes.
+  - [x] Create a dedicated custom agent skill `do-gist-hub-dev-workflow` in `/.agents/skills/do-gist-hub-dev-workflow/SKILL.md` to enforce the codebase's strict manual constructor injection, 600 LOC limits, and synchronization states on future AI coding agents.
+  - [x] Synchronize `AGENTS.md` and `TASK.md` to reference the newly introduced workflow commands.
+- **Verification command(s)**:
+  - `./harness.sh help`
+  - `./harness.sh setup-hooks`
+- **Definition of done**: Harness supports local auto-formatting and hook installation, all scripts execute cleanly, and the codebase rules are formalized under a custom agent skill.
+
 
 
 

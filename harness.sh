@@ -54,6 +54,7 @@ show_help() {
     echo -e "  ${COLOR_INFO}e2e${COLOR_RESET}          Run ONLY local high-fidelity JVM E2E tests (Tier 1)"
     echo -e "  ${COLOR_INFO}lint${COLOR_RESET}         Run Android Lint checker"
     echo -e "  ${COLOR_INFO}format-check${COLOR_RESET} Run Spotless code formatting check"
+    echo -e "  ${COLOR_INFO}format${COLOR_RESET}       Apply Spotless code formatting (spotlessApply)"
     echo -e "  ${COLOR_INFO}build${COLOR_RESET}        Compile debug APK"
     echo -e "  ${COLOR_INFO}check${COLOR_RESET}        Run static-analysis gate (format-check -> detekt -> lint -> unit)"
     echo -e "  ${COLOR_INFO}detekt${COLOR_RESET}       Run Detekt static analysis"
@@ -61,7 +62,8 @@ show_help() {
     echo -e "  ${COLOR_INFO}codacy${COLOR_RESET}       Upload coverage to Codacy (requires CODACY_PROJECT_TOKEN)"
     echo -e "  ${COLOR_INFO}test${COLOR_RESET}         Run the full local test pyramid (E2E, Integration, & Unit)"
     echo -e "  ${COLOR_INFO}clean${COLOR_RESET}        Run Gradle clean"
-echo -e "  ${COLOR_INFO}wrapper-check${COLOR_RESET} Validate gradle-wrapper.jar integrity (zip + min size)"
+    echo -e "  ${COLOR_INFO}wrapper-check${COLOR_RESET} Validate gradle-wrapper.jar integrity (zip + min size)"
+    echo -e "  ${COLOR_INFO}setup-hooks${COLOR_RESET}  Install Git pre-push hooks to automate local verification"
     echo -e ""
 }
 
@@ -79,8 +81,13 @@ case "$COMMAND" in
         ;;
     format-check)
         print_header "Step: Format Check"
-        run_gradle spotlessCheck || die "Format check failed. Run 'gradle spotlessApply' to fix."
+        run_gradle spotlessCheck || die "Format check failed. Run './harness.sh format' to fix."
         print_success "Format check passed."
+        ;;
+    format)
+        print_header "Step: Apply Code Formatting"
+        run_gradle spotlessApply || die "Applying formatting failed."
+        print_success "Code formatting applied successfully."
         ;;
     detekt)
         print_header "Step: Detekt Static Analysis"
@@ -171,6 +178,38 @@ case "$COMMAND" in
             die "Wrapper jar at $WRAPPER_JAR is suspiciously small (${ACTUAL_BYTES} bytes < ${MIN_BYTES}). It is likely truncated/corrupt."
         fi
         print_success "Wrapper jar integrity OK (${ACTUAL_BYTES} bytes)."
+        ;;
+    setup-hooks)
+        print_header "Step: Install Git Local Verification Hooks"
+        if [ ! -d ".git" ]; then
+            die "Not a git repository. Cannot install git hooks."
+        fi
+        HOOK_FILE=".git/hooks/pre-push"
+        print_info "Writing pre-push hook to $HOOK_FILE..."
+        cat << 'EOF' > "$HOOK_FILE"
+#!/usr/bin/env bash
+# Automatically installed by Do Gist Hub harness.sh setup-hooks
+set -euo pipefail
+
+echo "===================================================="
+echo "Running git pre-push local verification..."
+echo "===================================================="
+
+if ! ./harness.sh check; then
+    echo "===================================================="
+    echo "❌ Local verification failed! Push aborted."
+    echo "Please fix formatting, lints, or unit tests first."
+    echo "You can run './harness.sh format' to auto-fix formatting."
+    echo "===================================================="
+    exit 1
+fi
+
+echo "===================================================="
+echo "✅ Local verification passed. Pushing code..."
+echo "===================================================="
+EOF
+        chmod +x "$HOOK_FILE"
+        print_success "Git pre-push hook installed and made executable."
         ;;
     *)
         print_error "Unknown command: '$COMMAND'"
