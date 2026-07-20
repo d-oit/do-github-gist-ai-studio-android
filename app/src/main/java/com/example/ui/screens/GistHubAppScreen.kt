@@ -167,12 +167,14 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
                   Modifier.size(40.dp)
                     .clip(CircleShape)
                     .background(
-                      brush = androidx.compose.ui.graphics.Brush.linearGradient(
-                        colors = listOf(
-                          MaterialTheme.colorScheme.primary,
-                          MaterialTheme.colorScheme.secondary
+                      brush =
+                        androidx.compose.ui.graphics.Brush.linearGradient(
+                          colors =
+                            listOf(
+                              MaterialTheme.colorScheme.primary,
+                              MaterialTheme.colorScheme.secondary
+                            )
                         )
-                      )
                     ),
                 contentAlignment = Alignment.Center
               ) {
