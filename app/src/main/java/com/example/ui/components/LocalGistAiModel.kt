@@ -42,26 +42,37 @@ object LocalGistAiModel {
     description: String,
     files: List<Pair<String, String>>,
     apiKey: String?
-  ): GistAiAnalysis = withContext(Dispatchers.IO) {
-    Log.d(TAG, "Starting Gist AI analysis. Description length: ${description.length}, File count: ${files.size}, API Key configured: ${!apiKey.isNullOrBlank()}")
-    if (!apiKey.isNullOrBlank()) {
-      try {
-        Log.d(TAG, "Attempting online generative analysis via Gemini API (gemini-3.5-flash)...")
-        val onlineResult = analyzeWithGemini(description, files, apiKey)
-        Log.d(TAG, "Gemini online analysis completed successfully.")
-        return@withContext onlineResult
-      } catch (e: Exception) {
-        Log.e(TAG, "Gemini online analysis failed: ${e.message}. Falling back to offline heuristics...", e)
+  ): GistAiAnalysis =
+    withContext(Dispatchers.IO) {
+      Log.d(
+        TAG,
+        "Starting Gist AI analysis. Description length: ${description.length}, File count: ${files.size}, API Key configured: ${!apiKey.isNullOrBlank()}"
+      )
+      if (!apiKey.isNullOrBlank()) {
+        try {
+          Log.d(TAG, "Attempting online generative analysis via Gemini API (gemini-3.5-flash)...")
+          val onlineResult = analyzeWithGemini(description, files, apiKey)
+          Log.d(TAG, "Gemini online analysis completed successfully.")
+          return@withContext onlineResult
+        } catch (e: Exception) {
+          Log.e(
+            TAG,
+            "Gemini online analysis failed: ${e.message}. Falling back to offline heuristics...",
+            e
+          )
+        }
+      } else {
+        Log.d(TAG, "No API Key configured. Skipping online analysis.")
       }
-    } else {
-      Log.d(TAG, "No API Key configured. Skipping online analysis.")
-    }
 
-    Log.d(TAG, "Running local offline code-parsing heuristic engine...")
-    val offlineResult = analyzeOffline(description, files)
-    Log.d(TAG, "Local offline heuristics completed. Score: ${offlineResult.complexityScore}/10 (${offlineResult.complexityLevel}), Maintainability: ${offlineResult.maintainabilityIndex}")
-    offlineResult
-  }
+      Log.d(TAG, "Running local offline code-parsing heuristic engine...")
+      val offlineResult = analyzeOffline(description, files)
+      Log.d(
+        TAG,
+        "Local offline heuristics completed. Score: ${offlineResult.complexityScore}/10 (${offlineResult.complexityLevel}), Maintainability: ${offlineResult.maintainabilityIndex}"
+      )
+      offlineResult
+    }
 
   /**
    * Pure offline code-parsing heuristic engine (Simulated Local LLM Model). High-fidelity,

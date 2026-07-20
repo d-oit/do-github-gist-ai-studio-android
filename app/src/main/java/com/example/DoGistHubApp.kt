@@ -34,7 +34,10 @@ class DoGistHubApp : Application() {
       val stackTraceStr = android.util.Log.getStackTraceString(throwable)
       val sanitizedMsg = com.example.core.security.PrivacySanitizer.redact(rawMessage)
       val sanitizedStack = com.example.core.security.PrivacySanitizer.redact(stackTraceStr)
-      android.util.Log.e("DoGistHubApp", "CRITICAL GLOBAL EXCEPTION on thread ${thread.name}: $sanitizedMsg\n$sanitizedStack")
+      android.util.Log.e(
+        "DoGistHubApp",
+        "CRITICAL GLOBAL EXCEPTION on thread ${thread.name}: $sanitizedMsg\n$sanitizedStack"
+      )
     }
 
     if (com.example.BuildConfig.DEBUG) {

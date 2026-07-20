@@ -123,19 +123,19 @@ fun DetailedCreationInfoCard(item: GistWithFiles) {
         if (item.gist.htmlUrl.isNotEmpty()) {
           val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
           Row(
-            modifier = Modifier
-              .fillMaxWidth()
-              .heightIn(min = 48.dp)
-              .clip(RoundedCornerShape(8.dp))
-              .clickable {
-                try {
-                  uriHandler.openUri(item.gist.htmlUrl)
-                } catch (e: Exception) {
-                  // Handled gracefully
+            modifier =
+              Modifier.fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .clickable {
+                  try {
+                    uriHandler.openUri(item.gist.htmlUrl)
+                  } catch (e: Exception) {
+                    // Handled gracefully
+                  }
                 }
-              }
-              .testTag("detail_web_url_row")
-              .padding(vertical = 4.dp),
+                .testTag("detail_web_url_row")
+                .padding(vertical = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
           ) {

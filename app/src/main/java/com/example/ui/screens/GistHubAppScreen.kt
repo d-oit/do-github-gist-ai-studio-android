@@ -22,7 +22,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Refresh
@@ -170,7 +169,10 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
                 contentAlignment = Alignment.Center
               ) {
                 androidx.compose.foundation.Image(
-                  painter = androidx.compose.ui.res.painterResource(id = com.example.R.drawable.img_app_logo),
+                  painter =
+                    androidx.compose.ui.res.painterResource(
+                      id = com.example.R.drawable.img_app_logo
+                    ),
                   contentDescription = "Gist Logo",
                   modifier = Modifier.size(40.dp),
                   contentScale = androidx.compose.ui.layout.ContentScale.Crop

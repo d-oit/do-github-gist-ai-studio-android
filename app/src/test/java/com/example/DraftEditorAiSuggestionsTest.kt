@@ -19,19 +19,21 @@ class DraftEditorAiSuggestionsTest {
 
   @get:Rule val composeTestRule = createComposeRule()
 
-  private val mockAiAnalysis = GistAiAnalysis(
-    summary = "Provides Jetpack Compose layout snippets with typical debug statements.",
-    complexityScore = 5,
-    complexityLevel = "Medium",
-    maintainabilityIndex = "Good",
-    recommendedTags = listOf("#Kotlin", "#Compose", "#Networking"),
-    optimizationSuggestions = listOf(
-      "Remove debug print/log (found Log.d/println)",
-      "mutableStateOf should be wrapped in remember",
-      "One or more files do not have an extension"
-    ),
-    isOnlineGenerated = false
-  )
+  private val mockAiAnalysis =
+    GistAiAnalysis(
+      summary = "Provides Jetpack Compose layout snippets with typical debug statements.",
+      complexityScore = 5,
+      complexityLevel = "Medium",
+      maintainabilityIndex = "Good",
+      recommendedTags = listOf("#Kotlin", "#Compose", "#Networking"),
+      optimizationSuggestions =
+        listOf(
+          "Remove debug print/log (found Log.d/println)",
+          "mutableStateOf should be wrapped in remember",
+          "One or more files do not have an extension"
+        ),
+      isOnlineGenerated = false
+    )
 
   @Test
   fun test_gistAiAssistantCardView_standaloneCallbacks() {
@@ -123,7 +125,9 @@ class DraftEditorAiSuggestionsTest {
     composeTestRule.onNodeWithTag("append_all_tags_btn").performClick()
 
     // Compose was already there, so only Kotlin and Networking should be appended
-    composeTestRule.onNodeWithTag("editor_tags").assertTextContains("initial, Compose, Kotlin, Networking")
+    composeTestRule
+      .onNodeWithTag("editor_tags")
+      .assertTextContains("initial, Compose, Kotlin, Networking")
   }
 
   @Test
@@ -131,15 +135,18 @@ class DraftEditorAiSuggestionsTest {
     var savedFiles = emptyList<Pair<String, String>>()
     var savedTags = emptyList<String>()
 
-    val initialFiles = listOf(
-      "UnfinishedClass" to """
+    val initialFiles =
+      listOf(
+        "UnfinishedClass" to
+          """
         fun debugLog() {
           println("Entering function")
           Log.d("TAG", "processing")
           val value = mutableStateOf("test")
         }
-      """.trimIndent()
-    )
+      """
+            .trimIndent()
+      )
 
     composeTestRule.setContent {
       MyApplicationTheme {
@@ -166,7 +173,10 @@ class DraftEditorAiSuggestionsTest {
     composeTestRule.onNodeWithTag("apply_ai_fixes_btn").performScrollTo().performClick()
 
     // Verify tags are appended
-    composeTestRule.onNodeWithTag("editor_tags").performScrollTo().assertTextContains("existing, Kotlin, Compose, Networking")
+    composeTestRule
+      .onNodeWithTag("editor_tags")
+      .performScrollTo()
+      .assertTextContains("existing, Kotlin, Compose, Networking")
 
     // Click "Save Draft" to capture updated state
     composeTestRule.onNodeWithText("Save Draft").performClick()

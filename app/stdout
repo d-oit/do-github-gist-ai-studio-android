@@ -1,3 +1,18 @@
+/app/applet/app/src/main/java/com/example/DoGistHubApp.kt:32: Warning: Must call getDefaultUncaughtExceptionHandler() to get the existing handler, and call existingHandler.uncaughtException(thread, throwable) from your new handler [DefaultUncaughtExceptionDelegation]
+    Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+    ^
+
+   Explanation for issues of type "DefaultUncaughtExceptionDelegation":
+   A default uncaught exception handler should usually call the existing
+   (previously set) default uncaught exception handler. This is especially
+   true on Android, which uses a default uncaught exception handler to handle
+   crashes. This lint check reports calls to
+   setDefaultUncaughtExceptionHandler unless we can also see a call to
+   getDefaultUncaughtExceptionHandler (to get the existing handler) in the
+   same module. Make sure you also call
+   existingHandler.uncaughtException(thread, throwable) from your new
+   handler.
+
 /app/applet/app/src/main/AndroidManifest.xml:20: Warning: Redundant label can be removed [RedundantLabel]
             android:label="@string/app_name"
             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -116,16 +131,16 @@ loggingInterceptor = "4.10.0"
 /app/applet/gradle/libs.versions.toml:33: Warning: A newer version of com.squareup.okhttp3:okhttp than 4.10.0 is available: 5.4.0 [NewerVersionAvailable]
 okhttp = "4.10.0"
          ~~~~~~~~
-/app/applet/gradle/libs.versions.toml:38: Warning: A newer version of io.github.takahirom.roborazzi than 1.59.0 is available: 1.68.0 [NewerVersionAvailable]
+/app/applet/gradle/libs.versions.toml:38: Warning: A newer version of io.github.takahirom.roborazzi than 1.59.0 is available: 1.70.0 [NewerVersionAvailable]
 roborazzi = "1.59.0"
             ~~~~~~~~
-/app/applet/gradle/libs.versions.toml:38: Warning: A newer version of io.github.takahirom.roborazzi:roborazzi than 1.59.0 is available: 1.68.0 [NewerVersionAvailable]
+/app/applet/gradle/libs.versions.toml:38: Warning: A newer version of io.github.takahirom.roborazzi:roborazzi than 1.59.0 is available: 1.70.0 [NewerVersionAvailable]
 roborazzi = "1.59.0"
             ~~~~~~~~
-/app/applet/gradle/libs.versions.toml:38: Warning: A newer version of io.github.takahirom.roborazzi:roborazzi-compose than 1.59.0 is available: 1.68.0 [NewerVersionAvailable]
+/app/applet/gradle/libs.versions.toml:38: Warning: A newer version of io.github.takahirom.roborazzi:roborazzi-compose than 1.59.0 is available: 1.70.0 [NewerVersionAvailable]
 roborazzi = "1.59.0"
             ~~~~~~~~
-/app/applet/gradle/libs.versions.toml:38: Warning: A newer version of io.github.takahirom.roborazzi:roborazzi-junit-rule than 1.59.0 is available: 1.68.0 [NewerVersionAvailable]
+/app/applet/gradle/libs.versions.toml:38: Warning: A newer version of io.github.takahirom.roborazzi:roborazzi-junit-rule than 1.59.0 is available: 1.70.0 [NewerVersionAvailable]
 roborazzi = "1.59.0"
             ~~~~~~~~
 /app/applet/gradle/libs.versions.toml:42: Warning: A newer version of com.google.dagger.hilt.android than 2.55 is available: 2.60.1 [NewerVersionAvailable]
@@ -227,6 +242,17 @@ detekt = "1.23.6"
    errors where images are either placed in the wrong folder, or icons are
    changed to new sizes but some folders are forgotten.
 
+/app/applet/app/src/main/res/drawable/img_app_logo.jpg: Warning: Found bitmap drawable res/drawable/img_app_logo.jpg in densityless folder [IconLocation]
+
+   Explanation for issues of type "IconLocation":
+   The res/drawable folder is intended for density-independent graphics such
+   as shapes defined in XML. For bitmaps, move it to drawable-mdpi and
+   consider providing higher and lower resolution versions in drawable-ldpi,
+   drawable-hdpi and drawable-xhdpi. If the icon really is density independent
+   (for example a solid color) you can place it in drawable-nodpi.
+
+   https://developer.android.com/guide/practices/screens_support.html
+
 /app/applet/app/src/main/java/com/example/data/local/pref/ConfigPrefs.kt:66: Warning: Use the KTX extension function SharedPreferences.edit instead? [UseKtx]
       sp.edit().putString(key, value).apply()
       ~~~~~~~~~
@@ -326,4 +352,4 @@ detekt = "1.23.6"
    </lint>
    ```
 
-0 errors, 65 warnings
+0 errors, 67 warnings

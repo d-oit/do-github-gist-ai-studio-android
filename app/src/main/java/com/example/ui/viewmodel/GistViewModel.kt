@@ -293,7 +293,8 @@ class GistViewModel(
           )
         _aiAnalysis.value = result
       } catch (e: Exception) {
-        val sanitizedError = com.example.core.security.PrivacySanitizer.redact(e.message ?: "Unknown error")
+        val sanitizedError =
+          com.example.core.security.PrivacySanitizer.redact(e.message ?: "Unknown error")
         android.util.Log.e("GistViewModel", "Error in analyzeGistContent: $sanitizedError", e)
       } finally {
         _isAnalyzingGist.value = false

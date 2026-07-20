@@ -512,7 +512,8 @@ class GistAppE2ETest {
         "SyncStatus should be Error",
         currentSyncStatus is com.example.data.repository.SyncStatus.Error
       )
-      val errorMsg = (currentSyncStatus as com.example.data.repository.SyncStatus.Error).errorMessage
+      val errorMsg =
+        (currentSyncStatus as com.example.data.repository.SyncStatus.Error).errorMessage
       assertTrue(
         "Error message should clearly state they cannot fork their own gist",
         errorMsg.contains("cannot fork your own Gist", ignoreCase = true)

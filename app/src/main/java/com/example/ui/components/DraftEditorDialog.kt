@@ -455,7 +455,12 @@ fun DraftEditorDialog(
               onAppendRecommendedTag = { tag ->
                 val cleanTag = tag.replace("#", "").trim()
                 if (cleanTag.isNotEmpty()) {
-                  val existingTags = tagsInput.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
+                  val existingTags =
+                    tagsInput
+                      .split(",")
+                      .map { it.trim() }
+                      .filter { it.isNotEmpty() }
+                      .toMutableList()
                   if (!existingTags.any { it.equals(cleanTag, ignoreCase = true) }) {
                     existingTags.add(cleanTag)
                     tagsInput = existingTags.joinToString(", ")
@@ -464,11 +469,15 @@ fun DraftEditorDialog(
               },
               onAppendAllTags = {
                 val tagsToAppend = aiAnalysis?.recommendedTags ?: emptyList()
-                val existingTags = tagsInput.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
+                val existingTags =
+                  tagsInput.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
                 var updated = false
                 tagsToAppend.forEach { tag ->
                   val cleanTag = tag.replace("#", "").trim()
-                  if (cleanTag.isNotEmpty() && !existingTags.any { it.equals(cleanTag, ignoreCase = true) }) {
+                  if (
+                    cleanTag.isNotEmpty() &&
+                      !existingTags.any { it.equals(cleanTag, ignoreCase = true) }
+                  ) {
                     existingTags.add(cleanTag)
                     updated = true
                   }
@@ -539,13 +548,17 @@ fun DraftEditorDialog(
                     fixedName to fixedContent
                   }
 
-                val existingTags = tagsInput.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
+                val existingTags =
+                  tagsInput.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
                 println("DEBUG_APPLY - existingTags: $existingTags")
                 var tagsUpdated = false
                 aiAnalysis?.recommendedTags?.forEach { tag ->
                   val cleanTag = tag.replace("#", "").trim()
                   println("DEBUG_APPLY - checking cleanTag: $cleanTag")
-                  if (cleanTag.isNotEmpty() && !existingTags.any { it.equals(cleanTag, ignoreCase = true) }) {
+                  if (
+                    cleanTag.isNotEmpty() &&
+                      !existingTags.any { it.equals(cleanTag, ignoreCase = true) }
+                  ) {
                     existingTags.add(cleanTag)
                     tagsUpdated = true
                   }

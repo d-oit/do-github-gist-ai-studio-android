@@ -17,14 +17,14 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up JDK 17
-        uses: actions/setup-java@862b4887b1c08411d35a21074e5ad1981299dad4 # v4.2.1
+        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
         with:
           distribution: 'zulu'
           java-version: '17'
           cache: 'gradle'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@b29d499edec5ed5036f01da53556c606132714c3 # v3.2.1
+        uses: android-actions/setup-android@00854ea68c109d98c75d956347303bf7c45b0277 # v3.2.1
         with:
           android-version: 36
           build-tools-version: 35.0.0
@@ -47,7 +47,7 @@ jobs:
           sha256sum app-release.apk > app-release.apk.sha256
 
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@c08a1c97afae2af3df9a1f89bc400b1d3d0f1b6a # v2.0.1
+        uses: softprops/action-gh-release@64df7ca660f0a62e71442d521755ff05b68b9b9b # v2.0.1
         with:
           files: |
             app/build/outputs/apk/release/app-release.apk
