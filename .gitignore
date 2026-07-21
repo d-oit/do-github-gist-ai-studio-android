@@ -20,3 +20,7 @@ debug.keystore
 # Codacy analysis artifacts
 results.sarif
 .codacy-temp/
+
+# Build and credentials
+.build-outputs/
+*.base64
