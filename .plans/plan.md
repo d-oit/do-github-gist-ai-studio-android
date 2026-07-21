@@ -1,4 +1,4 @@
-# Do Gist Hub — Codebase Improvement Plan
+# d.o.Gist Hub — Codebase Improvement Plan
 
 **Status:** Approved by user (full cleanup, full state hoist to ViewModel).
 **Scope:** All four tiers — compliance, correctness, code quality, quality gates/security/docs.

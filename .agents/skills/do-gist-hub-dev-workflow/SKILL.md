@@ -3,7 +3,7 @@ name: do-gist-hub-dev-workflow
 description: Strictly enforces Do Gist Hub's manual constructor injection, 600 LOC file limits, Room sync protocols, local test pyramid validation, and local harness commands.
 ---
 
-# Do Gist Hub Developer Workflow Skill
+# d.o.Gist Hub Developer Workflow Skill
 
 This skill governs the development, extension, and verification of **Do Gist Hub**—an offline-first, reactive GitHub Gist client built using Kotlin, Jetpack Compose, and Room. 
 
