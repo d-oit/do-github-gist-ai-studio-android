@@ -25,9 +25,6 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@00854ea68c109d98c75d956347303bf7c45b0277 # v3.2.1
-        with:
-          android-version: 36
-          build-tools-version: 35.0.0
 
       - name: Decode Keystore
         run: |
