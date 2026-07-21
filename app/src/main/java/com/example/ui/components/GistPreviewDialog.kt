@@ -57,8 +57,6 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.entity.GistWithFiles
 import com.example.ui.theme.ActivePurple
-import com.example.ui.theme.GraySecondary
-import com.example.ui.theme.GrayTertiary
 import com.example.ui.theme.SlateBg
 
 @Composable
@@ -164,7 +162,8 @@ fun GistPreviewDialog(
                 Icon(
                   imageVector = icon,
                   contentDescription = tabName,
-                  tint = if (isSelected) ActivePurple else GraySecondary,
+                  tint =
+                    if (isSelected) ActivePurple else MaterialTheme.colorScheme.onSurfaceVariant,
                   modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
@@ -199,7 +198,7 @@ fun GistPreviewDialog(
                 Text(
                   text = item.gist.description ?: "No description provided",
                   fontSize = 14.sp,
-                  color = GraySecondary,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
                   modifier = Modifier.padding(bottom = 8.dp)
                 )
               }
@@ -251,7 +250,7 @@ fun GistPreviewDialog(
                               if (previewMode == "raw") FontWeight.Bold else FontWeight.Normal,
                             color =
                               if (previewMode == "raw") MaterialTheme.colorScheme.primary
-                              else GraySecondary
+                              else MaterialTheme.colorScheme.onSurfaceVariant
                           )
                         }
                         TextButton(
@@ -265,7 +264,7 @@ fun GistPreviewDialog(
                               if (previewMode == "markdown") FontWeight.Bold else FontWeight.Normal,
                             color =
                               if (previewMode == "markdown") MaterialTheme.colorScheme.primary
-                              else GraySecondary
+                              else MaterialTheme.colorScheme.onSurfaceVariant
                           )
                         }
                       }
@@ -387,14 +386,14 @@ fun GistPreviewDialog(
             Icon(
               imageVector = if (item.gist.isPublic) Icons.Default.Public else Icons.Default.Lock,
               contentDescription = "Visibility",
-              tint = GrayTertiary,
+              tint = MaterialTheme.colorScheme.outline,
               modifier = Modifier.size(16.dp)
             )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
               text = if (item.gist.isPublic) "Public Gist" else "Private Gist",
               fontSize = 12.sp,
-              color = GraySecondary
+              color = MaterialTheme.colorScheme.onSurfaceVariant
             )
           }
 

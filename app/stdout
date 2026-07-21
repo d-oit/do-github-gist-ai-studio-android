@@ -188,6 +188,7 @@ detekt = "1.23.6"
 /app/applet/app/src/main/res/values/colors.xml:9: Warning: The resource R.color.white appears to be unused [UnusedResources]
     <color name="white">#FFFFFFFF</color>
            ~~~~~~~~~~~~
+/app/applet/app/src/main/res/drawable/img_app_logo.jpg: Warning: The resource R.drawable.img_app_logo appears to be unused [UnusedResources]
 
    Explanation for issues of type "UnusedResources":
    Unused resources make applications larger and slow down builds.
@@ -352,4 +353,4 @@ detekt = "1.23.6"
    </lint>
    ```
 
-0 errors, 67 warnings
+0 errors, 68 warnings

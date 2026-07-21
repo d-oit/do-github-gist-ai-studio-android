@@ -35,8 +35,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.ActivePurple
-import com.example.ui.theme.GraySecondary
-import com.example.ui.theme.GrayTertiary
 
 @Composable
 fun RevisionHistoryListView(
@@ -73,13 +71,17 @@ fun RevisionHistoryListView(
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.primary
               )
-              Text(text = "Committed on $formattedRevDate", fontSize = 12.sp, color = GraySecondary)
+              Text(
+                text = "Committed on $formattedRevDate",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+              )
               Spacer(modifier = Modifier.height(2.dp))
               Text(
                 text = "Version: ${rev.version?.take(7) ?: "unknown"}",
                 fontFamily = FontFamily.Monospace,
                 fontSize = 11.sp,
-                color = GrayTertiary
+                color = MaterialTheme.colorScheme.outline
               )
             }
           }
@@ -153,7 +155,11 @@ fun DetailedRevisionChangesView(
           fontWeight = FontWeight.Bold,
           color = MaterialTheme.colorScheme.onSurface
         )
-        Text(text = "Comparing files changes", fontSize = 11.sp, color = GraySecondary)
+        Text(
+          text = "Comparing files changes",
+          fontSize = 11.sp,
+          color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
       }
 
       // Unified vs Split Selector Toggle

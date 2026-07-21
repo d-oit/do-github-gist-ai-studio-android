@@ -7,7 +7,7 @@ import org.junit.Test
  * # Macrobenchmark and Baseline Profile Scaffolding
  *
  * This class serves as the production-ready scaffold for running startup timing diagnostics and
- * generating Baseline Profiles for **Do Gist Hub**.
+ * generating Baseline Profiles for **d.o.Gist Hub**.
  *
  * ## Context & Execution
  * Because hardware-dependent execution of Macrobenchmarks and Baseline Profiles requires a real

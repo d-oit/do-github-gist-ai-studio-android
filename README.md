@@ -15,7 +15,7 @@ An offline-first, reactive GitHub Gist client built using **Kotlin**, **Jetpack 
 
 ## 📁 Repository Structure
 
-Below is the directory structure of the **Do Gist Hub** project:
+Below is the directory structure of the **d.o.Gist Hub** project:
 
 ```text
 do-github-gist-ai-studio-android/

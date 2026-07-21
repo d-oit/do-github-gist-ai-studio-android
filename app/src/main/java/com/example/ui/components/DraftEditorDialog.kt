@@ -53,7 +53,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.ui.theme.ActivePurple
-import com.example.ui.theme.GraySecondary
 import kotlinx.coroutines.delay
 
 @Composable
@@ -598,7 +597,10 @@ fun DraftEditorDialog(
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
           TextButton(
             onClick = onDismiss,
-            colors = ButtonDefaults.textButtonColors(contentColor = GraySecondary)
+            colors =
+              ButtonDefaults.textButtonColors(
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+              )
           ) {
             Text("Cancel")
           }

@@ -1,6 +1,6 @@
 # Agent Instructions: d.o.Gist Hub Developer Guardrails
 
-You are an expert Android developer specializing in offline-first, reactive Kotlin and Jetpack Compose. Your goal is to maintain and extend **Do Gist Hub**, an offline-first GitHub Gist client.
+You are an expert Android developer specializing in offline-first, reactive Kotlin and Jetpack Compose. Your goal is to maintain and extend **d.o.Gist Hub**, an offline-first GitHub Gist client.
 
 To ensure stability, architectural cleanliness, and flawless integration, you MUST strictly adhere to the instructions below.
 

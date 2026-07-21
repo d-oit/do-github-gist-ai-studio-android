@@ -1,12 +1,12 @@
-# System Design & Developer Architecture: Do Gist Hub
+# System Design & Developer Architecture: d.o.Gist Hub
 
-Welcome to the **Do Gist Hub** technical design specification. This document outlines the modern architectural blueprints, offline-first state synchronization engine, Material 3 "Clean Minimalism" styling guidelines, and developer workflow harness designed for sustainable high-frequency product iterations.
+Welcome to the **d.o.Gist Hub** technical design specification. This document outlines the modern architectural blueprints, offline-first state synchronization engine, Material 3 "Clean Minimalism" styling guidelines, and developer workflow harness designed for sustainable high-frequency product iterations.
 
 ---
 
 ## 1. Architectural Blueprint (Modern Android 2026 MAP)
 
-Do Gist Hub is built upon the modern **Unidirectional Data Flow (UDF)** model using **Jetpack Compose**, **Kotlin Coroutines/Flows**, and **MVVM (Model-View-ViewModel)** with an offline-first repository pattern.
+d.o.Gist Hub is built upon the modern **Unidirectional Data Flow (UDF)** model using **Jetpack Compose**, **Kotlin Coroutines/Flows**, and **MVVM (Model-View-ViewModel)** with an offline-first repository pattern.
 
 ```
                     ┌────────────────────────┐
@@ -50,7 +50,7 @@ Do Gist Hub is built upon the modern **Unidirectional Data Flow (UDF)** model us
 
 ## 2. Offline-First Synchronization Protocol
 
-To support a seamless offline coding workflow, Do Gist Hub implements an advanced dirty-flag-based syncing protocol.
+To support a seamless offline coding workflow, d.o.Gist Hub implements an advanced dirty-flag-based syncing protocol.
 
 ```
                     ┌────────────────────────┐

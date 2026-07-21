@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.entity.GistWithFiles
 import com.example.ui.theme.ActivePurple
-import com.example.ui.theme.GraySecondary
 
 @Composable
 fun UserAvatarPlaceholder(login: String, size: androidx.compose.ui.unit.Dp = 36.dp) {
@@ -92,7 +91,7 @@ fun DetailedCreationInfoCard(item: GistWithFiles) {
           Text(
             text = if (item.gist.isPublic) "Public Gist" else "Secret Gist",
             fontSize = 11.sp,
-            color = GraySecondary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
           )
         }
       }
@@ -103,7 +102,7 @@ fun DetailedCreationInfoCard(item: GistWithFiles) {
 
       Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-          Text("Created", fontSize = 12.sp, color = GraySecondary)
+          Text("Created", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
           Text(
             formatGistDate(item.gist.createdAt),
             fontSize = 12.sp,
@@ -112,7 +111,7 @@ fun DetailedCreationInfoCard(item: GistWithFiles) {
           )
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-          Text("Updated", fontSize = 12.sp, color = GraySecondary)
+          Text("Updated", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
           Text(
             formatGistDate(item.gist.updatedAt),
             fontSize = 12.sp,
@@ -139,7 +138,7 @@ fun DetailedCreationInfoCard(item: GistWithFiles) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
           ) {
-            Text("Web URL", fontSize = 12.sp, color = GraySecondary)
+            Text("Web URL", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
               text = item.gist.htmlUrl,
               fontSize = 11.sp,

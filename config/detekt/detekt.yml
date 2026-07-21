@@ -575,8 +575,12 @@ style:
         value: 'TODO:'
     allowedPatterns: ''
   ForbiddenImport:
-    active: false
-    imports: []
+    active: true
+    imports:
+      - value: 'com.example.ui.theme.GraySecondary'
+        reason: 'Avoid hardcoded grays that cause low contrast in Dark/OLED mode. Use MaterialTheme.colorScheme.onSurfaceVariant instead.'
+      - value: 'com.example.ui.theme.GrayTertiary'
+        reason: 'Avoid hardcoded grays that cause low contrast in Dark/OLED mode. Use MaterialTheme.colorScheme.outline instead.'
     forbiddenPatterns: ''
   ForbiddenMethodCall:
     active: false

@@ -26,8 +26,6 @@ import com.example.data.remote.model.GistResponse
 import com.example.ui.theme.ActivePurple
 import com.example.ui.theme.ActivePurpleContainer
 import com.example.ui.theme.DarkPurpleText
-import com.example.ui.theme.GraySecondary
-import com.example.ui.theme.GrayTertiary
 
 @Composable
 fun GitHubGistApiList(
@@ -62,7 +60,7 @@ fun GitHubGistApiList(
           Text(
             text = "Direct real-time query using stored GITHUB_PAT",
             fontSize = 11.sp,
-            color = GraySecondary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
           )
         }
 
@@ -121,7 +119,11 @@ fun GitHubGistApiList(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
               CircularProgressIndicator(color = ActivePurple)
               Spacer(modifier = Modifier.height(8.dp))
-              Text(text = "Contacting GitHub...", fontSize = 12.sp, color = GraySecondary)
+              Text(
+                text = "Contacting GitHub...",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+              )
             }
           } else {
             Column(
@@ -131,7 +133,7 @@ fun GitHubGistApiList(
               Icon(
                 imageVector = Icons.Default.CloudDownload,
                 contentDescription = "No Remote Gists",
-                tint = GrayTertiary,
+                tint = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.size(36.dp)
               )
               Spacer(modifier = Modifier.height(8.dp))
@@ -144,7 +146,7 @@ fun GitHubGistApiList(
               Text(
                 text = "Click refresh icon to retrieve directly via your token.",
                 fontSize = 11.sp,
-                color = GraySecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 2.dp)
               )
             }
@@ -197,7 +199,7 @@ fun GitHubGistApiList(
                     Icon(
                       imageVector = if (isPublic) Icons.Default.Public else Icons.Default.Lock,
                       contentDescription = if (isPublic) "Public Gist" else "Secret Gist",
-                      tint = GraySecondary,
+                      tint = MaterialTheme.colorScheme.onSurfaceVariant,
                       modifier = Modifier.size(12.dp)
                     )
                   }
@@ -221,7 +223,7 @@ fun GitHubGistApiList(
                         text = owner.login ?: "",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
-                        color = GraySecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                       )
@@ -234,7 +236,7 @@ fun GitHubGistApiList(
                 Text(
                   text = description,
                   fontSize = 12.sp,
-                  color = GraySecondary,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
                   maxLines = 2,
                   overflow = TextOverflow.Ellipsis
                 )
@@ -314,7 +316,11 @@ fun GitHubGistApiList(
                       } catch (e: Exception) {
                         dateStr
                       }
-                    Text(text = "Created: $formattedDate", fontSize = 9.sp, color = GrayTertiary)
+                    Text(
+                      text = "Created: $formattedDate",
+                      fontSize = 9.sp,
+                      color = MaterialTheme.colorScheme.outline
+                    )
                   }
                 }
               }
@@ -325,7 +331,7 @@ fun GitHubGistApiList(
             Text(
               text = "Showing top 10 Gists. View other Gists on your GitHub profile.",
               fontSize = 10.sp,
-              color = GrayTertiary,
+              color = MaterialTheme.colorScheme.outline,
               modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp)
             )
           }

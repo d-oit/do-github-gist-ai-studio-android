@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Do Gist Hub</string>
+    <string name="app_name">d.o.Gist Hub</string>
     <string name="verify_idle">Verify Token &amp; Autofill Profile</string>
     <string name="verify_loading">Verifying Token...</string>
     <string name="verify_success">Token Verified &amp; Saved Successfully!</string>

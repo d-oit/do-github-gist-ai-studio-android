@@ -51,8 +51,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ui.theme.GraySecondary
-import com.example.ui.theme.GrayTertiary
 
 @Composable
 fun GitHubMarkdownEditor(
@@ -99,7 +97,9 @@ fun GitHubMarkdownEditor(
           Text(
             text = "Write",
             fontWeight = if (viewMode == "write") FontWeight.Bold else FontWeight.Normal,
-            color = if (viewMode == "write") MaterialTheme.colorScheme.primary else GraySecondary,
+            color =
+              if (viewMode == "write") MaterialTheme.colorScheme.primary
+              else MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 13.sp
           )
         }
@@ -113,7 +113,9 @@ fun GitHubMarkdownEditor(
           Text(
             text = "Preview",
             fontWeight = if (viewMode == "preview") FontWeight.Bold else FontWeight.Normal,
-            color = if (viewMode == "preview") MaterialTheme.colorScheme.primary else GraySecondary,
+            color =
+              if (viewMode == "preview") MaterialTheme.colorScheme.primary
+              else MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 13.sp
           )
         }
@@ -305,7 +307,7 @@ fun GitHubMarkdownEditor(
               Text(
                 text = "Nothing to preview yet.",
                 fontSize = 13.sp,
-                color = GrayTertiary,
+                color = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.padding(8.dp)
               )
             } else {
@@ -360,8 +362,17 @@ fun GitHubMarkdownEditor(
           horizontalArrangement = Arrangement.spacedBy(4.dp),
           modifier = Modifier.testTag("markdown_footer_logo")
         ) {
-          Text(text = "M⬇", fontWeight = FontWeight.Black, fontSize = 11.sp, color = GraySecondary)
-          Text(text = "Markdown is supported", fontSize = 11.sp, color = GraySecondary)
+          Text(
+            text = "M⬇",
+            fontWeight = FontWeight.Black,
+            fontSize = 11.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+          )
+          Text(
+            text = "Markdown is supported",
+            fontSize = 11.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+          )
         }
 
         // Bottom-Right area: Click attachment hint
@@ -379,10 +390,14 @@ fun GitHubMarkdownEditor(
           Icon(
             imageVector = Icons.Default.AttachFile,
             contentDescription = "Attach file icon",
-            tint = GraySecondary,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(14.dp)
           )
-          Text(text = "Paste, drop, or click to add files", fontSize = 11.sp, color = GraySecondary)
+          Text(
+            text = "Paste, drop, or click to add files",
+            fontSize = 11.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+          )
         }
       }
     }

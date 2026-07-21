@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -16,7 +17,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.ActivePurple
-import com.example.ui.theme.GraySecondary
 
 @Composable
 fun DraftEditorSwitchRow(
@@ -33,7 +33,7 @@ fun DraftEditorSwitchRow(
   ) {
     Column(modifier = Modifier.weight(1f)) {
       Text(text = title, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-      Text(text = description, fontSize = 11.sp, color = GraySecondary)
+      Text(text = description, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
     Switch(
       checked = checked,

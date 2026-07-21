@@ -63,7 +63,6 @@ import com.example.ui.components.MarkdownText
 import com.example.ui.components.SyntaxHighlighter
 import com.example.ui.components.borderButtonStroke
 import com.example.ui.theme.ActivePurple
-import com.example.ui.theme.GraySecondary
 import com.example.ui.theme.SlateBg
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -132,7 +131,9 @@ fun GistDetailScreen(
                 imageVector =
                   if (item.gist.isStarred) Icons.Default.Star else Icons.Default.StarBorder,
                 contentDescription = "Star",
-                tint = if (item.gist.isStarred) Color(0xFFFFA000) else GraySecondary,
+                tint =
+                  if (item.gist.isStarred) Color(0xFFFFA000)
+                  else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(22.dp)
               )
             }
@@ -141,7 +142,9 @@ fun GistDetailScreen(
                 imageVector =
                   if (item.gist.isPinned) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
                 contentDescription = "Pin",
-                tint = if (item.gist.isPinned) ActivePurple else GraySecondary,
+                tint =
+                  if (item.gist.isPinned) ActivePurple
+                  else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(22.dp)
               )
             }
@@ -232,14 +235,14 @@ fun GistDetailScreen(
                   imageVector =
                     if (item.gist.isPublic) Icons.Default.Public else Icons.Default.Lock,
                   contentDescription = "Visibility",
-                  tint = GraySecondary,
+                  tint = MaterialTheme.colorScheme.onSurfaceVariant,
                   modifier = Modifier.size(14.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                   text = if (item.gist.isPublic) "Public" else "Private",
                   fontSize = 11.sp,
-                  color = GraySecondary
+                  color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
               }
             }
@@ -314,7 +317,7 @@ fun GistDetailScreen(
                 Text(
                   text = "${file.language ?: "Plain Text"} • ${file.size} bytes",
                   fontSize = 11.sp,
-                  color = GraySecondary
+                  color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
               }
 
@@ -333,7 +336,7 @@ fun GistDetailScreen(
                       fontWeight = if (previewMode == "raw") FontWeight.Bold else FontWeight.Normal,
                       color =
                         if (previewMode == "raw") MaterialTheme.colorScheme.primary
-                        else GraySecondary
+                        else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                   }
                   TextButton(
@@ -347,7 +350,7 @@ fun GistDetailScreen(
                         if (previewMode == "markdown") FontWeight.Bold else FontWeight.Normal,
                       color =
                         if (previewMode == "markdown") MaterialTheme.colorScheme.primary
-                        else GraySecondary
+                        else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                   }
                 }

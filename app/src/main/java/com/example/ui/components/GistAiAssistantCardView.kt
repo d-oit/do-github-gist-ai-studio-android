@@ -30,7 +30,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.ActivePurple
-import com.example.ui.theme.GraySecondary
 
 @Composable
 fun GistAiAssistantCardView(
@@ -122,7 +121,11 @@ fun GistAiAssistantCardView(
           horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
           Column(modifier = Modifier.weight(1f)) {
-            Text("Complexity Level", fontSize = 10.sp, color = GraySecondary)
+            Text(
+              "Complexity Level",
+              fontSize = 10.sp,
+              color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Text(
               text = "${aiAnalysis.complexityLevel} (${aiAnalysis.complexityScore}/10)",
               fontSize = 12.sp,
@@ -133,7 +136,11 @@ fun GistAiAssistantCardView(
             )
           }
           Column(modifier = Modifier.weight(1f)) {
-            Text("Maintainability Index", fontSize = 10.sp, color = GraySecondary)
+            Text(
+              "Maintainability Index",
+              fontSize = 10.sp,
+              color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Text(
               text = aiAnalysis.maintainabilityIndex,
               fontSize = 12.sp,

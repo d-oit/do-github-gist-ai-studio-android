@@ -26,7 +26,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ui.theme.GraySecondary
+
+private val DiffMutedGray =
+  Color(0xFF8B949E) // High-contrast GitHub dark-theme gray for line numbers and helper text
 
 @Composable
 fun UnifiedDiffView(oldContent: String, newContent: String) {
@@ -44,7 +46,7 @@ fun UnifiedDiffView(oldContent: String, newContent: String) {
         text = "No changes in this file.",
         fontSize = 12.sp,
         fontStyle = FontStyle.Italic,
-        color = GraySecondary,
+        color = DiffMutedGray,
         modifier = Modifier.padding(12.dp)
       )
     } else {
@@ -77,14 +79,14 @@ fun UnifiedDiffView(oldContent: String, newContent: String) {
             text = line.oldLineNum?.toString() ?: "",
             fontFamily = FontFamily.Monospace,
             fontSize = 10.sp,
-            color = GraySecondary.copy(alpha = 0.6f),
+            color = DiffMutedGray.copy(alpha = 0.6f),
             modifier = Modifier.width(28.dp)
           )
           Text(
             text = line.newLineNum?.toString() ?: "",
             fontFamily = FontFamily.Monospace,
             fontSize = 10.sp,
-            color = GraySecondary.copy(alpha = 0.6f),
+            color = DiffMutedGray.copy(alpha = 0.6f),
             modifier = Modifier.width(28.dp)
           )
           Text(
@@ -127,7 +129,7 @@ fun SplitDiffView(oldContent: String, newContent: String) {
         text = "No changes in this file.",
         fontSize = 12.sp,
         fontStyle = FontStyle.Italic,
-        color = GraySecondary,
+        color = DiffMutedGray,
         modifier = Modifier.padding(12.dp)
       )
     } else {
@@ -143,7 +145,7 @@ fun SplitDiffView(oldContent: String, newContent: String) {
               text = "Original File",
               fontSize = 11.sp,
               fontWeight = FontWeight.Bold,
-              color = GraySecondary,
+              color = DiffMutedGray,
               modifier = Modifier.weight(1f)
             )
             Spacer(modifier = Modifier.width(16.dp))
@@ -151,7 +153,7 @@ fun SplitDiffView(oldContent: String, newContent: String) {
               text = "Revised File",
               fontSize = 11.sp,
               fontWeight = FontWeight.Bold,
-              color = GraySecondary,
+              color = DiffMutedGray,
               modifier = Modifier.weight(1f)
             )
           }
@@ -188,7 +190,7 @@ fun SplitDiffView(oldContent: String, newContent: String) {
                   text = row.left?.oldLineNum?.toString() ?: "",
                   fontFamily = FontFamily.Monospace,
                   fontSize = 10.sp,
-                  color = GraySecondary.copy(alpha = 0.5f),
+                  color = DiffMutedGray.copy(alpha = 0.5f),
                   modifier = Modifier.width(28.dp)
                 )
                 Text(
@@ -238,7 +240,7 @@ fun SplitDiffView(oldContent: String, newContent: String) {
                   text = row.right?.newLineNum?.toString() ?: "",
                   fontFamily = FontFamily.Monospace,
                   fontSize = 10.sp,
-                  color = GraySecondary.copy(alpha = 0.5f),
+                  color = DiffMutedGray.copy(alpha = 0.5f),
                   modifier = Modifier.width(28.dp)
                 )
                 Text(

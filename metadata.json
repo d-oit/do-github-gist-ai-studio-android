@@ -1,5 +1,7 @@
 {
   "name": "d.o.Gist Hub",
+  "author": "d-oit",
+  "version": "0.1.0",
   "description": "An offline-first GitHub Gist client with local sync state tracking.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

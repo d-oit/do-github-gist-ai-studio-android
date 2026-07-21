@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "Do Gist Hub"
+rootProject.name = "d.o.Gist Hub"
 
 include(":app")

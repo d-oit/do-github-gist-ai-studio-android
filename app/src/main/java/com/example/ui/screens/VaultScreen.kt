@@ -40,7 +40,6 @@ import com.example.ui.components.GistCard
 import com.example.ui.theme.ActivePurple
 import com.example.ui.theme.ActivePurpleContainer
 import com.example.ui.theme.DarkPurpleText
-import com.example.ui.theme.GraySecondary
 
 @Composable
 fun VaultScreen(
@@ -200,7 +199,7 @@ fun VaultScreen(
             Text(
               text = "No offline changes or local drafts.",
               fontSize = 13.sp,
-              color = GraySecondary
+              color = MaterialTheme.colorScheme.onSurfaceVariant
             )
           }
         }

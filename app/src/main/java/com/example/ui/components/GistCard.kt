@@ -52,7 +52,6 @@ import com.example.ui.theme.ActivePurpleContainer
 import com.example.ui.theme.DarkPurpleText
 import com.example.ui.theme.DarkRedText
 import com.example.ui.theme.ErrorRed
-import com.example.ui.theme.GraySecondary
 import com.example.ui.theme.LightPinkContainer
 
 @Composable
@@ -97,7 +96,7 @@ fun GistCard(
             Icon(
               imageVector = if (item.gist.isPublic) Icons.Default.Public else Icons.Default.Lock,
               contentDescription = "Visibility",
-              tint = GraySecondary,
+              tint = MaterialTheme.colorScheme.onSurfaceVariant,
               modifier = Modifier.size(14.dp)
             )
           }
@@ -105,7 +104,7 @@ fun GistCard(
           Text(
             text = item.gist.description ?: "No description provided",
             fontSize = 13.sp,
-            color = GraySecondary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
           )
           if (item.gist.tags.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
@@ -146,7 +145,9 @@ fun GistCard(
               imageVector =
                 if (item.gist.isStarred) Icons.Default.Star else Icons.Default.StarBorder,
               contentDescription = "Star",
-              tint = if (item.gist.isStarred) Color(0xFFFFA000) else GraySecondary,
+              tint =
+                if (item.gist.isStarred) Color(0xFFFFA000)
+                else MaterialTheme.colorScheme.onSurfaceVariant,
               modifier = Modifier.size(20.dp)
             )
           }
@@ -158,7 +159,9 @@ fun GistCard(
               imageVector =
                 if (item.gist.isPinned) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
               contentDescription = "Pin",
-              tint = if (item.gist.isPinned) ActivePurple else GraySecondary,
+              tint =
+                if (item.gist.isPinned) ActivePurple
+                else MaterialTheme.colorScheme.onSurfaceVariant,
               modifier = Modifier.size(20.dp)
             )
           }
@@ -301,7 +304,7 @@ fun GistCard(
             Icon(
               imageVector = Icons.Default.Visibility,
               contentDescription = "Preview Code",
-              tint = GraySecondary,
+              tint = MaterialTheme.colorScheme.onSurfaceVariant,
               modifier = Modifier.size(18.dp)
             )
           }
@@ -309,7 +312,7 @@ fun GistCard(
             Icon(
               imageVector = Icons.Default.Edit,
               contentDescription = "Edit",
-              tint = GraySecondary,
+              tint = MaterialTheme.colorScheme.onSurfaceVariant,
               modifier = Modifier.size(18.dp)
             )
           }

@@ -1,4 +1,4 @@
-# Task Board: Do Gist Hub
+# Task Board: d.o.Gist Hub
 
 An offline-first GitHub Gist client utilizing **Jetpack Compose**, a local **Room SQLite cache**, reactive **WorkManager synchronization**, and **manual constructor injection**. This board tracks the production-ready implementation milestones.
 
