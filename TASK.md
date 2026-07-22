@@ -425,6 +425,23 @@ and upload SARIF to GitHub Security.
   - `./harness.sh setup-hooks`
 - **Definition of done**: Harness supports local auto-formatting and hook installation, all scripts execute cleanly, and the codebase rules are formalized under a custom agent skill.
 
+---
+
+## 📂 22. Codebase Refactoring, 600 LOC Compliance & Build Concurrency Guidelines
+- **Goal**: Audit codebase for strict compliance with 600 LOC limits, extract reusable test components, clean up deprecated AGP configuration warnings, and establish execution rules to prevent build container timeouts.
+- **Files expected to change**: `app/src/test/java/com/example/GistAppE2ETest.kt`, `app/src/test/java/com/example/FakeGitHubApiService.kt`, `app/build.gradle.kts`, `AGENTS.md`, `/.agents/skills/do-gist-hub-dev-workflow/SKILL.md`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Audit source files against 600 LOC threshold; identify `GistAppE2ETest.kt` (656 LOC).
+  - [x] Extract `FakeGitHubApiService` into `app/src/test/java/com/example/FakeGitHubApiService.kt` to reduce `GistAppE2ETest.kt` to 522 LOC and make the fake service modular and reusable.
+  - [x] Remove deprecated `buildToolsVersion = "35.0.0"` from `app/build.gradle.kts` to eliminate AGP 9.1.1 deprecation warnings.
+  - [x] Document build concurrency rules in `AGENTS.md` and `do-gist-hub-dev-workflow/SKILL.md`: never execute `compile_applet` concurrently with background `./harness.sh` tasks to prevent lock contention and control plane health timeouts.
+  - [x] Run `./harness.sh format` and `./harness.sh check` to verify 100% success across wrapper integrity, Spotless formatting, Detekt, Lint, and local unit/E2E test pyramid suites.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+- **Definition of done**: No file exceeds 600 LOC, AGP warnings are resolved, build concurrency safety guidelines are codified in skills/AGENTS.md, and harness checks pass cleanly.
+
+
 
 
 

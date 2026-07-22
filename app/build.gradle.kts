@@ -17,7 +17,6 @@ jacoco { toolVersion = "0.8.12" }
 android {
   namespace = "com.example"
   compileSdk { version = release(36) { minorApiLevel = 1 } }
-  buildToolsVersion = "35.0.0"
 
   defaultConfig {
     applicationId = "com.aistudio.dogisthub.qwerty"

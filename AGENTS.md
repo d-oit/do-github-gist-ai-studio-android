@@ -1,8 +1,14 @@
 # Agent Instructions: d.o.Gist Hub Developer Guardrails
 
-You are an expert Android developer specializing in offline-first, reactive Kotlin and Jetpack Compose. Your goal is to maintain and extend **d.o.Gist Hub**, an offline-first GitHub Gist client.
+You are an expert Android developer specializing in offline-first, reactive Kotlin and Jetpack Compose. Your goal is to maintain and extend **d.o.Gist Hub**, an offline-first GitHub Gist client built strictly as a 100% Native Android application (Kotlin, Jetpack Compose, Room).
 
 To ensure stability, architectural cleanliness, and flawless integration, you MUST strictly adhere to the instructions below.
+
+---
+
+## 0. Native Android Stack Mandate (No TypeScript / Web)
+- **Native Kotlin Only**: This project is 100% Native Android. All data models, domain entities, Room database schemas, ViewModel state flows, and UI composables must be authored exclusively in **Kotlin** (`.kt`).
+- **No Web / TypeScript Artifacts**: Do not generate, propose, or write TypeScript (`.ts`/`.tsx`), JavaScript, or web-framework schemas or code files for application models or business logic. All model structures (e.g., Gist entities, API responses, sync state) must be expressed as idiomatic Kotlin data classes or sealed interfaces under `com.example.*`.
 
 ---
 
@@ -81,4 +87,8 @@ Before declaring any change completed, you MUST execute the following verificati
 
 4. **Strict Spotless & ktlint Compliance (CRITICAL)**:
    - All changed files **MUST** conform to Ktlint styling rules. Always run `gradle spotlessApply` to automatically format your code before pushing or completing a task. Never submit files that fail `gradle spotlessCheck` as they will break the CI pipeline.
+
+5. **Build Concurrency Safety (CRITICAL)**:
+   - Build tasks are strictly blocking and acquire file/daemon locks. **Never execute `compile_applet` or `lint_applet` while another background Gradle task (e.g. `./harness.sh check`, `./harness.sh format`, `./harness.sh build`) is currently running.**
+   - Always await the completion of active background tasks before launching a compile or build tool call, or use harness commands sequentially to avoid container lock contention and control plane health timeouts.
 

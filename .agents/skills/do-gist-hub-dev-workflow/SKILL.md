@@ -13,6 +13,10 @@ Any AI coding agent modifying this codebase **MUST** read and adhere to this ski
 
 ## 1. Core Architectural Constraints (Non-Negotiable)
 
+### 1.0 Native Android Stack Mandate (No TypeScript / Web)
+* **Native Kotlin Only**: **d.o.Gist Hub** is a 100% Native Android app. All data models, Room database entities, Retrofit DTOs, ViewModel states, and UI screens must be written in **Kotlin** (`.kt`).
+* **Prohibition of Web/TypeScript**: Do NOT write or create TypeScript (`.ts`/`.tsx`), JavaScript, or Web framework files for app data models or business logic. All models must be represented as Kotlin `data class`es or `sealed class`/`interface` declarations under `com.example.*`.
+
 ### 1.1 No Hilt / Dependency Injection Frameworks
 * **Rule**: Do **NOT** write `@Inject`, `@HiltViewModel`, `@AndroidEntryPoint`, or `@HiltAndroidApp` in any Kotlin files, even if Hilt is declared in dependencies.
 * **Mechanism**: The project utilizes **manual constructor injection**.
@@ -29,6 +33,7 @@ Any AI coding agent modifying this codebase **MUST** read and adhere to this ski
 ### 1.3 Modularity & Code Quality
 * **Maximum 600 LOC**: No Kotlin source file may exceed **600 Lines of Code (LOC)**. If a file is approaching this limit, extract helper methods, sub-composables, or business logic into separate, cohesive Kotlin files.
 * **No Magic Numbers or Hardcoded Settings**: Never hardcode endpoints, timeouts, or visual dimensions. Use `strings.xml`, central Kotlin constants, or Material 3 `Theme` tokens.
+* **Build Concurrency Safety**: Never execute `compile_applet` or `lint_applet` while a background Gradle task (`./harness.sh check`, `./harness.sh format`, etc.) is in progress to prevent build container daemon lock contention. Always run build and check steps serially.
 
 ---
 
