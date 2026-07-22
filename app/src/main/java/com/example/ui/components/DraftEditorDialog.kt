@@ -1,8 +1,6 @@
 package com.example.ui.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,8 +24,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -230,55 +226,12 @@ fun DraftEditorDialog(
           }
         }
 
-        if (showRestorePrompt && autoSavedDraft != null) {
-          Card(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).testTag("autosave_banner"),
-            colors =
-              CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer
-              ),
-            shape = RoundedCornerShape(12.dp),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
-          ) {
-            Row(
-              modifier = Modifier.fillMaxWidth().padding(12.dp),
-              horizontalArrangement = Arrangement.SpaceBetween,
-              verticalAlignment = Alignment.CenterVertically
-            ) {
-              Column(modifier = Modifier.weight(1f)) {
-                Text(
-                  text = "Auto-saved draft found",
-                  fontWeight = FontWeight.Bold,
-                  fontSize = 14.sp,
-                  color = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                  text = "Would you like to restore your unsaved edits?",
-                  fontSize = 12.sp,
-                  color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
-                )
-              }
-              Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-              ) {
-                TextButton(onClick = onDiscard, modifier = Modifier.testTag("autosave_discard")) {
-                  Text("Discard", fontSize = 13.sp)
-                }
-                Button(
-                  onClick = onRestore,
-                  shape = RoundedCornerShape(8.dp),
-                  colors =
-                    ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                  modifier = Modifier.testTag("autosave_restore")
-                ) {
-                  Text("Restore", fontSize = 13.sp)
-                }
-              }
-            }
-          }
-        }
+        DraftEditorAutoSaveBanner(
+          showRestorePrompt = showRestorePrompt,
+          hasAutoSavedDraft = autoSavedDraft != null,
+          onRestore = onRestore,
+          onDiscard = onDiscard
+        )
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -549,11 +502,9 @@ fun DraftEditorDialog(
 
                 val existingTags =
                   tagsInput.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
-                println("DEBUG_APPLY - existingTags: $existingTags")
                 var tagsUpdated = false
                 aiAnalysis?.recommendedTags?.forEach { tag ->
                   val cleanTag = tag.replace("#", "").trim()
-                  println("DEBUG_APPLY - checking cleanTag: $cleanTag")
                   if (
                     cleanTag.isNotEmpty() &&
                       !existingTags.any { it.equals(cleanTag, ignoreCase = true) }

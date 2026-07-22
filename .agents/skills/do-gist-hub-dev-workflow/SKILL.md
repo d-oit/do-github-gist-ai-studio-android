@@ -13,6 +13,10 @@ Any AI coding agent modifying this codebase **MUST** read and adhere to this ski
 
 ## 1. Core Architectural Constraints (Non-Negotiable)
 
+### 1.0 Native Android Stack Mandate (No TypeScript / Web)
+* **Native Kotlin Only**: **d.o.Gist Hub** is a 100% Native Android app. All data models, Room database entities, Retrofit DTOs, ViewModel states, and UI screens must be written in **Kotlin** (`.kt`).
+* **Prohibition of Web/TypeScript**: Do NOT write or create TypeScript (`.ts`/`.tsx`), JavaScript, or Web framework files for app data models or business logic. All models must be represented as Kotlin `data class`es or `sealed class`/`interface` declarations under `com.example.*`.
+
 ### 1.1 No Hilt / Dependency Injection Frameworks
 * **Rule**: Do **NOT** write `@Inject`, `@HiltViewModel`, `@AndroidEntryPoint`, or `@HiltAndroidApp` in any Kotlin files, even if Hilt is declared in dependencies.
 * **Mechanism**: The project utilizes **manual constructor injection**.
@@ -29,6 +33,7 @@ Any AI coding agent modifying this codebase **MUST** read and adhere to this ski
 ### 1.3 Modularity & Code Quality
 * **Maximum 600 LOC**: No Kotlin source file may exceed **600 Lines of Code (LOC)**. If a file is approaching this limit, extract helper methods, sub-composables, or business logic into separate, cohesive Kotlin files.
 * **No Magic Numbers or Hardcoded Settings**: Never hardcode endpoints, timeouts, or visual dimensions. Use `strings.xml`, central Kotlin constants, or Material 3 `Theme` tokens.
+* **Build Concurrency Safety**: Never execute `compile_applet` or `lint_applet` while a background Gradle task (`./harness.sh check`, `./harness.sh format`, etc.) is in progress to prevent build container daemon lock contention. Always run build and check steps serially.
 
 ---
 
@@ -82,6 +87,41 @@ To maintain dev-CI congruence, always execute local validations using the unifie
 ./harness.sh build
 ```
 
+### 3.1 GitHub Pull Request Management (`gh` CLI)
+
+Always manage GitHub PRs using the `gh` CLI tool:
+
+- **Environment Setup**:
+  ```bash
+  which gh || (curl -sS -L https://github.com/cli/cli/releases/download/v2.52.0/gh_2.52.0_linux_amd64.tar.gz | tar -xz && mkdir -p bin && mv gh_2.52.0_linux_amd64/bin/gh bin/ && rm -rf gh_2.52.0_linux_amd64)
+  export GH_TOKEN=$(git remote get-url origin | sed -n 's|.*https://\([^@]*\)@.*|\1|p')
+  ```
+- **New PR Creation (`gh pr create`)**:
+  ```bash
+  cat << 'EOF' > /tmp/pr_body.md
+  ## Summary
+  - ...
+  EOF
+  gh pr create --title "type: short description" --body-file /tmp/pr_body.md --base main
+  ```
+- **Get / Inspect PR Status & CI Checks (`gh pr view` / `gh pr checks`)**:
+  ```bash
+  gh pr view <pr_number> --json number,title,state,url,headRefName,baseRefName,statusCheckRollup
+  gh pr checks <pr_number>
+  ```
+- **List PRs (`gh pr list`)**:
+  ```bash
+  gh pr list --state open --json number,title,headRefName,url
+  ```
+- **Update Existing PR (`gh pr edit`)**:
+  ```bash
+  gh pr edit <pr_number> --title "new title" --body-file /tmp/updated_body.md
+  ```
+- **Checkout PR (`gh pr checkout`)**:
+  ```bash
+  gh pr checkout <pr_number>
+  ```
+
 ---
 
 ## 4. Definition of Done (DoD) Checklist
@@ -92,4 +132,4 @@ Before submitting or pushing any task:
 3. [ ] **Verify**: Ensure `./harness.sh check` compiles and passes format, Detekt, Lint, and Unit testing with 100% success.
 4. [ ] **Test**: Run `./harness.sh test` to execute E2E and unit test suites locally.
 5. [ ] **Build**: Run `./harness.sh build` to verify clean compilation.
-6. [ ] **CI**: Push to your branch and ensure that the GitHub Actions PR CI runs completely "green" with zero warnings or failures.
+6. [ ] **PR & CI Verification**: Push to your branch, manage the PR using `gh pr create` / `gh pr edit` / `gh pr view`, and verify via `gh pr view <number> --json statusCheckRollup` or `gh pr checks` that all GitHub Actions CI checks are 100% "green" with zero warnings or failures.

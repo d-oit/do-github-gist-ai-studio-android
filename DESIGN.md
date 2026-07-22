@@ -1,79 +1,164 @@
-# d.o.Gist Hub Design Tokens & Contrast Specification (2026 Best Practices)
+---
+name: Do Gist Hub Minimalist Theme
+version: alpha
+colors:
+  primary: "#6750A4"              # Active Purple accent
+  on-primary: "#FFFFFF"           # Text on primary accent
+  primary-container: "#EADDFF"    # Accent Container
+  on-primary-container: "#21005D" # Text on primary container
+  background: "#FDFBFF"           # Canvas background
+  on-background: "#0E0E11"        # High-emphasis body text
+  surface: "#FFFFFF"              # Surface card background
+  on-surface: "#0E0E11"           # Text on surface card
+  on-surface-variant: "#49454F"   # Secondary body text
+  outline: "#5A5761"              # Component borders, muted captions
+  error: "#B3261E"                # Error state
+  on-error: "#FFFFFF"             # Text on error state
+  error-container: "#F9DEDC"      # Local Draft indicator background
+  on-error-container: "#410E0B"    # Local Draft indicator text
+  pending-container: "#FFE0B2"    # Pending Sync indicator background
+  on-pending-container: "#5D1F00"  # Pending Sync indicator text
+typography:
+  h1:
+    fontFamily: sans-serif
+    fontSize: 2.25rem
+    fontWeight: 700
+  body-md:
+    fontFamily: sans-serif
+    fontSize: 1rem
+  label-caps:
+    fontFamily: sans-serif
+    fontSize: 0.75rem
+rounded:
+  sm: 4px
+  md: 8px
+  lg: 16px
+spacing:
+  sm: 8px
+  md: 16px
+  lg: 24px
+components:
+  canvas:
+    backgroundColor: "{colors.background}"
+    textColor: "{colors.on-background}"
+  card:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.on-surface}"
+    rounded: "{rounded.md}"
+    padding: 16px
+  button-primary:
+    backgroundColor: "{colors.primary}"
+    textColor: "{colors.on-primary}"
+    rounded: "{rounded.md}"
+    padding: 12px
+  button-destructive:
+    backgroundColor: "{colors.error}"
+    textColor: "{colors.on-error}"
+    rounded: "{rounded.md}"
+    padding: 12px
+  badge-synced:
+    backgroundColor: "{colors.primary-container}"
+    textColor: "{colors.on-primary-container}"
+    rounded: "{rounded.sm}"
+  badge-local:
+    backgroundColor: "{colors.error-container}"
+    textColor: "{colors.on-error-container}"
+    rounded: "{rounded.sm}"
+  badge-pending:
+    backgroundColor: "{colors.pending-container}"
+    textColor: "{colors.on-pending-container}"
+    rounded: "{rounded.sm}"
+  text-muted:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.on-surface-variant}"
+  text-caption:
+    backgroundColor: "{colors.background}"
+    textColor: "{colors.outline}"
+---
 
-This document establishes the architecture for design tokens, themes, and high-contrast styling inside **d.o.Gist Hub**. It outlines the transition from hardcoded color states to dynamic, theme-aware Material 3 (M3) semantic tokens to prevent low-contrast text and icons on dark backgrounds (complying with **WCAG 2.2 AA/AAA** and **APCA** guidelines).
+## Overview
+
+Architectural Minimalism meets offline development productivity inside **d.o.Gist Hub**.
+The application adopts a spacious, minimal, high-contrast palette aligned with Material Design 3 (M3) standards to deliver absolute visual clarity.
+
+This specification outlines the dynamic, theme-aware semantic tokens used throughout the codebase. By avoiding static gray color states, we guarantee full compliance with **WCAG 2.2 AA/AAA** and **APCA** accessibility and contrast metrics across both light and dark OLED system canvases.
 
 ---
 
-## 1. Core Problem: Hardcoded Grays on OLED Dark Canvases
+## Colors
 
-In early mobile layouts, neutral text and decorative symbols often relied on static colors (like `#35333A` for secondary body text or `#5A5761` for captions). While these grays deliver great contrast on a light canvas (`#FDFBFF`), they become completely unreadable when the application is switched to a dark or pitch-black OLED background (`#08080A`).
+The system uses dynamic semantic color tokens mapped directly to the ambient `MaterialTheme.colorScheme` instead of custom hardcoded values.
 
-| Mode | Background | Static Gray (`#35333A`) | Contrast Ratio | WCAG Compliance |
-| :--- | :--- | :--- | :--- | :--- |
-| **Light Mode** | `#FDFBFF` (SlateBg) | `#35333A` (GraySecondary) | **14.1:1** | ✅ AAA Pass |
-| **Dark Mode** | `#08080A` (DarkBg) | `#35333A` (GraySecondary) | **1.4:1** | ❌ Fail (Sub-threshold) |
+### The Contrast Problem of Hardcoded Grays
+Static neutrals (such as `#35333A` for secondary text or `#5A5761` for borders) that look great on a light backdrop (`#FDFBFF`) crash down to sub-threshold contrast (e.g., **1.4:1**) on dark backgrounds (`#08080A`). 
+To solve this, we map all colors dynamically:
 
-### Solution: Dynamic Semantic Tokens
-To resolve accessibility failures under dark theme configurations, the application avoids using hardcoded static gray palette constants (like `GraySecondary` and `GrayTertiary`) in Compose views. Instead, it utilizes **Material 3 Semantic Design Tokens** mapped directly to the active theme context (`MaterialTheme.colorScheme`).
-
----
-
-## 2. 2026 Design Token Mapping Matrix
-
-| Design Token Category | Compose Theme Access | Light Hex Value | Dark Hex Value | WCAG AA Contrast | Perceptual Role |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Primary Accent** | `MaterialTheme.colorScheme.primary` | `#4F378B` | `#EADDFF` | > 6.5:1 | Main branding, primary buttons, active tabs. |
-| **On-Primary** | `MaterialTheme.colorScheme.onPrimary` | `#FFFFFF` | `#21005D` | > 4.5:1 | Text/icons on primary containers. |
-| **Primary Container** | `MaterialTheme.colorScheme.primaryContainer`| `#EADDFF` | `#4F378B` | - | Secondary highlights, card headers. |
-| **Canvas Background** | `MaterialTheme.colorScheme.background` | `#FBFBFC` | `#08080A` | - | Full screen backdrop, side sheets. |
-| **On-Background** | `MaterialTheme.colorScheme.onBackground` | `#0E0E11` | `#FFFFFF` | > 19.1:1 | Primary headers, long-form content. |
-| **Surface (Cards)** | `MaterialTheme.colorScheme.surface` | `#FFFFFF` | `#121214` | - | Dialog containers, card wrappers. |
-| **On-Surface (High)** | `MaterialTheme.colorScheme.onSurface` | `#0E0E11` | `#FFFFFF` | > 21.1:1 | High-emphasis body, list items. |
-| **On-Surface Variant** | `MaterialTheme.colorScheme.onSurfaceVariant`| `#35333A` | `#E2E1E6` | **> 7.0:1** | Secondary body, inactive states, description labels. |
-| **Outline (Muted)** | `MaterialTheme.colorScheme.outline` | `#5A5761` | `#94919E` | **> 4.5:1** | Component borders, caption text, placeholder outlines. |
+- **Primary Accent (`#6750A4` / `{colors.primary}`):** Active Purple accent used for main branding, primary buttons, and active interactive elements.
+- **Background (`#FDFBFF` / `{colors.background}`):** Clean off-white canvas backdrop providing maximum legibility.
+- **Surface (`#FFFFFF` / `{colors.surface}`):** Raised containers, card wrappers, and dialog boxes.
+- **On-Surface Variant (`#49454F` / `{colors.on-surface-variant}`):** Elegant medium slate gray for secondary labels and descriptions.
+- **Outline (`#5A5761` / `{colors.outline}`):** Muted border lines, caption typography, and input outlines.
 
 ---
 
-## 3. Jetpack Compose Integration Best Practices
+## Typography
 
-### A. Referencing Theme-Aware Color Schemes
-To allow seamless runtime switching and high-contrast scaling, always consume colors from the ambient `MaterialTheme.colorScheme` instead of custom global variables.
+Typography establishes structural hierarchies and high-density readability:
 
-```kotlin
-// ❌ BAD: Bypasses the theme, creating contrast crashes on dark background
-Text(
-    text = description,
-    color = GraySecondary
-)
-
-//  GOOD: Dynamically maps to light/dark equivalents automatically
-Text(
-    text = description,
-    color = MaterialTheme.colorScheme.onSurfaceVariant
-)
-```
-
-### B. Alpha Blending & Transparency
-When implementing semi-transparent overlays or muted secondary text (e.g., line numbers in diff views), do not blend static grays. Apply alpha opacity directly to dynamic semantic tokens:
-
-```kotlin
-// ❌ BAD: Static gray alpha blended
-color = GraySecondary.copy(alpha = 0.5f)
-
-//  GOOD: Theme-aware variant text alpha blended
-color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-```
-
-### C. M3 Ripple and Interaction States
-Button hover, focus, and press states should use the M3 dynamic ripple. Avoid hardcoded visual feedback bounds:
-- Under **WCAG 2.2**, interactive inputs require a minimum focus indicator contrast of **3.0:1** against adjacent colors.
-- Outlines of text fields should transition from `MaterialTheme.colorScheme.outline` (inactive) to `MaterialTheme.colorScheme.primary` (focused).
+- **H1 Header (`h1`):** Large bold displays for key titles and greeting headers.
+- **Body Medium (`body-md`):** High-legibility default sans-serif text for long-form content and gist details.
+- **Label Caps (`label-caps`):** Tiny, wide-tracked labels for metadata and technical indicators.
 
 ---
 
-## 4. Accessibility Checklists
+## Layout
 
-- [ ] **Touch Target Size**: Minimum `48.dp` height/width on all interactive surfaces.
-- [ ] **Minimum Text Size**: Sub-captions are kept above `11.sp` to support high visual density without sacrificing readability.
-- [ ] **TalkBack Screen Readers**: All icons and action buttons have a meaningful `contentDescription` or are marked decorative with `null`.
-- [ ] **System Bars Alignment**: Fully supports edge-to-edge rendering by applying `WindowInsets.safeDrawing` or `.navigationBarsPadding()`.
+Spacing is governed strictly by the Material Design 8dp grid system to create elegant negative space:
+
+- **Small Spacing (`spacing.sm` / 8dp):** Padding inside tight items, icon-to-text margins.
+- **Medium Spacing (`spacing.md` / 16dp):** Standard padding for cards, lists, and screen boundaries.
+- **Large Spacing (`spacing.lg` / 24dp):** Broad margins separating distinct semantic layout modules.
+
+---
+
+## Elevation & Depth
+
+Components communicate focus and interactive hierarchy through standard Material 3 tonal elevation and surface colors:
+
+- **Elevation 0 (Canvas):** Pure off-white background.
+- **Elevation 1 (Cards):** Surface container color providing elevated contrast bounds without dark heavy shadows.
+
+---
+
+## Shapes
+
+Rounded shapes provide a soft modern edge to coding blocks:
+
+- **Small Rounded (`rounded.sm` / 4px):** Applied to badges, tag labels, and status pills.
+- **Medium Rounded (`rounded.md` / 8px):** Applied to card panels, dialogue interfaces, and primary action buttons.
+- **Large Rounded (`rounded.lg` / 16px):** Applied to bottom sheets and deep drawer overlays.
+
+---
+
+## Components
+
+The semantic design token relationships are validated and executed in standard Material 3 layout containers:
+
+- **Primary Canvas (`canvas`):** Integrates `{colors.background}` and `{colors.on-background}` to create the foundational edge-to-edge backdrop.
+- **Card Wrapper (`card`):** Draws `{colors.surface}` and `{colors.on-surface}` with a smooth `{rounded.md}` boundary.
+- **Action Buttons (`button-primary` / `button-destructive`):** Use solid primary/error colors with highly contrasting white labels.
+- **Sync Badge Indicators (`badge-synced`, `badge-local`, `badge-pending`):** Low-saturation background containers paired with high-contrast text colors conforming to WCAG 2.2 contrast rules.
+
+---
+
+## Do's and Don'ts
+
+### Do's
+- **DO** always consume color parameters from `MaterialTheme.colorScheme` instead of hardcoded hex colors inside Compose screens.
+- **DO** verify that the text-to-background contrast ratio is at least **4.5:1** for normal text and **3.0:1** for large titles.
+- **DO** pair color tokens with dynamic transparency using `.copy(alpha = ...)` on semantic tokens instead of static gray tones.
+
+### Don'ts
+- **DON'T** use static global gray constants (like `GraySecondary` or `GrayTertiary`) for text on dynamic canvases.
+- **DON'T** create layout dimensions or padding offsets outside the defined 8dp grid spacing tokens.
+- **DON'T** implement custom color mappings that bypass the active system theme context.

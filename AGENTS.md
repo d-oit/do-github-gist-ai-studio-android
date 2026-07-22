@@ -1,8 +1,14 @@
 # Agent Instructions: d.o.Gist Hub Developer Guardrails
 
-You are an expert Android developer specializing in offline-first, reactive Kotlin and Jetpack Compose. Your goal is to maintain and extend **d.o.Gist Hub**, an offline-first GitHub Gist client.
+You are an expert Android developer specializing in offline-first, reactive Kotlin and Jetpack Compose. Your goal is to maintain and extend **d.o.Gist Hub**, an offline-first GitHub Gist client built strictly as a 100% Native Android application (Kotlin, Jetpack Compose, Room).
 
 To ensure stability, architectural cleanliness, and flawless integration, you MUST strictly adhere to the instructions below.
+
+---
+
+## 0. Native Android Stack Mandate (No TypeScript / Web)
+- **Native Kotlin Only**: This project is 100% Native Android. All data models, domain entities, Room database schemas, ViewModel state flows, and UI composables must be authored exclusively in **Kotlin** (`.kt`).
+- **No Web / TypeScript Artifacts**: Do not generate, propose, or write TypeScript (`.ts`/`.tsx`), JavaScript, or web-framework schemas or code files for application models or business logic. All model structures (e.g., Gist entities, API responses, sync state) must be expressed as idiomatic Kotlin data classes or sealed interfaces under `com.example.*`.
 
 ---
 
@@ -51,8 +57,44 @@ Before declaring any change completed, you MUST execute the following verificati
 6. **Screenshot Verification**: If Compose UI layouts were intentionally changed, verify or re-record Roborazzi screenshot baselines (`gradle :app:verifyRoborazziDebug` / `gradle :app:recordRoborazziDebug`).
 7. **PR Git Push & CI Verification (MANDATORY)**:
    - Always `git commit` and `git push` any code/document changes made during development to the Pull Request's branch.
-   - Verify the GitHub Pull Request's CI status. **All CI checks must pass completely** without any failures or warnings. Address all failures and warnings immediately.
+   - Use `gh` CLI to manage Pull Requests (`gh pr create`, `gh pr view`, `gh pr list`, `gh pr edit`, `gh pr checkout`).
+   - Verify the GitHub Pull Request's CI status via `gh pr view <number> --json statusCheckRollup` or `gh pr checks`. **All CI checks must pass completely** without any failures or warnings. Address all failures and warnings immediately.
    - **Task Completion Criteria**: A task is only considered completed when all CI checks on the PR pass successfully (fully "green") and all PR review comments are fully resolved. Never declare a task completed until this has been satisfied.
+
+### 3.1 GitHub PR Operations via GitHub CLI (`gh`)
+
+When creating, inspecting, or updating GitHub Pull Requests, use the `gh` CLI:
+
+- **Setup & Token Configuration**: Ensure `gh` CLI is available (install to `./bin/gh` if not present) and `GH_TOKEN` is exported from the git remote credentials:
+  ```bash
+  which gh || (curl -sS -L https://github.com/cli/cli/releases/download/v2.52.0/gh_2.52.0_linux_amd64.tar.gz | tar -xz && mkdir -p bin && mv gh_2.52.0_linux_amd64/bin/gh bin/ && rm -rf gh_2.52.0_linux_amd64)
+  export GH_TOKEN=$(git remote get-url origin | sed -n 's|.*https://\([^@]*\)@.*|\1|p')
+  ```
+- **Create a New PR (`gh pr create`)**: Write markdown body to a temp file to avoid shell escaping issues:
+  ```bash
+  cat << 'EOF' > /tmp/pr_body.md
+  ## Summary
+  - ...
+  EOF
+  gh pr create --title "type: short summary" --body-file /tmp/pr_body.md --base main
+  ```
+- **Get / View PR Details & CI Status (`gh pr view` / `gh pr checks`)**:
+  ```bash
+  gh pr view <pr_number> --json number,title,state,url,headRefName,baseRefName,statusCheckRollup
+  gh pr checks <pr_number>
+  ```
+- **List PRs (`gh pr list`)**:
+  ```bash
+  gh pr list --state open --json number,title,headRefName,url
+  ```
+- **Update an Existing PR (`gh pr edit`)**:
+  ```bash
+  gh pr edit <pr_number> --title "updated title" --body-file /tmp/updated_body.md
+  ```
+- **Checkout a PR Branch (`gh pr checkout`)**:
+  ```bash
+  gh pr checkout <pr_number>
+  ```
 
 ---
 
@@ -81,4 +123,8 @@ Before declaring any change completed, you MUST execute the following verificati
 
 4. **Strict Spotless & ktlint Compliance (CRITICAL)**:
    - All changed files **MUST** conform to Ktlint styling rules. Always run `gradle spotlessApply` to automatically format your code before pushing or completing a task. Never submit files that fail `gradle spotlessCheck` as they will break the CI pipeline.
+
+5. **Build Concurrency Safety (CRITICAL)**:
+   - Build tasks are strictly blocking and acquire file/daemon locks. **Never execute `compile_applet` or `lint_applet` while another background Gradle task (e.g. `./harness.sh check`, `./harness.sh format`, `./harness.sh build`) is currently running.**
+   - Always await the completion of active background tasks before launching a compile or build tool call, or use harness commands sequentially to avoid container lock contention and control plane health timeouts.
 

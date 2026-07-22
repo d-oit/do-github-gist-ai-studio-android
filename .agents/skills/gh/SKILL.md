@@ -150,6 +150,21 @@ Sometimes useful data isn't on the typed commands. Examples:
   `{owner}/{repo}` placeholder is filled in for you when run from a repo
   with detected remotes; pass them literally if you want determinism.
 
+## Pull Request Management (`gh pr`)
+
+- **Create PR (`gh pr create`)**: Always pass `--title` and `--body-file` (write body markdown to a temp file first to prevent shell string parsing issues):
+  `gh pr create --title "feat: title" --body-file /tmp/pr_body.md --base main`
+- **View / Inspect PR (`gh pr view`)**:
+  `gh pr view <number> --json number,title,state,url,headRefName,baseRefName,statusCheckRollup`
+- **List PRs (`gh pr list`)**:
+  `gh pr list --state open --json number,title,headRefName,url`
+- **Edit PR (`gh pr edit`)**:
+  `gh pr edit <number> --title "new title" --body-file /tmp/updated_body.md`
+- **Checkout PR Branch (`gh pr checkout`)**:
+  `gh pr checkout <number>`
+- **Check CI Status (`gh pr checks`)**:
+  `gh pr checks <number>`
+
 ## Authentication
 
 - `gh auth status` prints the active host(s), user, and which env var (if
