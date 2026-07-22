@@ -32,6 +32,8 @@ Any AI coding agent modifying this codebase **MUST** read and adhere to this ski
 
 ### 1.3 Modularity & Code Quality
 * **Maximum 600 LOC**: No Kotlin source file may exceed **600 Lines of Code (LOC)**. If a file is approaching this limit, extract helper methods, sub-composables, or business logic into separate, cohesive Kotlin files.
+* **Extension Function Imports**: When extracting class methods into top-level Kotlin extension functions (e.g. `GistViewModelRevisionExtensions.kt`), update all consumer composables/dialogs with explicit imports for the new extension functions.
+* **Detekt Suppressions for Internal Backing StateFlows**: When exposing backing `MutableStateFlow` properties as `internal` for extension function access within the same package, annotate them with `@Suppress("VariableNaming")` to satisfy Detekt static analysis.
 * **No Magic Numbers or Hardcoded Settings**: Never hardcode endpoints, timeouts, or visual dimensions. Use `strings.xml`, central Kotlin constants, or Material 3 `Theme` tokens.
 * **Build Concurrency Safety**: Never execute `compile_applet` or `lint_applet` while a background Gradle task (`./harness.sh check`, `./harness.sh format`, etc.) is in progress to prevent build container daemon lock contention. Always run build and check steps serially.
 
@@ -133,3 +135,13 @@ Before submitting or pushing any task:
 4. [ ] **Test**: Run `./harness.sh test` to execute E2E and unit test suites locally.
 5. [ ] **Build**: Run `./harness.sh build` to verify clean compilation.
 6. [ ] **PR & CI Verification**: Push to your branch, manage the PR using `gh pr create` / `gh pr edit` / `gh pr view`, and verify via `gh pr view <number> --json statusCheckRollup` or `gh pr checks` that all GitHub Actions CI checks are 100% "green" with zero warnings or failures.
+
+---
+
+## 5. Master Orchestrator Swarm Pipeline Integration
+
+When executing complex tasks on Do Gist Hub:
+1. **Decompose**: Decompose the task into atomic To-Dos assigned to specialized personas (Architect, Diagnostics, UI, Sync Engine, QA, CI/Build).
+2. **Code-First Inspection**: Execute a read-only diagnostic action (e.g. `view_file` or static analysis) before writing code changes.
+3. **Verification**: Format via `./harness.sh format` and run `./harness.sh check` to ensure zero regressions across lint, detekt, spotless, and the local test pyramid.
+

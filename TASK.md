@@ -441,6 +441,41 @@ and upload SARIF to GitHub Security.
   - `./harness.sh check`
 - **Definition of done**: No file exceeds 600 LOC, AGP warnings are resolved, build concurrency safety guidelines are codified in skills/AGENTS.md, and harness checks pass cleanly.
 
+---
+
+## 📂 23. Swarm Agent Orchestration Framework & Small TODO Decomposition
+
+- **Goal**: Implement a multi-agent swarm strategy led by an Orchestrator Agent to decompose features, quality checks, and refactoring tasks into atomic, verified TODOs.
+- **Files expected to change**: `TASK.md`, `AGENTS.md`, `DraftEditorDialog.kt`, `DraftEditorAiRefactoringHelper.kt`
+- **Implementation checklist**:
+  - [x] **Sub-Agent 1 (Orchestrator)**: Decompose full application lifecycle and maintenance into specialized agent domains (Architect, UI/Compose, Sync Engine, QA/Test Pyramid, CI/CD).
+  - [x] **Sub-Agent 2 (Architect)**: Enforce 600 LOC limits across all source files; extracted `DraftEditorAiRefactoringHelper.kt` from `DraftEditorDialog.kt` (reduced from 574 to 503 LOC).
+  - [x] **Sub-Agent 3 (UI / Compose Specialist)**: Verify Material 3 components, touch targets (≥48dp), and explicit `testTag` identifiers on interactive elements.
+  - [x] **Sub-Agent 4 (QA / Test Pyramid Specialist)**: Ensure Spotless ktfmt formatting compliance via `./harness.sh format`.
+  - [x] **Sub-Agent 5 (CI / Build Specialist)**: Execute `./harness.sh check` pipeline (wrapper check, spotless, detekt, lint, unit & E2E tests).
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+- **Definition of done**: Orchestrator-driven task decomposition complete, 600 LOC compliance verified across all files, code formatted with Spotless, and 100% of pipeline checks passing green.
+
+---
+
+## 📂 24. Codebase Architectural Refactoring & 600 LOC Ceiling Enforcement
+
+- **Goal**: Refactor `GistViewModel.kt` and `GistHubAppScreen.kt` to ensure strict compliance with the 600 LOC ceiling rule, extracting navigation components and revision extension functions.
+- **Files expected to change**: `app/src/main/java/com/example/ui/viewmodel/GistViewModel.kt`, `app/src/main/java/com/example/ui/viewmodel/GistViewModelRevisionExtensions.kt`, `app/src/main/java/com/example/ui/screens/GistHubAppScreen.kt`, `app/src/main/java/com/example/ui/components/GistHubNavigationComponents.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Extract `GistViewModelRevisionExtensions.kt` from `GistViewModel.kt` (reduced `GistViewModel.kt` from 585 to 511 LOC).
+  - [x] Extract `GistHubNavigationComponents.kt` containing `GistHubTopAppBar` and `GistHubBottomBar` from `GistHubAppScreen.kt` (reduced `GistHubAppScreen.kt` from 572 to 413 LOC).
+  - [x] Suppress Detekt `VariableNaming` rule for internal backing state flows.
+  - [x] Execute `./harness.sh format` to apply Spotless ktfmt formatting across all modified files.
+  - [x] Execute `./harness.sh check` to verify wrapper integrity, spotless, detekt, lint, and full unit/integration/E2E test suites.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+- **Definition of done**: All Kotlin source files in `app/src/main` are under 550 LOC, code is spotless-formatted, and 100% of harness quality checks pass green.
+
+
 
 
 

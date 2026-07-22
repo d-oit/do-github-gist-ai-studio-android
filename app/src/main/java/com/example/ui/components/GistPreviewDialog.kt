@@ -58,6 +58,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.entity.GistWithFiles
 import com.example.ui.theme.ActivePurple
 import com.example.ui.theme.SlateBg
+import com.example.ui.viewmodel.clearPreviewRevisionState
+import com.example.ui.viewmodel.loadGistHistory
+import com.example.ui.viewmodel.selectRevision
 
 @Composable
 fun GistPreviewDialog(
