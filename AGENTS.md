@@ -57,8 +57,44 @@ Before declaring any change completed, you MUST execute the following verificati
 6. **Screenshot Verification**: If Compose UI layouts were intentionally changed, verify or re-record Roborazzi screenshot baselines (`gradle :app:verifyRoborazziDebug` / `gradle :app:recordRoborazziDebug`).
 7. **PR Git Push & CI Verification (MANDATORY)**:
    - Always `git commit` and `git push` any code/document changes made during development to the Pull Request's branch.
-   - Verify the GitHub Pull Request's CI status. **All CI checks must pass completely** without any failures or warnings. Address all failures and warnings immediately.
+   - Use `gh` CLI to manage Pull Requests (`gh pr create`, `gh pr view`, `gh pr list`, `gh pr edit`, `gh pr checkout`).
+   - Verify the GitHub Pull Request's CI status via `gh pr view <number> --json statusCheckRollup` or `gh pr checks`. **All CI checks must pass completely** without any failures or warnings. Address all failures and warnings immediately.
    - **Task Completion Criteria**: A task is only considered completed when all CI checks on the PR pass successfully (fully "green") and all PR review comments are fully resolved. Never declare a task completed until this has been satisfied.
+
+### 3.1 GitHub PR Operations via GitHub CLI (`gh`)
+
+When creating, inspecting, or updating GitHub Pull Requests, use the `gh` CLI:
+
+- **Setup & Token Configuration**: Ensure `gh` CLI is available (install to `./bin/gh` if not present) and `GH_TOKEN` is exported from the git remote credentials:
+  ```bash
+  which gh || (curl -sS -L https://github.com/cli/cli/releases/download/v2.52.0/gh_2.52.0_linux_amd64.tar.gz | tar -xz && mkdir -p bin && mv gh_2.52.0_linux_amd64/bin/gh bin/ && rm -rf gh_2.52.0_linux_amd64)
+  export GH_TOKEN=$(git remote get-url origin | sed -n 's|.*https://\([^@]*\)@.*|\1|p')
+  ```
+- **Create a New PR (`gh pr create`)**: Write markdown body to a temp file to avoid shell escaping issues:
+  ```bash
+  cat << 'EOF' > /tmp/pr_body.md
+  ## Summary
+  - ...
+  EOF
+  gh pr create --title "type: short summary" --body-file /tmp/pr_body.md --base main
+  ```
+- **Get / View PR Details & CI Status (`gh pr view` / `gh pr checks`)**:
+  ```bash
+  gh pr view <pr_number> --json number,title,state,url,headRefName,baseRefName,statusCheckRollup
+  gh pr checks <pr_number>
+  ```
+- **List PRs (`gh pr list`)**:
+  ```bash
+  gh pr list --state open --json number,title,headRefName,url
+  ```
+- **Update an Existing PR (`gh pr edit`)**:
+  ```bash
+  gh pr edit <pr_number> --title "updated title" --body-file /tmp/updated_body.md
+  ```
+- **Checkout a PR Branch (`gh pr checkout`)**:
+  ```bash
+  gh pr checkout <pr_number>
+  ```
 
 ---
 

@@ -87,6 +87,41 @@ To maintain dev-CI congruence, always execute local validations using the unifie
 ./harness.sh build
 ```
 
+### 3.1 GitHub Pull Request Management (`gh` CLI)
+
+Always manage GitHub PRs using the `gh` CLI tool:
+
+- **Environment Setup**:
+  ```bash
+  which gh || (curl -sS -L https://github.com/cli/cli/releases/download/v2.52.0/gh_2.52.0_linux_amd64.tar.gz | tar -xz && mkdir -p bin && mv gh_2.52.0_linux_amd64/bin/gh bin/ && rm -rf gh_2.52.0_linux_amd64)
+  export GH_TOKEN=$(git remote get-url origin | sed -n 's|.*https://\([^@]*\)@.*|\1|p')
+  ```
+- **New PR Creation (`gh pr create`)**:
+  ```bash
+  cat << 'EOF' > /tmp/pr_body.md
+  ## Summary
+  - ...
+  EOF
+  gh pr create --title "type: short description" --body-file /tmp/pr_body.md --base main
+  ```
+- **Get / Inspect PR Status & CI Checks (`gh pr view` / `gh pr checks`)**:
+  ```bash
+  gh pr view <pr_number> --json number,title,state,url,headRefName,baseRefName,statusCheckRollup
+  gh pr checks <pr_number>
+  ```
+- **List PRs (`gh pr list`)**:
+  ```bash
+  gh pr list --state open --json number,title,headRefName,url
+  ```
+- **Update Existing PR (`gh pr edit`)**:
+  ```bash
+  gh pr edit <pr_number> --title "new title" --body-file /tmp/updated_body.md
+  ```
+- **Checkout PR (`gh pr checkout`)**:
+  ```bash
+  gh pr checkout <pr_number>
+  ```
+
 ---
 
 ## 4. Definition of Done (DoD) Checklist
@@ -97,4 +132,4 @@ Before submitting or pushing any task:
 3. [ ] **Verify**: Ensure `./harness.sh check` compiles and passes format, Detekt, Lint, and Unit testing with 100% success.
 4. [ ] **Test**: Run `./harness.sh test` to execute E2E and unit test suites locally.
 5. [ ] **Build**: Run `./harness.sh build` to verify clean compilation.
-6. [ ] **CI**: Push to your branch and ensure that the GitHub Actions PR CI runs completely "green" with zero warnings or failures.
+6. [ ] **PR & CI Verification**: Push to your branch, manage the PR using `gh pr create` / `gh pr edit` / `gh pr view`, and verify via `gh pr view <number> --json statusCheckRollup` or `gh pr checks` that all GitHub Actions CI checks are 100% "green" with zero warnings or failures.
