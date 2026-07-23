@@ -134,6 +134,27 @@ When creating, inspecting, or updating GitHub Pull Requests, use the `gh` CLI:
 7. **Detekt Static Analysis Rules for Internal Backing StateFlows**:
    - When converting `private` backing state flows (e.g., `_historyList`) to `internal` visibility for extension function access within the same package, annotate each property with `@Suppress("VariableNaming")`. Detekt's `VariableNaming` rule flags leading underscores on non-private properties, which will cause `./harness.sh check` to fail if unannotated.
 
+8. **Git Index and Repository Recovery (CRITICAL)**:
+   - **Issue**: If Git operations are interrupted (due to container or fetch timeouts, abrupt termination, or concurrent operations), the Git index or object database can become corrupt (errors like `fatal: unknown index entry format`, `loose object is corrupt`, or `fatal: bad object HEAD`).
+   - **Resolution Procedure**:
+     1. Try resetting the index first: `rm -f .git/index && git reset`
+     2. If `bad object HEAD` or corruption persists, execute a **metadata swap**:
+        - Clone a clean metadata-only repo to a temporary directory: `rm -rf /tmp/repo_fresh && git clone https://github.com/d-oit/do-github-gist-ai-studio-android.git /tmp/repo_fresh` (adjust the URL if needed, or get it via `git remote get-url origin`)
+        - Swap the corrupted `.git` folder with the fresh one: `rm -rf .git && cp -r /tmp/repo_fresh/.git . && rm -rf /tmp/repo_fresh`
+        - Run `git status` to verify working directory alignment.
+
+9. **Gradle Wrapper and Binary Protection**:
+   - **Issue**: Spotless or Git line ending transformation rules can accidentally modify or corrupt binary assets such as `gradle/wrapper/gradle-wrapper.jar`.
+   - **Prevention & Recovery**:
+     - Ensure binary files are excluded from formatting rules.
+     - If the wrapper jar is reported corrupt or invalid:
+       - Restore it from clean origin: `git restore gradle/wrapper/gradle-wrapper.jar`
+       - Or regenerate it using local gradle: `rm -f gradle/wrapper/gradle-wrapper.jar && gradle wrapper --gradle-version 9.3.1 --no-daemon`
+
+10. **Execution Permissions (Script Safeguards)**:
+    - **Issue**: When files are cloned or restored, script execution permissions can be lost, causing `sh: ./harness.sh: Permission denied`.
+    - **Resolution**: Always run `chmod +x ./harness.sh gradlew` before executing scripts or starting any development task.
+
 ---
 
 ## 6. Master Orchestrator & Swarm Task Execution Protocol

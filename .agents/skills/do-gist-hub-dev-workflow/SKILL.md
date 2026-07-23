@@ -145,3 +145,32 @@ When executing complex tasks on Do Gist Hub:
 2. **Code-First Inspection**: Execute a read-only diagnostic action (e.g. `view_file` or static analysis) before writing code changes.
 3. **Verification**: Format via `./harness.sh format` and run `./harness.sh check` to ensure zero regressions across lint, detekt, spotless, and the local test pyramid.
 
+---
+
+## 6. Troubleshooting and Environment Recovery Safeguards (CRITICAL)
+
+### 6.1 Git Index / Repository Corruption Recovery
+If git reports index or object database corruption (such as `fatal: unknown index entry format`, `loose object is corrupt`, or `fatal: bad object HEAD`) due to sudden execution interruptions or container state locks:
+1. Try resetting the index first: `rm -f .git/index && git reset`
+2. If `bad object HEAD` or corruption persists, execute a **metadata swap**:
+   ```bash
+   rm -rf /tmp/repo_fresh && git clone https://github.com/d-oit/do-github-gist-ai-studio-android.git /tmp/repo_fresh
+   rm -rf .git && cp -r /tmp/repo_fresh/.git . && rm -rf /tmp/repo_fresh
+   git status
+   ```
+
+### 6.2 Gradle Wrapper Corruption
+If the gradle-wrapper.jar becomes corrupted or modified by automatic spotless runs or file system transformation:
+1. Restore the pristine wrapper jar directly from git origin:
+   ```bash
+   git restore gradle/wrapper/gradle-wrapper.jar
+   ```
+2. If the local file is untracked or needs recreation, regenerate it using the local Gradle installation:
+   ```bash
+   rm -f gradle/wrapper/gradle-wrapper.jar && gradle wrapper --gradle-version $(grep -oP 'gradle-\K[0-9.]+' gradle/wrapper/gradle-wrapper.properties)-bin.zip --no-daemon
+   ```
+
+### 6.3 Executable Script Permissions
+When files are cloned or restored, script execution permissions can be lost, causing `sh: ./harness.sh: Permission denied`.
+Always ensure `chmod +x ./harness.sh gradlew` is run proactively before starting any task or running harness commands.
+

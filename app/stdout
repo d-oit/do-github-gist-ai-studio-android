@@ -25,7 +25,7 @@
 /app/applet/gradle/wrapper/gradle-wrapper.properties:3: Warning: A newer version of Gradle than 9.3.1 is available: 9.6.1 [AndroidGradlePluginVersion]
 distributionUrl=https\://services.gradle.org/distributions/gradle-9.3.1-bin.zip
                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/app/applet/gradle/libs.versions.toml:2: Warning: A newer version of com.android.application than 9.1.1 is available: 9.3.0 [AndroidGradlePluginVersion]
+/app/applet/gradle/libs.versions.toml:2: Warning: A newer version of com.android.application than 9.1.1 is available: 9.3.1 [AndroidGradlePluginVersion]
 agp = "9.1.1"
       ~~~~~~~
 
