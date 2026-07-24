@@ -44,7 +44,7 @@ jobs:
           sha256sum app-release.apk > app-release.apk.sha256
 
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@64df7ca660f0a62e71442d521755ff05b68b9b9b # v2.0.1
+        uses: softprops/action-gh-release@20e085ccc73308c2c8e43ab8da4f8d7ecbb94d4e # v2.0.1
         with:
           files: |
             app/build/outputs/apk/release/app-release.apk
