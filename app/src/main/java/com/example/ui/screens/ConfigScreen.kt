@@ -504,7 +504,7 @@ fun ConfigScreen(viewModel: GistViewModel) {
           if (token.isNotEmpty()) {
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-              onClick = { viewModel.refreshGists() },
+              onClick = { viewModel.refreshGists(context) },
               colors =
                 ButtonDefaults.buttonColors(
                   containerColor = MaterialTheme.colorScheme.primaryContainer,

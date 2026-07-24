@@ -475,6 +475,24 @@ and upload SARIF to GitHub Security.
   - `./harness.sh check`
 - **Definition of done**: All Kotlin source files in `app/src/main` are under 550 LOC, code is spotless-formatted, and 100% of harness quality checks pass green.
 
+---
+
+## 📂 25. Pull-to-Refresh & WorkManager Integration
+
+- **Goal**: Implement Pull-to-Refresh functionality on the Gist list screen using PullRefreshIndicator, triggering a manual sync WorkManager request.
+- **Files expected to change**: `GistViewModel.kt`, `HomeScreen.kt`, `GistHubAppScreen.kt`, `ConfigScreen.kt`, `libs.versions.toml`, `app/build.gradle.kts`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Register standard Compose Material library dependency (`androidx.compose.material`) in `libs.versions.toml` and implement it in `app/build.gradle.kts`.
+  - [x] Update `GistViewModel.kt` to accept `Context` in `refreshGists(context)` and schedule a manual sync WorkManager request via `GistSyncWorker.enqueue(context)` when present.
+  - [x] Collect `syncStatus` reactively within `GistViewModel.kt` to update `isRefreshing` state dynamically.
+  - [x] Refactor `HomeScreen.kt` to use `@OptIn(ExperimentalMaterialApi::class)` and replace `PullToRefreshBox` with Material 2's `PullRefreshIndicator` and the `pullRefresh` state container.
+  - [x] Update `GistHubAppScreen.kt` and `ConfigScreen.kt` to retrieve local `Context` via `LocalContext.current` and pass it to `viewModel.refreshGists(context)`.
+  - [x] Run `./harness.sh format` and `./harness.sh check` to verify formatting, linter rules, and all Robolectric unit/integration/E2E tests pass 100%.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+- **Definition of done**: The Pull-to-Refresh gesture enqueues the `GistSyncWorker` through WorkManager, updates the reactive syncing state properly, and passes the entire quality gate suite with zero errors.
+
 
 
 

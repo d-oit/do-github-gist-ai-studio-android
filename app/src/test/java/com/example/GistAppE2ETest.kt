@@ -13,7 +13,9 @@ import com.example.ui.viewmodel.GistViewModel
 import com.example.ui.viewmodel.exportBackup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Assert.*
@@ -514,5 +516,34 @@ class GistAppE2ETest {
         "Error message should clearly state they cannot fork their own gist",
         errorMsg.contains("cannot fork your own Gist", ignoreCase = true)
       )
+    }
+
+  @Test
+  fun test_lastSyncTime_updates_on_sync() =
+    runTest(testDispatcher) {
+      // Start a background collection job so that WhileSubscribed StateFlow updates reactively
+      // during testing
+      val collectJob = launch { viewModel.lastSyncTime.collect {} }
+
+      // 0. Explicitly clear and reset state for hermetic isolation
+      configPrefs.setLastSyncTime(0L)
+      repository.clearSyncStatus()
+      testDispatcher.scheduler.advanceUntilIdle()
+
+      // 1. Initial lastSyncTime should be 0
+      assertEquals(0L, viewModel.lastSyncTime.value)
+
+      // 2. Perform a sync update directly via repository
+      val testTime = 1718889999000L
+      repository.updateSyncStatus(
+        com.example.data.repository.SyncStatus.Success("Synced!", testTime)
+      )
+      testDispatcher.scheduler.advanceUntilIdle()
+
+      // 3. Assert viewModel.lastSyncTime matches the testTime
+      assertEquals(testTime, viewModel.lastSyncTime.value)
+      assertEquals(testTime, configPrefs.getLastSyncTime())
+
+      collectJob.cancel()
     }
 }

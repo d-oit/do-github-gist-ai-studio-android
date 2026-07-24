@@ -16,10 +16,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -31,7 +35,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -48,7 +51,7 @@ import com.example.ui.theme.ActivePurpleContainer
 import com.example.ui.theme.DarkPurpleText
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 fun HomeScreen(
   gists: List<GistWithFiles>,
   searchQuery: String,
@@ -62,7 +65,8 @@ fun HomeScreen(
   onToggleStar: (String) -> Unit,
   onEdit: (GistWithFiles) -> Unit,
   onDelete: (String) -> Unit,
-  onPreview: (GistWithFiles) -> Unit
+  onPreview: (GistWithFiles) -> Unit,
+  lastSyncTime: Long = 0L
 ) {
   val filtered =
     remember(gists, searchQuery, selectedTag) {
@@ -90,11 +94,9 @@ fun HomeScreen(
       }
     }
 
-  PullToRefreshBox(
-    isRefreshing = isRefreshing,
-    onRefresh = onRefresh,
-    modifier = Modifier.fillMaxSize()
-  ) {
+  val pullRefreshState = rememberPullRefreshState(refreshing = isRefreshing, onRefresh = onRefresh)
+
+  Box(modifier = Modifier.fillMaxSize().pullRefresh(pullRefreshState)) {
     Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
       // Persistent Search Bar
       OutlinedTextField(
@@ -172,13 +174,22 @@ fun HomeScreen(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
       ) {
-        Text(
-          text = "Local Cache & Sync Status",
-          fontSize = 12.sp,
-          fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-          color = ActivePurple,
-          letterSpacing = 1.sp
-        )
+        Column {
+          Text(
+            text = "Local Cache & Sync Status",
+            fontSize = 12.sp,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            color = ActivePurple,
+            letterSpacing = 1.sp
+          )
+          Spacer(modifier = Modifier.height(2.dp))
+          Text(
+            text = "Last Synced: ${formatLastSynced(lastSyncTime)}",
+            fontSize = 11.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.testTag("last_synced_timestamp")
+          )
+        }
         Box(
           modifier =
             Modifier.background(ActivePurpleContainer, RoundedCornerShape(10.dp))
@@ -365,5 +376,25 @@ fun HomeScreen(
         }
       }
     }
+
+    PullRefreshIndicator(
+      refreshing = isRefreshing,
+      state = pullRefreshState,
+      modifier = Modifier.align(Alignment.TopCenter).testTag("pull_refresh_indicator"),
+      backgroundColor = MaterialTheme.colorScheme.surface,
+      contentColor = MaterialTheme.colorScheme.primary
+    )
+  }
+}
+
+private fun formatLastSynced(timestamp: Long): String {
+  if (timestamp <= 0L) return "Never"
+  return try {
+    val date = java.util.Date(timestamp)
+    val formatter =
+      java.text.SimpleDateFormat("MMM dd, yyyy 'at' hh:mm a", java.util.Locale.getDefault())
+    formatter.format(date)
+  } catch (e: Exception) {
+    "Never"
   }
 }

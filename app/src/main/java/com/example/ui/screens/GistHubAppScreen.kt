@@ -42,12 +42,14 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun GistHubAppScreen(viewModel: GistViewModel) {
+  val context = androidx.compose.ui.platform.LocalContext.current
   val gists by viewModel.gists.collectAsState()
   val isRefreshing by viewModel.isRefreshing.collectAsState()
   val isSyncing by viewModel.isSyncing.collectAsState()
   val statusMessage by viewModel.statusMessage.collectAsState()
   val errorMessage by viewModel.errorMessage.collectAsState()
   val syncStatus by viewModel.syncStatus.collectAsState()
+  val lastSyncTime by viewModel.lastSyncTime.collectAsState()
 
   val selectedTag by viewModel.selectedTag.collectAsState()
   val allTags by viewModel.allTags.collectAsState()
@@ -124,7 +126,7 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
           searchQuery = searchQuery,
           onSearchQueryChange = { viewModel.updateSearchQuery(it) },
           isRefreshing = isRefreshing,
-          onRefresh = { viewModel.refreshGists() }
+          onRefresh = { viewModel.refreshGists(context) }
         )
       }
     },
@@ -197,7 +199,7 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
               allTags = allTags,
               onSelectedTagChange = { viewModel.updateSelectedTag(it) },
               isRefreshing = isRefreshing,
-              onRefresh = { viewModel.refreshGists() },
+              onRefresh = { viewModel.refreshGists(context) },
               onTogglePin = { viewModel.togglePin(it) },
               onToggleStar = { viewModel.toggleStar(it) },
               onEdit = { item ->
@@ -210,7 +212,8 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
                 showEditor = true
               },
               onDelete = { gistIdToDelete = it },
-              onPreview = { selectedDetailGistId = it.gist.id }
+              onPreview = { selectedDetailGistId = it.gist.id },
+              lastSyncTime = lastSyncTime
             )
           }
           "vault" -> {

@@ -1,5 +1,6 @@
 package com.example.ui.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.core.config.AppConfiguration
@@ -60,6 +61,21 @@ class GistViewModel(
 
   val syncStatus: StateFlow<com.example.data.repository.SyncStatus> = repository.syncStatus
 
+  val lastSyncTime: StateFlow<Long> =
+    repository.syncStatus
+      .map { status ->
+        when (status) {
+          is com.example.data.repository.SyncStatus.Success -> status.timestamp
+          is com.example.data.repository.SyncStatus.Error -> status.timestamp
+          else -> configPrefs.getLastSyncTime()
+        }
+      }
+      .stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = configPrefs.getLastSyncTime()
+      )
+
   // Config form states
   private val _token = MutableStateFlow(configPrefs.getGithubToken())
   val token: StateFlow<String> = _token.asStateFlow()
@@ -94,6 +110,11 @@ class GistViewModel(
   val remoteError: StateFlow<String?> = _remoteError.asStateFlow()
 
   init {
+    viewModelScope.launch {
+      repository.syncStatus.collect { status ->
+        _isRefreshing.value = status is com.example.data.repository.SyncStatus.Syncing
+      }
+    }
     viewModelScope.launch {
       combine(_searchQuery, _selectedTag) { query, tag -> query to tag }
         .collectLatest { (query, tag) ->
@@ -245,30 +266,35 @@ class GistViewModel(
     _appTheme.value = theme
   }
 
-  fun refreshGists() {
+  fun refreshGists(context: Context? = null) {
     viewModelScope.launch {
-      _isRefreshing.value = true
       clearMessages()
-      repository.updateSyncStatus(com.example.data.repository.SyncStatus.Syncing)
-      val result = repository.fetchFromRemote()
-      result
-        .onSuccess {
-          repository.updateSyncStatus(
-            com.example.data.repository.SyncStatus.Success(
-              "Gists updated successfully",
-              System.currentTimeMillis()
+      if (context != null) {
+        repository.updateSyncStatus(com.example.data.repository.SyncStatus.Syncing)
+        com.example.data.sync.GistSyncWorker.enqueue(context)
+      } else {
+        _isRefreshing.value = true
+        repository.updateSyncStatus(com.example.data.repository.SyncStatus.Syncing)
+        val result = repository.fetchFromRemote()
+        result
+          .onSuccess {
+            repository.updateSyncStatus(
+              com.example.data.repository.SyncStatus.Success(
+                "Gists updated successfully",
+                System.currentTimeMillis()
+              )
             )
-          )
-          _statusMessage.value = "Gists updated successfully"
-        }
-        .onFailure { error ->
-          val classified = com.example.core.error.SyncErrorHandler.classifyError(error)
-          repository.updateSyncStatus(
-            com.example.data.repository.SyncStatus.Error(classified, System.currentTimeMillis())
-          )
-          _errorMessage.value = classified
-        }
-      _isRefreshing.value = false
+            _statusMessage.value = "Gists updated successfully"
+          }
+          .onFailure { error ->
+            val classified = com.example.core.error.SyncErrorHandler.classifyError(error)
+            repository.updateSyncStatus(
+              com.example.data.repository.SyncStatus.Error(classified, System.currentTimeMillis())
+            )
+            _errorMessage.value = classified
+          }
+        _isRefreshing.value = false
+      }
     }
   }
 
