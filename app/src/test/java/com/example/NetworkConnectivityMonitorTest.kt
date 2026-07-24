@@ -130,4 +130,137 @@ class NetworkConnectivityMonitorTest {
     assertEquals(1, unsyncedAfter.size)
     assertEquals("local_only_id", unsyncedAfter[0].gist.id)
   }
+
+  @Test
+  fun test_networkConnectivityMonitor_registersCallbackAndTriggersSync() = runTest {
+    // Initialize WorkManager for testing enqueued work
+    try {
+      val config = androidx.work.Configuration.Builder().build()
+      androidx.work.WorkManager.initialize(context, config)
+    } catch (e: Exception) {
+      // Ignored if already initialized
+    }
+
+    // Insert an unsynchronized GistEntity to trigger sync
+    val unsyncedGist =
+      GistEntity(
+        id = "local_only_id",
+        description = "Unsynced local gist",
+        htmlUrl = "",
+        url = "",
+        createdAt = "2026-07-15T00:00:00Z",
+        updatedAt = "2026-07-15T00:00:00Z",
+        nodeId = "",
+        isPublic = true,
+        isPinned = false,
+        isLocalOnly = true,
+        isDirty = false,
+        isDeleted = false,
+        isStarred = false,
+        isStarredDirty = false,
+        tags = emptyList(),
+        ownerLogin = "test_user",
+        ownerId = 12345,
+        ownerAvatarUrl = ""
+      )
+    database.gistDao().insertGist(unsyncedGist)
+
+    val connectivityManager =
+      context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+    val shadowConnectivityManager = org.robolectric.Shadows.shadowOf(connectivityManager)
+
+    // Configure internet capabilities and NetworkInfo for default/active network under Robolectric
+    val mockNetwork = org.robolectric.shadows.ShadowNetwork.newInstance(1)
+    val capabilities = android.net.NetworkCapabilities()
+    val shadowCapabilities = org.robolectric.Shadows.shadowOf(capabilities)
+    shadowCapabilities.addCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    shadowCapabilities.addCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+    shadowConnectivityManager.setNetworkCapabilities(mockNetwork, capabilities)
+
+    val networkInfo =
+      org.robolectric.shadows.ShadowNetworkInfo.newInstance(
+        android.net.NetworkInfo.DetailedState.CONNECTED,
+        android.net.ConnectivityManager.TYPE_WIFI,
+        0,
+        true,
+        true
+      )
+    shadowConnectivityManager.addNetwork(mockNetwork, networkInfo)
+
+    val monitor = NetworkConnectivityMonitor(context, repository)
+    val testScope = TestScope(testDispatcher)
+    monitor.startMonitoring(testScope)
+
+    // Trigger NetworkCallback onAvailable
+    val callbacks = shadowConnectivityManager.networkCallbacks
+    assertFalse("Should have registered network callbacks", callbacks.isEmpty())
+
+    callbacks.forEach { callback -> callback.onAvailable(mockNetwork) }
+
+    testScope.testScheduler.advanceUntilIdle()
+
+    // Assert that monitor.isOnline becomes true
+    assertTrue("Monitor should show online state", monitor.isOnline.value)
+
+    // Assert that a WorkManager task has been enqueued (polling up to 2 seconds due to
+    // Dispatchers.IO)
+    val workManager = androidx.work.WorkManager.getInstance(context)
+    var workInfos = emptyList<androidx.work.WorkInfo>()
+    for (i in 1..40) {
+      workInfos = workManager.getWorkInfosForUniqueWork("gist_sync_work").get()
+      if (workInfos.isNotEmpty()) break
+      Thread.sleep(50)
+    }
+    assertFalse("Should have enqueued a sync task", workInfos.isEmpty())
+  }
+
+  @Test
+  fun test_networkConnectivityMonitor_networkLostUpdatesState() = runTest {
+    val connectivityManager =
+      context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+    val shadowConnectivityManager = org.robolectric.Shadows.shadowOf(connectivityManager)
+
+    // Initially configure a connected mock network
+    val mockNetwork = org.robolectric.shadows.ShadowNetwork.newInstance(1)
+    val capabilities = android.net.NetworkCapabilities()
+    val shadowCapabilities = org.robolectric.Shadows.shadowOf(capabilities)
+    shadowCapabilities.addCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    shadowCapabilities.addCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+    shadowConnectivityManager.setNetworkCapabilities(mockNetwork, capabilities)
+
+    val networkInfo =
+      org.robolectric.shadows.ShadowNetworkInfo.newInstance(
+        android.net.NetworkInfo.DetailedState.CONNECTED,
+        android.net.ConnectivityManager.TYPE_WIFI,
+        0,
+        true,
+        true
+      )
+    shadowConnectivityManager.addNetwork(mockNetwork, networkInfo)
+
+    val monitor = NetworkConnectivityMonitor(context, repository)
+    val testScope = TestScope(testDispatcher)
+    monitor.startMonitoring(testScope)
+
+    val callbacks = shadowConnectivityManager.networkCallbacks
+    assertFalse(callbacks.isEmpty())
+
+    // Trigger onAvailable to set it to true
+    callbacks.forEach { callback -> callback.onAvailable(mockNetwork) }
+    testScope.testScheduler.advanceUntilIdle()
+    assertTrue(monitor.isOnline.value)
+
+    // Configure shadow capabilities as empty (no internet) and remove network for checking network
+    // loss
+    val emptyCapabilities = android.net.NetworkCapabilities()
+    shadowConnectivityManager.setNetworkCapabilities(mockNetwork, emptyCapabilities)
+    shadowConnectivityManager.removeNetwork(mockNetwork)
+
+    // Trigger onLost
+    callbacks.forEach { callback -> callback.onLost(mockNetwork) }
+    testScope.testScheduler.advanceUntilIdle()
+
+    // Assert that it correctly transitions isOnline state to false when offline
+    assertFalse(monitor.isOnline.value)
+  }
 }
