@@ -493,9 +493,56 @@ and upload SARIF to GitHub Security.
   - `./harness.sh check`
 - **Definition of done**: The Pull-to-Refresh gesture enqueues the `GistSyncWorker` through WorkManager, updates the reactive syncing state properly, and passes the entire quality gate suite with zero errors.
 
+---
 
+## 📂 26. Swipe-to-Delete Functionality & Confirmation Undo Snackbar
 
+- **Goal**: Enable swipe-to-delete functionality for items in the Gist list (Home and Vault screens) using Material 3 `SwipeToDismissBox`, with a confirmation Snackbar that allows undoing the deletion.
+- **Files expected to change**: `GistRepository.kt`, `GistViewModel.kt`, `HomeScreen.kt`, `VaultScreen.kt`, `GistHubAppScreen.kt`, `SwipeToDeleteAndUndoTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Add `restoreGist(gistWithFiles)` method to `GistRepository.kt` to allow undeleting soft-deleted Gists in Room.
+  - [x] Update `GistViewModel.kt` with `pendingDeleteEvent`, `recentlyDeletedGist`, and `restoreGist(item)` state and action handlers.
+  - [x] Wrap `GistCard` items in `HomeScreen.kt` and `VaultScreen.kt` using Material 3 `SwipeToDismissBox` with a red background and trash icon.
+  - [x] Integrate `SnackbarHost` in `GistHubAppScreen.kt` triggered by `pendingDeleteEvent` with an "Undo" action that calls `viewModel.restoreGist(deletedItem)`.
+  - [x] Add unit & UI component tests in `SwipeToDeleteAndUndoTest.kt` verifying deletion state, undo restoration flow, and SwipeToDismiss layout node existence.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+- **Definition of done**: Swiping a Gist item on either Home or Vault screen triggers soft-deletion, displays a confirmation Snackbar with an "Undo" action that successfully restores the item, and passes all tests.
 
+---
 
+## 📂 27. Gist List Sorting Menu ('Recently Updated', 'Created Date', 'Title')
+
+- **Goal**: Add a menu to the Gist list screen (HomeScreen) allowing users to sort gists by 'Recently Updated', 'Created Date', or 'Title'.
+- **Files expected to change**: `GistSortOption.kt`, `GistViewModel.kt`, `HomeScreen.kt`, `GistHubAppScreen.kt`, `GistSortTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Create `GistSortOption.kt` enum with `RECENTLY_UPDATED`, `CREATED_DATE`, and `TITLE` options.
+  - [x] Add `sortOption` StateFlow and `updateSortOption(option)` handler to `GistViewModel.kt`.
+  - [x] Add sort dropdown menu button (`sort_menu_button`) in `HomeScreen.kt` header bar and update `remember(gists, searchQuery, selectedTag, sortOption)` sorting comparator logic.
+  - [x] Pass `sortOption` and `onSortOptionChange` from `GistHubAppScreen.kt` to `HomeScreen`.
+  - [x] Write `GistSortTest.kt` verifying default sort option, StateFlow updates, comparator sorting logic, and Compose UI dropdown menu interaction.
+  - [x] Format with `./harness.sh format` and run test suite with `./harness.sh test`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh test`
+- **Definition of done**: Gist list sorting dropdown menu is rendered on HomeScreen, sorting option updates the displayed Gist list dynamically, and all unit and Robolectric tests pass green.
+
+---
+
+## 📂 28. Toggle 'Starred' Status for Gists Locally & Persist in Room
+
+- **Goal**: Allow users to toggle a 'starred' status for Gists locally, persisting the state in Room database and providing a 'Starred' filter option on the HomeScreen.
+- **Files expected to change**: `GistViewModel.kt`, `HomeScreen.kt`, `GistHubAppScreen.kt`, `StarredGistTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Utilize `GistRepository.toggleStar(id)` and expose `showStarredOnly` state and `toggleShowStarredOnly()` handler in `GistViewModel.kt`.
+  - [x] Add 'Starred' `FilterChip` (`tag_filter_starred`) in `HomeScreen.kt` filter chip row with star icon and filter predicate logic.
+  - [x] Connect `showStarredOnly` and `onToggleShowStarredOnly` in `GistHubAppScreen.kt`.
+  - [x] Write `StarredGistTest.kt` verifying Room DB persistence, dirty state flagging for remote gists, and Compose UI filter chip filtering.
+  - [x] Format with `./harness.sh format` and pass full test suite with `./harness.sh test`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh test`
+- **Definition of done**: Starred status toggling persists locally in Room DB, 'Starred' filter chip filters gists in UI, and all tests pass.
 
 

@@ -431,6 +431,11 @@ class GistRepository(
     }
   }
 
+  suspend fun restoreGist(gistWithFiles: GistWithFiles) {
+    val restoredGist = gistWithFiles.gist.copy(isDeleted = false)
+    gistDao.upsertGistWithFiles(restoredGist, gistWithFiles.files)
+  }
+
   suspend fun clearAllLocalData() {
     gistDao.clearAllData()
   }

@@ -10,7 +10,16 @@ suspend fun GistRepository.syncWithGitHub(): Result<String> {
   }
   val unsynced = gistDao.getUnsynchronizedGists()
   if (unsynced.isEmpty()) {
-    return Result.success("Already fully synchronized")
+    return try {
+      val fetchResult = fetchFromRemote()
+      if (fetchResult.isSuccess) {
+        Result.success("Already fully synchronized (fetched from remote)")
+      } else {
+        Result.failure(fetchResult.exceptionOrNull() ?: Exception("Remote fetch failed"))
+      }
+    } catch (e: Exception) {
+      Result.failure(e)
+    }
   }
 
   var successCount = 0

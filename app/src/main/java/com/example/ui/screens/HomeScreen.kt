@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,27 +19,42 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudSync
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -49,6 +65,7 @@ import com.example.ui.components.GistCard
 import com.example.ui.theme.ActivePurple
 import com.example.ui.theme.ActivePurpleContainer
 import com.example.ui.theme.DarkPurpleText
+import com.example.ui.viewmodel.GistSortOption
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
@@ -59,6 +76,10 @@ fun HomeScreen(
   selectedTag: String? = null,
   allTags: List<String> = emptyList(),
   onSelectedTagChange: (String?) -> Unit = {},
+  sortOption: GistSortOption = GistSortOption.RECENTLY_UPDATED,
+  onSortOptionChange: (GistSortOption) -> Unit = {},
+  showStarredOnly: Boolean = false,
+  onToggleShowStarredOnly: () -> Unit = {},
   isRefreshing: Boolean,
   onRefresh: () -> Unit,
   onTogglePin: (String) -> Unit,
@@ -69,29 +90,45 @@ fun HomeScreen(
   lastSyncTime: Long = 0L
 ) {
   val filtered =
-    remember(gists, searchQuery, selectedTag) {
-      if (searchQuery.isBlank()) {
-        gists.sortedWith(
-          compareByDescending<GistWithFiles> { it.gist.isPinned }
-            .thenByDescending { it.gist.createdAt }
-        )
-      } else {
-        gists
-          .filter { item ->
-            val desc = item.gist.description ?: ""
-            val matchesDescription = desc.contains(searchQuery, ignoreCase = true)
-            val matchesFiles =
-              item.files.any { file ->
-                file.filename.contains(searchQuery, ignoreCase = true) ||
-                  file.content.contains(searchQuery, ignoreCase = true)
-              }
-            matchesDescription || matchesFiles
-          }
-          .sortedWith(
+    remember(gists, searchQuery, selectedTag, sortOption, showStarredOnly) {
+      val baseList =
+        gists.filter { item ->
+          val matchesStarred = !showStarredOnly || item.gist.isStarred
+          val matchesSearch =
+            if (searchQuery.isBlank()) {
+              true
+            } else {
+              val desc = item.gist.description ?: ""
+              val matchesDescription = desc.contains(searchQuery, ignoreCase = true)
+              val matchesFiles =
+                item.files.any { file ->
+                  file.filename.contains(searchQuery, ignoreCase = true) ||
+                    file.content.contains(searchQuery, ignoreCase = true)
+                }
+              matchesDescription || matchesFiles
+            }
+          matchesStarred && matchesSearch
+        }
+
+      val comparator: Comparator<GistWithFiles> =
+        when (sortOption) {
+          GistSortOption.RECENTLY_UPDATED ->
+            compareByDescending<GistWithFiles> { it.gist.isPinned }
+              .thenByDescending { it.gist.updatedAt.ifBlank { it.gist.createdAt } }
+          GistSortOption.CREATED_DATE ->
             compareByDescending<GistWithFiles> { it.gist.isPinned }
               .thenByDescending { it.gist.createdAt }
-          )
-      }
+          GistSortOption.TITLE ->
+            compareByDescending<GistWithFiles> { it.gist.isPinned }
+              .thenBy {
+                (it.gist.description?.takeIf { d -> d.isNotBlank() }
+                    ?: it.files.firstOrNull()?.filename
+                    ?: "Untitled Gist")
+                  .lowercase()
+              }
+        }
+
+      baseList.sortedWith(comparator)
     }
 
   val pullRefreshState = rememberPullRefreshState(refreshing = isRefreshing, onRefresh = onRefresh)
@@ -137,35 +174,54 @@ fun HomeScreen(
           )
       )
 
-      // Horizontal Scrollable Tag Filters Row
-      if (allTags.isNotEmpty()) {
-        LazyRow(
-          horizontalArrangement = Arrangement.spacedBy(8.dp),
-          modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-          verticalAlignment = Alignment.CenterVertically
-        ) {
-          item {
-            FilterChip(
-              selected = selectedTag == null,
-              onClick = { onSelectedTagChange(null) },
-              label = { Text("All", fontSize = 12.sp) },
-              modifier = Modifier.testTag("tag_filter_all")
-            )
-          }
-          items(allTags) { tag ->
-            FilterChip(
-              selected = selectedTag == tag,
-              onClick = {
-                if (selectedTag == tag) {
-                  onSelectedTagChange(null)
-                } else {
-                  onSelectedTagChange(tag)
-                }
-              },
-              label = { Text("#$tag", fontSize = 12.sp) },
-              modifier = Modifier.testTag("tag_filter_$tag")
-            )
-          }
+      // Horizontal Scrollable Tag & Star Filter Row
+      LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+      ) {
+        item {
+          FilterChip(
+            selected = !showStarredOnly && selectedTag == null,
+            onClick = {
+              if (showStarredOnly) onToggleShowStarredOnly()
+              onSelectedTagChange(null)
+            },
+            label = { Text("All", fontSize = 12.sp) },
+            modifier = Modifier.testTag("tag_filter_all")
+          )
+        }
+        item {
+          FilterChip(
+            selected = showStarredOnly,
+            onClick = onToggleShowStarredOnly,
+            label = { Text("Starred", fontSize = 12.sp) },
+            leadingIcon = {
+              Icon(
+                imageVector = if (showStarredOnly) Icons.Default.Star else Icons.Default.StarBorder,
+                contentDescription = "Starred filter",
+                tint =
+                  if (showStarredOnly) Color(0xFFFFA000)
+                  else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(16.dp)
+              )
+            },
+            modifier = Modifier.testTag("tag_filter_starred")
+          )
+        }
+        items(allTags) { tag ->
+          FilterChip(
+            selected = selectedTag == tag,
+            onClick = {
+              if (selectedTag == tag) {
+                onSelectedTagChange(null)
+              } else {
+                onSelectedTagChange(tag)
+              }
+            },
+            label = { Text("#$tag", fontSize = 12.sp) },
+            modifier = Modifier.testTag("tag_filter_$tag")
+          )
         }
       }
 
@@ -190,17 +246,74 @@ fun HomeScreen(
             modifier = Modifier.testTag("last_synced_timestamp")
           )
         }
-        Box(
-          modifier =
-            Modifier.background(ActivePurpleContainer, RoundedCornerShape(10.dp))
-              .padding(horizontal = 8.dp, vertical = 2.dp)
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-          Text(
-            text = "${filtered.size} Items",
-            fontSize = 11.sp,
-            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-            color = DarkPurpleText
-          )
+          Box(
+            modifier =
+              Modifier.background(ActivePurpleContainer, RoundedCornerShape(10.dp))
+                .padding(horizontal = 8.dp, vertical = 2.dp)
+          ) {
+            Text(
+              text = "${filtered.size} Items",
+              fontSize = 11.sp,
+              fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+              color = DarkPurpleText
+            )
+          }
+
+          Box {
+            var showSortMenu by remember { mutableStateOf(false) }
+
+            OutlinedButton(
+              onClick = { showSortMenu = true },
+              shape = RoundedCornerShape(10.dp),
+              contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+              modifier = Modifier.height(28.dp).testTag("sort_menu_button")
+            ) {
+              Icon(
+                imageVector = Icons.AutoMirrored.Filled.Sort,
+                contentDescription = "Sort gists",
+                modifier = Modifier.size(14.dp)
+              )
+              Spacer(modifier = Modifier.width(4.dp))
+              Text(text = sortOption.label, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+            }
+
+            DropdownMenu(
+              expanded = showSortMenu,
+              onDismissRequest = { showSortMenu = false },
+              modifier = Modifier.testTag("sort_dropdown_menu")
+            ) {
+              GistSortOption.entries.forEach { option ->
+                DropdownMenuItem(
+                  text = {
+                    Text(
+                      text = option.label,
+                      fontWeight = if (sortOption == option) FontWeight.Bold else FontWeight.Normal,
+                      fontSize = 13.sp
+                    )
+                  },
+                  trailingIcon = {
+                    if (sortOption == option) {
+                      Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Selected",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                      )
+                    }
+                  },
+                  onClick = {
+                    onSortOptionChange(option)
+                    showSortMenu = false
+                  },
+                  modifier = Modifier.testTag("sort_option_${option.name.lowercase()}")
+                )
+              }
+            }
+          }
         }
       }
 
@@ -363,14 +476,85 @@ fun HomeScreen(
           verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
           items(filtered, key = { it.gist.id }) { item ->
-            GistCard(
-              item = item,
-              onTogglePin = { onTogglePin(item.gist.id) },
-              onToggleStar = { onToggleStar(item.gist.id) },
-              onEdit = { onEdit(item) },
-              onDelete = { onDelete(item.gist.id) },
-              onPreview = { onPreview(item) }
-            )
+            val dismissState =
+              rememberSwipeToDismissBoxState(
+                confirmValueChange = { dismissValue ->
+                  if (
+                    dismissValue == SwipeToDismissBoxValue.EndToStart ||
+                      dismissValue == SwipeToDismissBoxValue.StartToEnd
+                  ) {
+                    onDelete(item.gist.id)
+                    true
+                  } else {
+                    false
+                  }
+                }
+              )
+
+            SwipeToDismissBox(
+              state = dismissState,
+              modifier = Modifier.fillMaxWidth().testTag("swipe_to_dismiss_${item.gist.id}"),
+              backgroundContent = {
+                val isDismissed = dismissState.targetValue != SwipeToDismissBoxValue.Settled
+                val color =
+                  if (isDismissed) MaterialTheme.colorScheme.errorContainer
+                  else androidx.compose.ui.graphics.Color.Transparent
+                Box(
+                  modifier =
+                    Modifier.fillMaxSize()
+                      .background(color, RoundedCornerShape(16.dp))
+                      .padding(horizontal = 20.dp),
+                  contentAlignment =
+                    if (dismissState.targetValue == SwipeToDismissBoxValue.StartToEnd) {
+                      Alignment.CenterStart
+                    } else {
+                      Alignment.CenterEnd
+                    }
+                ) {
+                  if (isDismissed) {
+                    Row(
+                      verticalAlignment = Alignment.CenterVertically,
+                      horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                      if (dismissState.targetValue == SwipeToDismissBoxValue.StartToEnd) {
+                        Icon(
+                          imageVector = Icons.Default.Delete,
+                          contentDescription = "Swipe to delete",
+                          tint = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Text(
+                          text = "Delete",
+                          color = MaterialTheme.colorScheme.onErrorContainer,
+                          fontWeight = FontWeight.Bold,
+                          fontSize = 14.sp
+                        )
+                      } else {
+                        Text(
+                          text = "Delete",
+                          color = MaterialTheme.colorScheme.onErrorContainer,
+                          fontWeight = FontWeight.Bold,
+                          fontSize = 14.sp
+                        )
+                        Icon(
+                          imageVector = Icons.Default.Delete,
+                          contentDescription = "Swipe to delete",
+                          tint = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                      }
+                    }
+                  }
+                }
+              }
+            ) {
+              GistCard(
+                item = item,
+                onTogglePin = { onTogglePin(item.gist.id) },
+                onToggleStar = { onToggleStar(item.gist.id) },
+                onEdit = { onEdit(item) },
+                onDelete = { onDelete(item.gist.id) },
+                onPreview = { onPreview(item) }
+              )
+            }
           }
           item { Spacer(modifier = Modifier.height(80.dp)) }
         }

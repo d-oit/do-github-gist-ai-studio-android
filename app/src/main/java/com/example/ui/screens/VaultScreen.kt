@@ -20,13 +20,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -41,6 +46,7 @@ import com.example.ui.theme.ActivePurple
 import com.example.ui.theme.ActivePurpleContainer
 import com.example.ui.theme.DarkPurpleText
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VaultScreen(
   gists: List<GistWithFiles>,
@@ -205,14 +211,85 @@ fun VaultScreen(
         }
       } else {
         items(filtered, key = { it.gist.id }) { item ->
-          GistCard(
-            item = item,
-            onTogglePin = { onTogglePin(item.gist.id) },
-            onToggleStar = { onToggleStar(item.gist.id) },
-            onEdit = { onEdit(item) },
-            onDelete = { onDelete(item.gist.id) },
-            onPreview = { onPreview(item) }
-          )
+          val dismissState =
+            rememberSwipeToDismissBoxState(
+              confirmValueChange = { dismissValue ->
+                if (
+                  dismissValue == SwipeToDismissBoxValue.EndToStart ||
+                    dismissValue == SwipeToDismissBoxValue.StartToEnd
+                ) {
+                  onDelete(item.gist.id)
+                  true
+                } else {
+                  false
+                }
+              }
+            )
+
+          SwipeToDismissBox(
+            state = dismissState,
+            modifier = Modifier.fillMaxWidth().testTag("vault_swipe_to_dismiss_${item.gist.id}"),
+            backgroundContent = {
+              val isDismissed = dismissState.targetValue != SwipeToDismissBoxValue.Settled
+              val color =
+                if (isDismissed) MaterialTheme.colorScheme.errorContainer
+                else androidx.compose.ui.graphics.Color.Transparent
+              Box(
+                modifier =
+                  Modifier.fillMaxSize()
+                    .background(color, RoundedCornerShape(16.dp))
+                    .padding(horizontal = 20.dp),
+                contentAlignment =
+                  if (dismissState.targetValue == SwipeToDismissBoxValue.StartToEnd) {
+                    Alignment.CenterStart
+                  } else {
+                    Alignment.CenterEnd
+                  }
+              ) {
+                if (isDismissed) {
+                  Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                  ) {
+                    if (dismissState.targetValue == SwipeToDismissBoxValue.StartToEnd) {
+                      Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Swipe to delete",
+                        tint = MaterialTheme.colorScheme.onErrorContainer
+                      )
+                      Text(
+                        text = "Delete",
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        fontSize = 14.sp
+                      )
+                    } else {
+                      Text(
+                        text = "Delete",
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        fontSize = 14.sp
+                      )
+                      Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Swipe to delete",
+                        tint = MaterialTheme.colorScheme.onErrorContainer
+                      )
+                    }
+                  }
+                }
+              }
+            }
+          ) {
+            GistCard(
+              item = item,
+              onTogglePin = { onTogglePin(item.gist.id) },
+              onToggleStar = { onToggleStar(item.gist.id) },
+              onEdit = { onEdit(item) },
+              onDelete = { onDelete(item.gist.id) },
+              onPreview = { onPreview(item) }
+            )
+          }
         }
       }
       item { Spacer(modifier = Modifier.height(80.dp)) }

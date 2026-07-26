@@ -50,9 +50,12 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
   val errorMessage by viewModel.errorMessage.collectAsState()
   val syncStatus by viewModel.syncStatus.collectAsState()
   val lastSyncTime by viewModel.lastSyncTime.collectAsState()
+  val pendingDeleteEvent by viewModel.pendingDeleteEvent.collectAsState()
 
   val selectedTag by viewModel.selectedTag.collectAsState()
   val allTags by viewModel.allTags.collectAsState()
+  val sortOption by viewModel.sortOption.collectAsState()
+  val showStarredOnly by viewModel.showStarredOnly.collectAsState()
 
   val remoteGists by viewModel.remoteGists.collectAsState()
   val isFetchingRemote by viewModel.isFetchingRemote.collectAsState()
@@ -113,6 +116,25 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
         viewModel.dismissSyncError()
       }
       else -> {}
+    }
+  }
+
+  LaunchedEffect(pendingDeleteEvent) {
+    val deletedItem = pendingDeleteEvent
+    if (deletedItem != null) {
+      scope.launch {
+        val filename = deletedItem.files.firstOrNull()?.filename ?: "Gist"
+        val result =
+          snackbarHostState.showSnackbar(
+            message = "\"$filename\" deleted",
+            actionLabel = "Undo",
+            duration = androidx.compose.material3.SnackbarDuration.Short
+          )
+        if (result == androidx.compose.material3.SnackbarResult.ActionPerformed) {
+          viewModel.restoreGist(deletedItem)
+        }
+        viewModel.clearPendingDeleteEvent()
+      }
     }
   }
 
@@ -198,6 +220,10 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
               selectedTag = selectedTag,
               allTags = allTags,
               onSelectedTagChange = { viewModel.updateSelectedTag(it) },
+              sortOption = sortOption,
+              onSortOptionChange = { viewModel.updateSortOption(it) },
+              showStarredOnly = showStarredOnly,
+              onToggleShowStarredOnly = { viewModel.toggleShowStarredOnly() },
               isRefreshing = isRefreshing,
               onRefresh = { viewModel.refreshGists(context) },
               onTogglePin = { viewModel.togglePin(it) },

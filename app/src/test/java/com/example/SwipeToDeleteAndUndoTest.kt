@@ -30,7 +30,7 @@ import org.robolectric.annotation.Config
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [36])
-class DeleteConfirmationDialogTest {
+class SwipeToDeleteAndUndoTest {
 
   @get:Rule val composeTestRule = createComposeRule()
 
@@ -44,7 +44,6 @@ class DeleteConfirmationDialogTest {
 
   @Before
   fun setUp() {
-    org.robolectric.shadows.ShadowLog.stream = System.out
     Dispatchers.setMain(testDispatcher)
     context = ApplicationProvider.getApplicationContext()
     db =
@@ -74,103 +73,64 @@ class DeleteConfirmationDialogTest {
   }
 
   @Test
-  fun test_deleteConfirmationFlow_cancel() =
+  fun test_deleteGist_and_undo_restoresItem() =
     runTest(testDispatcher) {
-      // Create local draft
       viewModel.createGist(
-        description = "Test Draft to Delete Cancel",
-        filename = "cancel_me.py",
-        content = "print('stay')",
-        isPublic = false,
+        description = "Test Swipe Delete Undo",
+        filename = "test_undo.kt",
+        content = "fun test() {}",
+        isPublic = true,
         isPinned = false
       )
       testDispatcher.scheduler.advanceUntilIdle()
 
       val originalList = viewModel.gists.value
       assertEquals(1, originalList.size)
-      val gistId = originalList.first().gist.id
+      val item = originalList.first()
+      val gistId = item.gist.id
 
-      composeTestRule.setContent { MyApplicationTheme { GistHubAppScreen(viewModel = viewModel) } }
-
-      // Verify the Gist card is displayed
-      composeTestRule.onNodeWithTag("gist_card_$gistId").assertExists()
-
-      // Dialog should NOT be displayed initially
-      composeTestRule.onNodeWithTag("delete_confirm_dialog").assertDoesNotExist()
-
-      // Tap the delete button
-      composeTestRule
-        .onNodeWithTag("delete_button_$gistId", useUnmergedTree = true)
-        .performScrollTo()
-        .performClick()
-      composeTestRule.waitForIdle()
-
-      // Verify the confirmation dialog is displayed
-      composeTestRule.onNodeWithTag("delete_confirm_dialog", useUnmergedTree = true).assertExists()
-
-      // Tap cancel button
-      composeTestRule.onNodeWithTag("delete_confirm_cancel", useUnmergedTree = true).performClick()
-      composeTestRule.waitForIdle()
-
-      // Dialog should be dismissed
-      composeTestRule
-        .onNodeWithTag("delete_confirm_dialog", useUnmergedTree = true)
-        .assertDoesNotExist()
-
-      // Gist should NOT be deleted from the database/viewModel
+      // Trigger deletion
+      viewModel.deleteGist(gistId)
       testDispatcher.scheduler.advanceUntilIdle()
+
+      // Should be removed from gists list
+      assertTrue(viewModel.gists.value.isEmpty())
+
+      // Pending delete event should hold the deleted item
+      assertNotNull(viewModel.pendingDeleteEvent.value)
+      assertEquals(
+        "test_undo.kt",
+        viewModel.pendingDeleteEvent.value?.files?.firstOrNull()?.filename
+      )
+
+      // Now restore
+      viewModel.restoreGist(viewModel.pendingDeleteEvent.value!!)
+      testDispatcher.scheduler.advanceUntilIdle()
+
+      // Should be restored
       assertEquals(1, viewModel.gists.value.size)
-      composeTestRule.onNodeWithTag("gist_card_$gistId").assertExists()
+      assertEquals(gistId, viewModel.gists.value.first().gist.id)
+      assertEquals("Gist restored", viewModel.statusMessage.value)
     }
 
   @Test
-  fun test_deleteConfirmationFlow_confirm() =
+  fun test_swipeToDismissContainer_existsInUI() =
     runTest(testDispatcher) {
-      // Create local draft
       viewModel.createGist(
-        description = "Test Draft to Delete Confirm",
-        filename = "confirm_me.py",
-        content = "print('goodbye')",
-        isPublic = false,
+        description = "Test Swipe UI Container",
+        filename = "swipe_me.kt",
+        content = "val x = 1",
+        isPublic = true,
         isPinned = false
       )
       testDispatcher.scheduler.advanceUntilIdle()
 
-      val originalList = viewModel.gists.value
-      assertEquals(1, originalList.size)
-      val gistId = originalList.first().gist.id
+      val gistId = viewModel.gists.value.first().gist.id
 
       composeTestRule.setContent { MyApplicationTheme { GistHubAppScreen(viewModel = viewModel) } }
 
-      // Verify the Gist card is displayed
-      composeTestRule.onNodeWithTag("gist_card_$gistId").assertExists()
-
-      // Dialog should NOT be displayed initially
-      composeTestRule.onNodeWithTag("delete_confirm_dialog").assertDoesNotExist()
-
-      // Tap the delete button
-      composeTestRule
-        .onNodeWithTag("delete_button_$gistId", useUnmergedTree = true)
-        .performScrollTo()
-        .performClick()
-      composeTestRule.waitForIdle()
-
-      // Verify confirmation dialog is displayed
-      composeTestRule.onNodeWithTag("delete_confirm_dialog", useUnmergedTree = true).assertExists()
-
-      // Tap confirm/delete button
-      composeTestRule.onNodeWithTag("delete_confirm_confirm", useUnmergedTree = true).performClick()
-      composeTestRule.waitForIdle()
-
-      // Dialog should be dismissed
-      composeTestRule
-        .onNodeWithTag("delete_confirm_dialog", useUnmergedTree = true)
-        .assertDoesNotExist()
-
-      // Gist should be deleted from the database/viewModel
-      testDispatcher.scheduler.advanceUntilIdle()
-      assertTrue(viewModel.gists.value.isEmpty())
-      composeTestRule.onNodeWithTag("gist_card_$gistId").assertDoesNotExist()
+      // Verify SwipeToDismiss container with test tag exists
+      composeTestRule.onNodeWithTag("swipe_to_dismiss_$gistId").assertExists()
     }
 
   private class FakeGitHubApiService : com.example.data.remote.api.GitHubApiService {

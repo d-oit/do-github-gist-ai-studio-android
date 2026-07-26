@@ -96,6 +96,9 @@ firebaseBom = "34.15.0"
 /app/applet/gradle/libs.versions.toml:43: Warning: A newer version of androidx.work:work-runtime-ktx than 2.10.0 is available: 2.11.2 [GradleDependency]
 workKtx = "2.10.0"
           ~~~~~~~~
+/app/applet/gradle/libs.versions.toml:43: Warning: A newer version of androidx.work:work-testing than 2.10.0 is available: 2.11.2 [GradleDependency]
+workKtx = "2.10.0"
+          ~~~~~~~~
 /app/applet/gradle/libs.versions.toml:44: Warning: A newer version of androidx.security:security-crypto than 1.1.0-alpha06 is available: 1.1.0 [GradleDependency]
 securityCrypto = "1.1.0-alpha06"
                  ~~~~~~~~~~~~~~~
@@ -353,4 +356,4 @@ detekt = "1.23.6"
    </lint>
    ```
 
-0 errors, 68 warnings
+0 errors, 69 warnings

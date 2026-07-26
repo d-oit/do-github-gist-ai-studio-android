@@ -38,6 +38,12 @@ class GistViewModel(
   private val _selectedTag = MutableStateFlow<String?>(null)
   val selectedTag: StateFlow<String?> = _selectedTag.asStateFlow()
 
+  private val _sortOption = MutableStateFlow(GistSortOption.RECENTLY_UPDATED)
+  val sortOption: StateFlow<GistSortOption> = _sortOption.asStateFlow()
+
+  private val _showStarredOnly = MutableStateFlow(false)
+  val showStarredOnly: StateFlow<Boolean> = _showStarredOnly.asStateFlow()
+
   val allTags: StateFlow<List<String>> =
     repository.allGists
       .map { list -> list.flatMap { it.gist.tags }.filter { it.isNotBlank() }.distinct().sorted() }
@@ -58,6 +64,16 @@ class GistViewModel(
 
   private val _errorMessage = MutableStateFlow<String?>(null)
   val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+  private val _recentlyDeletedGist = MutableStateFlow<GistWithFiles?>(null)
+  val recentlyDeletedGist: StateFlow<GistWithFiles?> = _recentlyDeletedGist.asStateFlow()
+
+  private val _pendingDeleteEvent = MutableStateFlow<GistWithFiles?>(null)
+  val pendingDeleteEvent: StateFlow<GistWithFiles?> = _pendingDeleteEvent.asStateFlow()
+
+  fun clearPendingDeleteEvent() {
+    _pendingDeleteEvent.value = null
+  }
 
   val syncStatus: StateFlow<com.example.data.repository.SyncStatus> = repository.syncStatus
 
@@ -172,6 +188,14 @@ class GistViewModel(
 
   fun updateSelectedTag(tag: String?) {
     _selectedTag.value = tag
+  }
+
+  fun updateSortOption(option: GistSortOption) {
+    _sortOption.value = option
+  }
+
+  fun toggleShowStarredOnly() {
+    _showStarredOnly.value = !_showStarredOnly.value
   }
 
   fun updateGistTags(id: String, tags: List<String>) {
@@ -428,10 +452,28 @@ class GistViewModel(
   fun deleteGist(id: String) {
     viewModelScope.launch {
       clearMessages()
+      val itemToDelete = _gists.value.find { it.gist.id == id } ?: repository.getGist(id)
+      if (itemToDelete != null) {
+        _recentlyDeletedGist.value = itemToDelete
+      }
       val result = repository.deleteGist(id)
       result
-        .onSuccess { _statusMessage.value = "Gist deleted successfully" }
+        .onSuccess {
+          if (itemToDelete != null) {
+            _pendingDeleteEvent.value = itemToDelete
+          } else {
+            _statusMessage.value = "Gist deleted successfully"
+          }
+        }
         .onFailure { error -> _errorMessage.value = "Delete failed: ${error.message}" }
+    }
+  }
+
+  fun restoreGist(item: GistWithFiles) {
+    viewModelScope.launch {
+      repository.restoreGist(item)
+      _recentlyDeletedGist.value = null
+      _statusMessage.value = "Gist restored"
     }
   }
 
