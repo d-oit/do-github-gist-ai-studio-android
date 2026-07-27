@@ -5,11 +5,19 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.data.local.converters.RoomConverters
 import com.example.data.local.dao.GistDao
+import com.example.data.local.dao.SearchHistoryDao
 import com.example.data.local.entity.GistEntity
 import com.example.data.local.entity.GistFileEntity
+import com.example.data.local.entity.SearchHistoryEntity
 
-@Database(entities = [GistEntity::class, GistFileEntity::class], version = 4, exportSchema = false)
+@Database(
+  entities = [GistEntity::class, GistFileEntity::class, SearchHistoryEntity::class],
+  version = 5,
+  exportSchema = false
+)
 @TypeConverters(RoomConverters::class)
 abstract class AppDatabase : RoomDatabase() {
   abstract fun gistDao(): GistDao
+
+  abstract fun searchHistoryDao(): SearchHistoryDao
 }

@@ -53,6 +53,13 @@ class GistViewModel(
         initialValue = emptyList()
       )
 
+  val searchHistory: StateFlow<List<com.example.data.local.entity.SearchHistoryEntity>> =
+    repository.searchHistory.stateIn(
+      scope = viewModelScope,
+      started = SharingStarted.WhileSubscribed(5000),
+      initialValue = emptyList()
+    )
+
   private val _isRefreshing = MutableStateFlow(false)
   val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 

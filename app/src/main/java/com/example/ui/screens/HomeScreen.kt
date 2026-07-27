@@ -17,6 +17,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
@@ -57,11 +59,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.entity.GistWithFiles
+import com.example.data.local.entity.SearchHistoryEntity
 import com.example.ui.components.GistCard
+import com.example.ui.components.SearchHistoryView
 import com.example.ui.theme.ActivePurple
 import com.example.ui.theme.ActivePurpleContainer
 import com.example.ui.theme.DarkPurpleText
@@ -87,7 +92,11 @@ fun HomeScreen(
   onEdit: (GistWithFiles) -> Unit,
   onDelete: (String) -> Unit,
   onPreview: (GistWithFiles) -> Unit,
-  lastSyncTime: Long = 0L
+  lastSyncTime: Long = 0L,
+  searchHistory: List<SearchHistoryEntity> = emptyList(),
+  onSaveSearchQuery: (String) -> Unit = {},
+  onDeleteSearchQuery: (String) -> Unit = {},
+  onClearSearchHistory: () -> Unit = {}
 ) {
   val filtered =
     remember(gists, searchQuery, selectedTag, sortOption, showStarredOnly) {
@@ -164,6 +173,8 @@ fun HomeScreen(
         modifier =
           Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp).testTag("home_search_bar"),
         singleLine = true,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = { onSaveSearchQuery(searchQuery) }),
         shape = RoundedCornerShape(24.dp),
         colors =
           OutlinedTextFieldDefaults.colors(
@@ -172,6 +183,18 @@ fun HomeScreen(
             focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
             unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
           )
+      )
+
+      // Search History View
+      SearchHistoryView(
+        searchHistory = searchHistory,
+        onSelectQuery = { query ->
+          onSearchQueryChange(query)
+          onSaveSearchQuery(query)
+        },
+        onDeleteQuery = onDeleteSearchQuery,
+        onClearHistory = onClearSearchHistory,
+        modifier = Modifier.padding(bottom = 4.dp)
       )
 
       // Horizontal Scrollable Tag & Star Filter Row

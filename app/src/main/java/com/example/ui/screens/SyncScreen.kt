@@ -37,7 +37,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.entity.GistWithFiles
+import com.example.data.repository.SyncStatus
 import com.example.ui.components.GitHubGistApiList
+import com.example.ui.components.SyncStatusBar
 
 @Composable
 fun SyncScreen(
@@ -49,7 +51,9 @@ fun SyncScreen(
   remoteError: String?,
   onRefreshRemote: () -> Unit,
   isForking: String?,
-  onForkClick: (String) -> Unit
+  onForkClick: (String) -> Unit,
+  lastSyncTime: Long = 0L,
+  syncStatus: SyncStatus = SyncStatus.Idle
 ) {
   val unsynced =
     remember(gists) { gists.filter { it.gist.isLocalOnly || it.gist.isDirty || it.gist.isDeleted } }
@@ -60,6 +64,9 @@ fun SyncScreen(
     horizontalAlignment = Alignment.CenterHorizontally,
     verticalArrangement = Arrangement.Top
   ) {
+    // Status Bar
+    SyncStatusBar(lastSyncTime = lastSyncTime, syncStatus = syncStatus)
+
     // Local state card
     Spacer(modifier = Modifier.height(16.dp))
     Box(

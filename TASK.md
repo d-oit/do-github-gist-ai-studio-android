@@ -530,19 +530,20 @@ and upload SARIF to GitHub Security.
 
 ---
 
-## 📂 28. Toggle 'Starred' Status for Gists Locally & Persist in Room
+## 📂 29. Last Synced Status Bar Component
 
-- **Goal**: Allow users to toggle a 'starred' status for Gists locally, persisting the state in Room database and providing a 'Starred' filter option on the HomeScreen.
-- **Files expected to change**: `GistViewModel.kt`, `HomeScreen.kt`, `GistHubAppScreen.kt`, `StarredGistTest.kt`, `TASK.md`
+- **Goal**: Create a status bar component that displays the 'Last Synced' timestamp from the local Room database to improve user trust in data freshness.
+- **Files expected to change**: `SyncStatusBar.kt`, `GistHubNavigationComponents.kt`, `GistHubAppScreen.kt`, `SyncScreen.kt`, `SyncStatusBarTest.kt`, `TASK.md`
 - **Implementation checklist**:
-  - [x] Utilize `GistRepository.toggleStar(id)` and expose `showStarredOnly` state and `toggleShowStarredOnly()` handler in `GistViewModel.kt`.
-  - [x] Add 'Starred' `FilterChip` (`tag_filter_starred`) in `HomeScreen.kt` filter chip row with star icon and filter predicate logic.
-  - [x] Connect `showStarredOnly` and `onToggleShowStarredOnly` in `GistHubAppScreen.kt`.
-  - [x] Write `StarredGistTest.kt` verifying Room DB persistence, dirty state flagging for remote gists, and Compose UI filter chip filtering.
-  - [x] Format with `./harness.sh format` and pass full test suite with `./harness.sh test`.
+  - [x] Implement `SyncStatusBar.kt` component in `com.example.ui.components` featuring relative timestamp formatting (`formatLastSyncTime`), status badges (Synced, Syncing, Error, Not Synced), and explicit `testTag` attributes (`sync_status_bar`, `last_synced_text`, `sync_status_indicator`).
+  - [x] Integrate `SyncStatusBar` into top navigation bar (`GistHubNavigationComponents.kt`) and `SyncScreen.kt`.
+  - [x] Connect `lastSyncTime` and `syncStatus` from `GistViewModel.kt` through `GistHubAppScreen.kt`.
+  - [x] Write `SyncStatusBarTest.kt` verifying timestamp formatting function, component rendering, and sync state badges across all conditions.
+  - [x] Format codebase using `./harness.sh format`.
+  - [x] Verify app compilation with `compile_applet`.
 - **Verification command(s)**:
   - `./harness.sh format`
-  - `./harness.sh test`
-- **Definition of done**: Starred status toggling persists locally in Room DB, 'Starred' filter chip filters gists in UI, and all tests pass.
+  - `compile_applet`
+- **Definition of done**: 'Last Synced' status bar component displays formatted Room DB sync timestamps and status indicators across app screens, fully tested with Compose test rules and formatted with Spotless.
 
 

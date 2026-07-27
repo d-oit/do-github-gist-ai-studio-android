@@ -73,7 +73,8 @@ class DoGistHubApp : Application() {
       GistRepository(
         gistDao = database.gistDao(),
         apiService = apiService,
-        configPrefs = configPrefs
+        configPrefs = configPrefs,
+        searchHistoryDao = database.searchHistoryDao()
       )
 
     // Initialize custom WorkManager configuration with GistSyncWorkerFactory

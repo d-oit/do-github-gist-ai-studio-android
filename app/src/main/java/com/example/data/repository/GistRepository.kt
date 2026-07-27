@@ -1,9 +1,11 @@
 package com.example.data.repository
 
 import com.example.data.local.dao.GistDao
+import com.example.data.local.dao.SearchHistoryDao
 import com.example.data.local.entity.GistEntity
 import com.example.data.local.entity.GistFileEntity
 import com.example.data.local.entity.GistWithFiles
+import com.example.data.local.entity.SearchHistoryEntity
 import com.example.data.local.pref.ConfigPrefs
 import com.example.data.remote.api.GitHubApiService
 import com.example.data.remote.model.GistResponse
@@ -15,15 +17,35 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 class GistRepository(
   val gistDao: GistDao,
   val apiService: GitHubApiService,
-  val configPrefs: ConfigPrefs
+  val configPrefs: ConfigPrefs,
+  val searchHistoryDao: SearchHistoryDao? = null
 ) {
   private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
   val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
+
+  val searchHistory: Flow<List<SearchHistoryEntity>> =
+    searchHistoryDao?.observeRecentSearchHistory() ?: flowOf(emptyList())
+
+  suspend fun saveSearchQuery(query: String) {
+    if (query.isBlank()) return
+    searchHistoryDao?.insertSearchQuery(
+      SearchHistoryEntity(query = query.trim(), timestamp = System.currentTimeMillis())
+    )
+  }
+
+  suspend fun deleteSearchQuery(query: String) {
+    searchHistoryDao?.deleteSearchQuery(query)
+  }
+
+  suspend fun clearSearchHistory() {
+    searchHistoryDao?.clearAllSearchHistory()
+  }
 
   init {
     val lastError = configPrefs.getLastSyncError()
@@ -438,6 +460,7 @@ class GistRepository(
 
   suspend fun clearAllLocalData() {
     gistDao.clearAllData()
+    searchHistoryDao?.clearAllSearchHistory()
   }
 
   fun detectLanguage(filename: String): String {

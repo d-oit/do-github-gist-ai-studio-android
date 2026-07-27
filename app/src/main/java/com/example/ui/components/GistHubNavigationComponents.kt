@@ -43,6 +43,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.repository.SyncStatus
 
 @Composable
 fun GistHubTopAppBar(
@@ -51,7 +52,9 @@ fun GistHubTopAppBar(
   searchQuery: String,
   onSearchQueryChange: (String) -> Unit,
   isRefreshing: Boolean,
-  onRefresh: () -> Unit
+  onRefresh: () -> Unit,
+  lastSyncTime: Long = 0L,
+  syncStatus: SyncStatus = SyncStatus.Idle
 ) {
   Column(
     modifier =
@@ -138,6 +141,11 @@ fun GistHubTopAppBar(
         }
       }
     }
+
+    Spacer(modifier = Modifier.height(6.dp))
+
+    // Last Synced Status Bar
+    SyncStatusBar(lastSyncTime = lastSyncTime, syncStatus = syncStatus)
 
     AnimatedVisibility(visible = isSearchExpanded) {
       Column(modifier = Modifier.padding(top = 8.dp)) {

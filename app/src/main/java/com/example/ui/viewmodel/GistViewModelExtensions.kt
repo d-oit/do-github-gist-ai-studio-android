@@ -5,6 +5,20 @@ import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.example.data.local.pref.AutoSavedDraft
 import com.example.data.local.pref.DraftFile
+import kotlinx.coroutines.launch
+
+fun GistViewModel.saveSearchQuery(query: String) {
+  if (query.isBlank()) return
+  viewModelScope.launch { repository.saveSearchQuery(query) }
+}
+
+fun GistViewModel.deleteSearchQuery(query: String) {
+  viewModelScope.launch { repository.deleteSearchQuery(query) }
+}
+
+fun GistViewModel.clearSearchHistory() {
+  viewModelScope.launch { repository.clearSearchHistory() }
+}
 
 fun GistViewModel.getAutoSavedDraft(editingGistId: String?): AutoSavedDraft? {
   return configPrefs.getAutoSavedDraft(editingGistId)

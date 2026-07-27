@@ -36,8 +36,11 @@ import com.example.ui.components.GistHubTopAppBar
 import com.example.ui.components.GistPreviewDialog
 import com.example.ui.viewmodel.GistViewModel
 import com.example.ui.viewmodel.clearAutoSavedDraft
+import com.example.ui.viewmodel.clearSearchHistory
+import com.example.ui.viewmodel.deleteSearchQuery
 import com.example.ui.viewmodel.getAutoSavedDraft
 import com.example.ui.viewmodel.saveAutoSavedDraft
+import com.example.ui.viewmodel.saveSearchQuery
 import kotlinx.coroutines.launch
 
 @Composable
@@ -64,6 +67,7 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
 
   var activeTab by remember { mutableStateOf("home") }
   val searchQuery by viewModel.searchQuery.collectAsState()
+  val searchHistory by viewModel.searchHistory.collectAsState()
   var isSearchExpanded by remember { mutableStateOf(false) }
 
   // Editor form states
@@ -148,7 +152,9 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
           searchQuery = searchQuery,
           onSearchQueryChange = { viewModel.updateSearchQuery(it) },
           isRefreshing = isRefreshing,
-          onRefresh = { viewModel.refreshGists(context) }
+          onRefresh = { viewModel.refreshGists(context) },
+          lastSyncTime = lastSyncTime,
+          syncStatus = syncStatus
         )
       }
     },
@@ -239,7 +245,11 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
               },
               onDelete = { gistIdToDelete = it },
               onPreview = { selectedDetailGistId = it.gist.id },
-              lastSyncTime = lastSyncTime
+              lastSyncTime = lastSyncTime,
+              searchHistory = searchHistory,
+              onSaveSearchQuery = { viewModel.saveSearchQuery(it) },
+              onDeleteSearchQuery = { viewModel.deleteSearchQuery(it) },
+              onClearSearchHistory = { viewModel.clearSearchHistory() }
             )
           }
           "vault" -> {
@@ -281,7 +291,9 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
               remoteError = remoteError,
               onRefreshRemote = { viewModel.fetchRemoteGistsDirectly() },
               isForking = isForking,
-              onForkClick = { viewModel.forkGist(it) }
+              onForkClick = { viewModel.forkGist(it) },
+              lastSyncTime = lastSyncTime,
+              syncStatus = syncStatus
             )
           }
           "config" -> {
