@@ -116,6 +116,67 @@ class GistSyncWorkerTest {
     }
 
   @Test
+  fun test_doGistHubApp_providesWorkManagerConfiguration() {
+    val app = ApplicationProvider.getApplicationContext<DoGistHubApp>()
+    assertNotNull(app.workManagerConfiguration)
+    assertNotNull(app.workManagerConfiguration.workerFactory)
+  }
+
+  @Test
+  fun test_enqueuePeriodic_schedulesWorkInfo() {
+    val workManager = androidx.work.WorkManager.getInstance(context)
+    GistSyncWorker.enqueuePeriodic(context)
+    val workInfos = workManager.getWorkInfosForUniqueWork("gist_periodic_sync_work").get()
+    assertNotNull(workInfos)
+    assertFalse(workInfos.isEmpty())
+  }
+
+  @Test
+  fun test_worker_doWork_syncsUnsyncedGists() =
+    runTest(testDispatcher) {
+      val draftGist =
+        com.example.data.local.entity.GistEntity(
+          id = "draft_periodic_123",
+          description = "Periodic Test Draft",
+          htmlUrl = "https://gist.github.com/draft_periodic_123",
+          url = "https://api.github.com/gists/draft_periodic_123",
+          createdAt = "2026-01-01T00:00:00Z",
+          updatedAt = "2026-01-01T00:00:00Z",
+          nodeId = "node_123",
+          isPublic = true,
+          isPinned = false,
+          isLocalOnly = true,
+          isDirty = false,
+          ownerLogin = "testUser",
+          ownerId = 12345,
+          ownerAvatarUrl = "https://github.com/testUser.png",
+          tags = listOf("kotlin")
+        )
+      val draftFile =
+        com.example.data.local.entity.GistFileEntity(
+          fileId = "file_periodic_123",
+          gistId = "draft_periodic_123",
+          filename = "Main.kt",
+          type = "text/plain",
+          language = "Kotlin",
+          rawUrl = "https://gist.github.com/raw/123",
+          size = 100L,
+          content = "fun main() {}"
+        )
+      database.gistDao().upsertGistWithFiles(draftGist, listOf(draftFile))
+
+      val factory = GistSyncWorkerFactory(repository)
+      val worker =
+        TestListenableWorkerBuilder<GistSyncWorker>(context).setWorkerFactory(factory).build()
+
+      val result = worker.doWork()
+
+      assertEquals(ListenableWorker.Result.success(), result)
+      val unsyncedRemaining = database.gistDao().getUnsynchronizedGists()
+      assertTrue(unsyncedRemaining.isEmpty())
+    }
+
+  @Test
   fun test_enqueueAndEnqueuePeriodic_dontCrash() {
     // Basic test ensuring no crashes occur during work request construction and enqueueing
     GistSyncWorker.enqueue(context)

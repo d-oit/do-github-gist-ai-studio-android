@@ -546,4 +546,63 @@ and upload SARIF to GitHub Security.
   - `compile_applet`
 - **Definition of done**: 'Last Synced' status bar component displays formatted Room DB sync timestamps and status indicators across app screens, fully tested with Compose test rules and formatted with Spotless.
 
+---
+
+## 📂 30. Centralized Loading State Handling Mechanism
+
+- **Goal**: Implement a centralized loading state handling mechanism in the UI using Compose to manage data fetching feedback across all application flows (syncing, refreshing, profile verifying, remote querying, AI analyzing, and forking).
+- **Files expected to change**: `LoadingFeedbackComponents.kt`, `GistHubAppScreen.kt`, `GitHubGistApiList.kt`, `LoadingFeedbackTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Create `LoadingFeedbackComponents.kt` containing `DataLoadingState` sealed models, `LoadingFeedbackBar` top banner, `LoadingFeedbackOverlay` modal progress card, `SkeletonLoadingList` pulse placeholders, and `LoadingFeedbackBox` universal layout wrapper with test tag annotations.
+  - [x] Integrate `LoadingFeedbackBar` into `GistHubAppScreen.kt` for top banner sync feedback and `LoadingFeedbackOverlay` for modal operations (token verification and gist forking).
+  - [x] Integrate `SkeletonLoadingList` into `GitHubGistApiList.kt` during direct remote API loading.
+  - [x] Create `LoadingFeedbackTest.kt` verifying rendering of `LoadingFeedbackBar`, `LoadingFeedbackOverlay` (with cancel CTA click), `SkeletonLoadingList`, and `LoadingFeedbackBox` empty/error/retry states.
+  - [x] Format codebase using `./harness.sh format`.
+  - [x] Execute full test suite via `./harness.sh test` and verify app compilation with `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh test`
+  - `compile_applet`
+- **Definition of done**: Centralized loading state handling mechanism is fully implemented in Jetpack Compose, integrated across app screens, tested with Compose test rules on JVM Robolectric, formatted with Spotless, and compiled without errors.
+
+---
+
+## 📂 31. Pull-To-Refresh Swipe Refresh Indicator on Main Gist List
+
+- **Goal**: Add a SwipeRefreshLayout / Compose `PullRefreshIndicator` to the main Gist list screen (`HomeScreen.kt`) to allow manual swipe triggers for local-to-remote Gist synchronization.
+- **Files expected to change**: `HomeScreen.kt`, `PullToRefreshHomeScreenTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Configure `rememberPullRefreshState` and `.pullRefresh()` modifier on `HomeScreen.kt`'s primary root container.
+  - [x] Attach `PullRefreshIndicator` styled with Material 3 primary theme colors at `Alignment.TopCenter` with `testTag("pull_refresh_indicator")`.
+  - [x] Create `PullToRefreshHomeScreenTest.kt` verifying rendering of `PullRefreshIndicator` during active pull-to-refresh state and idle state.
+  - [x] Format codebase using `./harness.sh format`.
+  - [x] Execute full test suite via `./harness.sh test` and verify app compilation with `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh test`
+  - `compile_applet`
+- **Definition of done**: Pull-to-refresh indicator is integrated into `HomeScreen.kt`, allowing manual pull triggers for remote-to-local Gist synchronization, verified via Robolectric JVM tests, formatted with Spotless, and compiled cleanly.
+
+---
+
+## 📂 32. WorkManager Periodic Background Synchronization
+
+- **Goal**: Configure a WorkManager periodic task to perform periodic background synchronization of local gist changes with the remote GitHub API.
+- **Files expected to change**: `DoGistHubApp.kt`, `GistSyncWorker.kt`, `GistSyncWorkerTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Configure `DoGistHubApp` to implement `Configuration.Provider` returning custom WorkManager configuration with `GistSyncWorkerFactory`.
+  - [x] Implement `enqueuePeriodic` in `GistSyncWorker` with `15` minutes periodic interval, `NetworkType.CONNECTED` constraint, exponential backoff, and `ExistingPeriodicWorkPolicy.UPDATE`.
+  - [x] Schedule periodic background synchronization on application startup in `DoGistHubApp`.
+  - [x] Add unit tests in `GistSyncWorkerTest.kt` verifying `DoGistHubApp` WorkManager configuration, `GistSyncWorker.enqueuePeriodic` WorkInfo scheduling, and periodic worker execution pushing unsynced local drafts.
+  - [x] Format codebase using `./harness.sh format`.
+  - [x] Execute full verification via `./harness.sh check` and `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `compile_applet`
+- **Definition of done**: WorkManager periodic background synchronization task is fully configured and scheduled, supported by `Configuration.Provider` in `DoGistHubApp`, verified via Robolectric JVM tests, formatted with Spotless, and compiled without errors.
+
+
+
+
 

@@ -114,7 +114,7 @@ class GistSyncWorker(
         WorkManager.getInstance(context)
           .enqueueUniquePeriodicWork(
             PERIODIC_WORK_NAME,
-            ExistingPeriodicWorkPolicy.KEEP,
+            ExistingPeriodicWorkPolicy.UPDATE,
             periodicRequest
           )
         Log.d(TAG, "GistSyncWorker enqueued unique periodic work")

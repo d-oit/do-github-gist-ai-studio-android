@@ -105,27 +105,19 @@ fun GitHubGistApiList(
 
       // List Content
       if (gists.isEmpty()) {
-        Box(
-          modifier =
-            Modifier.fillMaxWidth()
-              .height(160.dp)
-              .background(
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(12.dp)
-              ),
-          contentAlignment = Alignment.Center
-        ) {
-          if (isFetching) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-              CircularProgressIndicator(color = ActivePurple)
-              Spacer(modifier = Modifier.height(8.dp))
-              Text(
-                text = "Contacting GitHub...",
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-              )
-            }
-          } else {
+        if (isFetching) {
+          SkeletonLoadingList(count = 2)
+        } else {
+          Box(
+            modifier =
+              Modifier.fillMaxWidth()
+                .height(160.dp)
+                .background(
+                  color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                  shape = RoundedCornerShape(12.dp)
+                ),
+            contentAlignment = Alignment.Center
+          ) {
             Column(
               horizontalAlignment = Alignment.CenterHorizontally,
               modifier = Modifier.padding(16.dp)

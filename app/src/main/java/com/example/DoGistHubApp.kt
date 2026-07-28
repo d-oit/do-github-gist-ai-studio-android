@@ -1,6 +1,7 @@
 package com.example
 
 import android.app.Application
+import androidx.work.Configuration
 import com.example.core.config.AppConfiguration
 import com.example.core.config.AppConfigurationImpl
 import com.example.data.local.AppDatabase
@@ -10,7 +11,13 @@ import com.example.di.NetworkModule
 import com.example.di.StorageModule
 import kotlinx.coroutines.launch
 
-class DoGistHubApp : Application() {
+class DoGistHubApp : Application(), Configuration.Provider {
+
+  override val workManagerConfiguration: Configuration
+    get() =
+      Configuration.Builder()
+        .setWorkerFactory(com.example.data.sync.GistSyncWorkerFactory(repository))
+        .build()
 
   lateinit var configPrefs: ConfigPrefs
     private set

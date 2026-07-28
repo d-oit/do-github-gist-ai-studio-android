@@ -81,13 +81,11 @@ case "$COMMAND" in
         ;;
     format-check)
         print_header "Step: Format Check"
-        rm -rf .gradle/configuration-cache
         run_gradle spotlessCheck || die "Format check failed. Run './harness.sh format' to fix."
         print_success "Format check passed."
         ;;
     format)
         print_header "Step: Apply Code Formatting"
-        rm -rf .gradle/configuration-cache
         run_gradle spotlessApply || die "Applying formatting failed."
         print_success "Code formatting applied successfully."
         ;;
@@ -114,20 +112,13 @@ case "$COMMAND" in
     check)
         print_header "Pipeline: Static analysis, formatting & unit tests"
         "$0" wrapper-check
-        "$0" format-check
-        "$0" detekt
-        "$0" lint
-        "$0" unit
+        run_gradle spotlessCheck detekt :app:lintDebug :app:testDebugUnitTest || die "Check pipeline failed."
         print_success "Check pipeline passed (wrapper + format + detekt + lint + unit)."
         ;;
     verify)
         print_header "Pipeline: Running local verification gate"
         "$0" wrapper-check
-        "$0" format-check
-        "$0" detekt
-        "$0" lint
-        "$0" unit
-        "$0" build
+        run_gradle spotlessCheck detekt :app:lintDebug :app:testDebugUnitTest :app:assembleDebug || die "Verification pipeline failed."
         if [ -n "${CODACY_PROJECT_TOKEN:-}" ]; then
             "$0" coverage
             "$0" codacy

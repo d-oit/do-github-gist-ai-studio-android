@@ -48,7 +48,7 @@ class SyncStatusBarTest {
     composeTestRule.onNodeWithTag("last_synced_text").assertIsDisplayed()
     composeTestRule.onNodeWithTag("sync_status_indicator").assertIsDisplayed()
     composeTestRule.onNodeWithText("Last Synced: 2m ago", substring = true).assertIsDisplayed()
-    composeTestRule.onNodeWithText("Synced", substring = true).assertIsDisplayed()
+    composeTestRule.onNodeWithText("Synced", substring = false).assertIsDisplayed()
   }
 
   @Test

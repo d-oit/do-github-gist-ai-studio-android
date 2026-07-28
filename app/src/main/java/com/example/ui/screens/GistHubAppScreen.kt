@@ -34,6 +34,8 @@ import com.example.ui.components.DraftEditorDialog
 import com.example.ui.components.GistHubBottomBar
 import com.example.ui.components.GistHubTopAppBar
 import com.example.ui.components.GistPreviewDialog
+import com.example.ui.components.LoadingFeedbackBar
+import com.example.ui.components.LoadingFeedbackOverlay
 import com.example.ui.viewmodel.GistViewModel
 import com.example.ui.viewmodel.clearAutoSavedDraft
 import com.example.ui.viewmodel.clearSearchHistory
@@ -64,6 +66,7 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
   val isFetchingRemote by viewModel.isFetchingRemote.collectAsState()
   val remoteError by viewModel.remoteError.collectAsState()
   val isForking by viewModel.isForking.collectAsState()
+  val isFetchingProfile by viewModel.isFetchingProfile.collectAsState()
 
   var activeTab by remember { mutableStateOf("home") }
   val searchQuery by viewModel.searchQuery.collectAsState()
@@ -216,6 +219,7 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
       )
     } else {
       Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+        LoadingFeedbackBar(isLoading = isSyncing, message = "Synchronizing Gists with GitHub...")
         // Tab contents
         when (activeTab) {
           "home" -> {
@@ -419,4 +423,16 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
       modifier = Modifier.testTag("delete_confirm_dialog")
     )
   }
+
+  LoadingFeedbackOverlay(
+    isLoading = isFetchingProfile,
+    title = "Verifying Token",
+    message = "Retrieving user profile and authorization scopes from GitHub..."
+  )
+
+  LoadingFeedbackOverlay(
+    isLoading = isForking != null,
+    title = "Forking Gist",
+    message = "Duplicating Gist to your account and saving local copy..."
+  )
 }

@@ -56,6 +56,8 @@ fun formatLastSyncTime(timestamp: Long, currentTime: Long = System.currentTimeMi
   }
 }
 
+private data class StatusUiState<A, B, C, D>(val text: A, val bg: B, val fg: C, val icon: D)
+
 /**
  * A status bar component that displays the 'Last Synced' timestamp from the local Room database and
  * current sync status to improve user trust in data freshness.
@@ -64,24 +66,24 @@ fun formatLastSyncTime(timestamp: Long, currentTime: Long = System.currentTimeMi
 fun SyncStatusBar(lastSyncTime: Long, syncStatus: SyncStatus, modifier: Modifier = Modifier) {
   val formattedTime = formatLastSyncTime(lastSyncTime)
 
-  val (statusText, statusBg, statusFg, statusIcon) =
+  val uiState =
     when (syncStatus) {
       is SyncStatus.Syncing ->
-        Quadruple(
+        StatusUiState(
           "Syncing...",
           MaterialTheme.colorScheme.primaryContainer,
           MaterialTheme.colorScheme.onPrimaryContainer,
           null
         )
       is SyncStatus.Success ->
-        Quadruple(
+        StatusUiState(
           "Synced",
           MaterialTheme.colorScheme.secondaryContainer,
           MaterialTheme.colorScheme.onSecondaryContainer,
           Icons.Default.CloudDone
         )
       is SyncStatus.Error ->
-        Quadruple(
+        StatusUiState(
           "Sync Error",
           MaterialTheme.colorScheme.errorContainer,
           MaterialTheme.colorScheme.onErrorContainer,
@@ -89,14 +91,14 @@ fun SyncStatusBar(lastSyncTime: Long, syncStatus: SyncStatus, modifier: Modifier
         )
       is SyncStatus.Idle -> {
         if (lastSyncTime > 0L) {
-          Quadruple(
+          StatusUiState(
             "Synced",
             MaterialTheme.colorScheme.secondaryContainer,
             MaterialTheme.colorScheme.onSecondaryContainer,
             Icons.Default.CloudDone
           )
         } else {
-          Quadruple(
+          StatusUiState(
             "Not Synced",
             MaterialTheme.colorScheme.surfaceVariant,
             MaterialTheme.colorScheme.onSurfaceVariant,
@@ -105,6 +107,11 @@ fun SyncStatusBar(lastSyncTime: Long, syncStatus: SyncStatus, modifier: Modifier
         }
       }
     }
+
+  val statusText = uiState.text
+  val statusBg = uiState.bg
+  val statusFg = uiState.fg
+  val statusIcon = uiState.icon
 
   Row(
     modifier =
@@ -165,5 +172,3 @@ fun SyncStatusBar(lastSyncTime: Long, syncStatus: SyncStatus, modifier: Modifier
     }
   }
 }
-
-private data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)

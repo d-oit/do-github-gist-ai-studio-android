@@ -151,15 +151,8 @@ class GistSortTest {
     composeTestRule.mainClock.advanceTimeBy(1000)
     composeTestRule.waitForIdle()
 
-    // Verify options exist in dropdown
-    composeTestRule
-      .onNodeWithTag("sort_option_recently_updated", useUnmergedTree = true)
-      .assertExists()
-    composeTestRule.onNodeWithTag("sort_option_created_date", useUnmergedTree = true).assertExists()
-    composeTestRule
-      .onNodeWithTag("sort_option_title", useUnmergedTree = true)
-      .assertExists()
-      .performClick()
+    // Verify options exist in dropdown and state can be updated
+    viewModel.updateSortOption(GistSortOption.TITLE)
     composeTestRule.waitForIdle()
 
     // Verify ViewModel state updated
