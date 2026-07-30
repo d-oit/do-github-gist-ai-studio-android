@@ -24,3 +24,6 @@ results.sarif
 # Build and credentials
 .build-outputs/
 *.base64
+app/stdout
+gh_*
+bin/

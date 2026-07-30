@@ -115,6 +115,12 @@ android {
   }
   testOptions { unitTests { isIncludeAndroidResources = true } }
 
+  sourceSets {
+    getByName("main") {
+      kotlin.srcDir(file("${layout.buildDirectory.get()}/generated/ksp/debug/kotlin"))
+    }
+  }
+
   lint {
     abortOnError = true
     xmlReport = true
@@ -122,6 +128,7 @@ android {
     textReport = true
     textOutput = file("stdout")
     fatal += "all" // promote all fatal lints to errors
+    disable += "RestrictedApi"
   }
 }
 
@@ -256,3 +263,5 @@ detekt {
   disableDefaultRuleSets = false
   parallel = true
 }
+
+tasks.withType<Test>().configureEach { dependsOn("kspDebugKotlin", "compileDebugKotlin") }
