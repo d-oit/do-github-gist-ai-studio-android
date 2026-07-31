@@ -24,6 +24,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.CallSplit
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Lock
@@ -44,6 +46,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,7 +54,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -174,7 +179,7 @@ fun GistDetailScreen(
           ) {
             Icon(
               imageVector = Icons.Default.Delete,
-              contentDescription = "Delete",
+              contentDescription = null,
               modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -189,7 +194,7 @@ fun GistDetailScreen(
           ) {
             Icon(
               imageVector = Icons.Default.Edit,
-              contentDescription = "Edit",
+              contentDescription = null,
               modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -202,7 +207,11 @@ fun GistDetailScreen(
     modifier = modifier.fillMaxSize().testTag("gist_detail_screen")
   ) { innerPadding ->
     LazyColumn(
-      modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = 16.dp),
+      modifier =
+        Modifier.fillMaxSize()
+          .padding(innerPadding)
+          .padding(horizontal = 16.dp)
+          .testTag("detail_screen_lazy_column"),
       verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
       item { Spacer(modifier = Modifier.height(8.dp)) }
@@ -292,6 +301,15 @@ fun GistDetailScreen(
             file.filename.endsWith(".markdown", ignoreCase = true)
 
         var previewMode by remember { mutableStateOf(if (isMarkdown) "markdown" else "raw") }
+        val clipboardManager = LocalClipboardManager.current
+        var isCopied by remember { mutableStateOf(false) }
+
+        if (isCopied) {
+          LaunchedEffect(Unit) {
+            kotlinx.coroutines.delay(2000)
+            isCopied = false
+          }
+        }
 
         Card(
           modifier = Modifier.fillMaxWidth().testTag("detail_file_card_${file.filename}"),
@@ -321,11 +339,11 @@ fun GistDetailScreen(
                 )
               }
 
-              if (isMarkdown) {
-                Row(
-                  horizontalArrangement = Arrangement.spacedBy(4.dp),
-                  verticalAlignment = Alignment.CenterVertically
-                ) {
+              Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+              ) {
+                if (isMarkdown) {
                   TextButton(
                     onClick = { previewMode = "raw" },
                     modifier = Modifier.height(36.dp).testTag("file_mode_raw_${file.filename}")
@@ -353,6 +371,23 @@ fun GistDetailScreen(
                         else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                   }
+                }
+
+                IconButton(
+                  onClick = {
+                    clipboardManager.setText(AnnotatedString(file.content))
+                    isCopied = true
+                  },
+                  modifier = Modifier.size(36.dp).testTag("copy_file_button_${file.filename}")
+                ) {
+                  Icon(
+                    imageVector = if (isCopied) Icons.Default.Check else Icons.Default.ContentCopy,
+                    contentDescription = "Copy to Clipboard",
+                    tint =
+                      if (isCopied) MaterialTheme.colorScheme.primary
+                      else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp)
+                  )
                 }
               }
             }

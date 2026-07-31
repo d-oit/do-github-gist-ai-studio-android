@@ -76,12 +76,14 @@ class DoGistHubApp : Application(), Configuration.Provider {
     val retrofit = NetworkModule.provideRetrofit(okHttp, moshi)
     val apiService = NetworkModule.provideGitHubApiService(retrofit)
 
+    val contentEncryptor = com.example.core.security.GistContentEncryptor(this)
     repository =
       GistRepository(
         gistDao = database.gistDao(),
         apiService = apiService,
         configPrefs = configPrefs,
-        searchHistoryDao = database.searchHistoryDao()
+        searchHistoryDao = database.searchHistoryDao(),
+        contentEncryptor = contentEncryptor
       )
 
     // Initialize custom WorkManager configuration with GistSyncWorkerFactory

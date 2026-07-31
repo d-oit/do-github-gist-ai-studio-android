@@ -24,7 +24,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
@@ -34,7 +33,6 @@ import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -66,6 +64,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.local.entity.GistWithFiles
 import com.example.data.local.entity.SearchHistoryEntity
 import com.example.ui.components.GistCard
+import com.example.ui.components.GistListEmptyState
 import com.example.ui.components.SearchHistoryView
 import com.example.ui.theme.ActivePurple
 import com.example.ui.theme.ActivePurpleContainer
@@ -344,94 +343,7 @@ fun HomeScreen(
         Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
           if (gists.isEmpty()) {
             // PRIMARY EMPTY STATE: No local gists at all in the database
-            Column(
-              horizontalAlignment = Alignment.CenterHorizontally,
-              verticalArrangement = Arrangement.Center,
-              modifier = Modifier.fillMaxWidth().padding(24.dp)
-            ) {
-              // Friendly, high-fidelity decorative illustration/avatar container
-              Box(
-                modifier =
-                  Modifier.size(96.dp)
-                    .background(
-                      color = ActivePurpleContainer.copy(alpha = 0.3f),
-                      shape = RoundedCornerShape(48.dp)
-                    ),
-                contentAlignment = Alignment.Center
-              ) {
-                Box(
-                  modifier =
-                    Modifier.size(72.dp)
-                      .background(
-                        color = ActivePurpleContainer.copy(alpha = 0.6f),
-                        shape = RoundedCornerShape(36.dp)
-                      ),
-                  contentAlignment = Alignment.Center
-                ) {
-                  Icon(
-                    imageVector = Icons.Default.CloudSync,
-                    contentDescription = "Cloud Synchronize",
-                    tint = ActivePurple,
-                    modifier = Modifier.size(36.dp)
-                  )
-                }
-              }
-              Spacer(modifier = Modifier.height(24.dp))
-              Text(
-                text = "Your Gist Library is Empty",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center
-              )
-              Spacer(modifier = Modifier.height(8.dp))
-              Text(
-                text =
-                  "Securely synchronize your GitHub snippets to work offline, or start drafting local code blocks immediately. Your drafts persist locally and can be synced anytime.",
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 16.dp)
-              )
-              Spacer(modifier = Modifier.height(28.dp))
-
-              // Primary Call-To-Action Button: Fetch from GitHub
-              Button(
-                onClick = onRefresh,
-                colors =
-                  ButtonDefaults.buttonColors(
-                    containerColor = ActivePurple,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                  ),
-                shape = RoundedCornerShape(24.dp),
-                modifier = Modifier.fillMaxWidth().height(48.dp).testTag("fetch_from_github_btn")
-              ) {
-                if (isRefreshing) {
-                  CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    strokeWidth = 2.dp,
-                    color = MaterialTheme.colorScheme.onPrimary
-                  )
-                  Spacer(modifier = Modifier.width(12.dp))
-                  Text("Fetching Gists...", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                } else {
-                  Icon(
-                    imageVector = Icons.Default.CloudSync,
-                    contentDescription = "Download icon",
-                    modifier = Modifier.size(18.dp)
-                  )
-                  Spacer(modifier = Modifier.width(8.dp))
-                  Text("Fetch from GitHub", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                }
-              }
-              Spacer(modifier = Modifier.height(12.dp))
-              Text(
-                text = "Or tap the '+' button in the bottom right to create a new draft offline.",
-                fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                textAlign = TextAlign.Center
-              )
-            }
+            GistListEmptyState(onFetchClick = onRefresh, isRefreshing = isRefreshing)
           } else {
             // SECONDARY EMPTY STATE: Gists exist but none match search filters
             Column(
@@ -507,7 +419,7 @@ fun HomeScreen(
                       dismissValue == SwipeToDismissBoxValue.StartToEnd
                   ) {
                     onDelete(item.gist.id)
-                    true
+                    false
                   } else {
                     false
                   }

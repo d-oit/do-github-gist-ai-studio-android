@@ -300,7 +300,10 @@ fun GistCard(
 
         // Action buttons
         Row {
-          IconButton(onClick = onPreview) {
+          IconButton(
+            onClick = onPreview,
+            modifier = Modifier.testTag("preview_button_${item.gist.id}")
+          ) {
             Icon(
               imageVector = Icons.Default.Visibility,
               contentDescription = "Preview Code",

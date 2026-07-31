@@ -40,6 +40,7 @@ import com.example.data.local.entity.GistWithFiles
 import com.example.data.repository.SyncStatus
 import com.example.ui.components.GitHubGistApiList
 import com.example.ui.components.SyncStatusBar
+import com.example.ui.components.SyncStatusDashboardView
 
 @Composable
 fun SyncScreen(
@@ -53,7 +54,8 @@ fun SyncScreen(
   isForking: String?,
   onForkClick: (String) -> Unit,
   lastSyncTime: Long = 0L,
-  syncStatus: SyncStatus = SyncStatus.Idle
+  syncStatus: SyncStatus = SyncStatus.Idle,
+  isOnline: Boolean = true
 ) {
   val unsynced =
     remember(gists) { gists.filter { it.gist.isLocalOnly || it.gist.isDirty || it.gist.isDeleted } }
@@ -66,6 +68,18 @@ fun SyncScreen(
   ) {
     // Status Bar
     SyncStatusBar(lastSyncTime = lastSyncTime, syncStatus = syncStatus)
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // Synchronization Dashboard for locally modified Gists
+    SyncStatusDashboardView(
+      gists = gists,
+      isSyncing = isSyncing,
+      isOnline = isOnline,
+      onSyncClick = onSyncClick,
+      lastSyncTime = lastSyncTime,
+      syncStatus = syncStatus
+    )
 
     // Local state card
     Spacer(modifier = Modifier.height(16.dp))

@@ -173,6 +173,68 @@ class DeleteConfirmationDialogTest {
       composeTestRule.onNodeWithTag("gist_card_$gistId").assertDoesNotExist()
     }
 
+  @Test
+  fun test_deleteConfirmationFlow_fromDetailScreen() =
+    runTest(testDispatcher) {
+      var deleteClicked = false
+      val sampleGist =
+        com.example.data.local.entity.GistWithFiles(
+          gist =
+            com.example.data.local.entity.GistEntity(
+              id = "detail_test_id",
+              description = "Test Detail Delete Flow",
+              htmlUrl = "https://gist.github.com/detail_test_id",
+              url = "https://api.github.com/gists/detail_test_id",
+              createdAt = "2026-01-01T00:00:00Z",
+              updatedAt = "2026-01-01T00:00:00Z",
+              nodeId = "node_123",
+              isPublic = false,
+              isPinned = false,
+              isLocalOnly = false,
+              isDirty = false,
+              ownerLogin = "testuser",
+              ownerId = 1,
+              ownerAvatarUrl = ""
+            ),
+          files =
+            listOf(
+              com.example.data.local.entity.GistFileEntity(
+                fileId = "detail_test_id_detail_delete.kt",
+                gistId = "detail_test_id",
+                filename = "detail_delete.kt",
+                type = "text/plain",
+                language = "Kotlin",
+                rawUrl = "",
+                size = 10,
+                content = "val x = 42"
+              )
+            )
+        )
+
+      composeTestRule.setContent {
+        MyApplicationTheme {
+          com.example.ui.screens.GistDetailScreen(
+            item = sampleGist,
+            onBack = {},
+            onEdit = {},
+            onDelete = { deleteClicked = true },
+            onTogglePin = {},
+            onToggleStar = {}
+          )
+        }
+      }
+
+      // Verify detail screen is displayed
+      composeTestRule.onNodeWithTag("gist_detail_screen", useUnmergedTree = true).assertExists()
+
+      // Tap delete button in detail screen
+      composeTestRule.onNodeWithTag("detail_delete_button", useUnmergedTree = true).performClick()
+      composeTestRule.waitForIdle()
+
+      // Verify onDelete callback was invoked
+      assertTrue(deleteClicked)
+    }
+
   private class FakeGitHubApiService : com.example.data.remote.api.GitHubApiService {
     override suspend fun getGists(
       page: Int?,

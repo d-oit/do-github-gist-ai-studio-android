@@ -192,7 +192,8 @@ suspend fun GistRepository.saveResponseToDb(
       ownerAvatarUrl = configPrefs.getOwnerAvatarUrl()
     )
 
-  val fileEntities = GistMapper.mapToFiles(response, id) { detectLanguage(it) }
+  val rawFiles = GistMapper.mapToFiles(response, id) { detectLanguage(it) }
+  val encryptedFiles = rawFiles.map { file -> file.copy(content = encryptContent(file.content)) }
 
-  gistDao.upsertGistWithFiles(entity, fileEntities)
+  gistDao.upsertGistWithFiles(entity, encryptedFiles)
 }

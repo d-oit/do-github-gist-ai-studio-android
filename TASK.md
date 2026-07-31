@@ -602,6 +602,79 @@ and upload SARIF to GitHub Security.
   - `compile_applet`
 - **Definition of done**: WorkManager periodic background synchronization task is fully configured and scheduled, supported by `Configuration.Provider` in `DoGistHubApp`, verified via Robolectric JVM tests, formatted with Spotless, and compiled without errors.
 
+---
+
+## 📂 33. Synchronization Status Dashboard View for Locally Modified Gists
+
+- **Goal**: Create a status dashboard view that displays the current synchronization state (e.g., 'Synced', 'Pending', 'Offline') for locally modified Gists.
+- **Files expected to change**: `SyncStatusDashboardView.kt`, `SyncScreen.kt`, `GistViewModel.kt`, `GistHubAppScreen.kt`, `SyncStatusDashboardTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Create `SyncStatusDashboardView.kt` featuring overall status state badges ('Synced', 'Pending', 'Offline'), metrics summary boxes (Total Local, Pending Sync, Network), list of locally modified Gists (Drafts, Modified, Pending Delete), and a push sync CTA button with test tags.
+  - [x] Add `isOnline` StateFlow to `GistViewModel.kt` and integrate it into `GistHubAppScreen.kt` and `SyncScreen.kt`.
+  - [x] Embed `SyncStatusDashboardView` into `SyncScreen.kt` to present a unified synchronization status view for locally modified Gists.
+  - [x] Create `SyncStatusDashboardTest.kt` verifying rendering of 'Synced', 'Pending', and 'Offline' status badges and metrics under all network and local modification conditions.
+  - [x] Format codebase using `./harness.sh format`.
+  - [x] Execute full pipeline checks via `./harness.sh check` and verify compilation via `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `compile_applet`
+- **Definition of done**: Synchronization status dashboard view is fully implemented and integrated, displaying current sync state ('Synced', 'Pending', 'Offline') and locally modified Gists, verified with Compose test rules on JVM Robolectric, formatted with Spotless, and compiled without errors.
+
+---
+
+## 📂 34. Gist List View Empty State UI Component
+
+- **Goal**: Create an empty state UI component for the Gist list view that displays a helpful message and a call-to-action button when there are no Gists synchronized or stored locally.
+- **Files expected to change**: `GistListEmptyState.kt`, `HomeScreen.kt`, `GistListEmptyStateTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Create `GistListEmptyState.kt` with modern M3 styling, illustration icon, helpful message, and "Fetch / Sync Gists" CTA button with test tag `empty_state_fetch_btn`.
+  - [x] Integrate `GistListEmptyState` in `HomeScreen.kt` when the local database contains zero Gists.
+  - [x] Add unit test `GistListEmptyStateTest.kt` verifying rendering and CTA click behavior.
+  - [x] Format codebase using `./harness.sh format`.
+  - [x] Execute full verification via `./harness.sh check` and `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `compile_applet`
+- **Definition of done**: Gist list view empty state component is fully implemented, integrated into `HomeScreen.kt`, verified via Robolectric JVM tests, formatted with Spotless, and compiled without errors.
+
+---
+
+## 📂 35. Deletion Confirmation Dialog Flow Verification
+
+- **Goal**: Verify and refine the deletion confirmation dialog flow across Home screen and Detail screen.
+- **Files expected to change**: `DeleteConfirmationDialogTest.kt`, `GistDetailScreen.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Refine `DeleteConfirmationDialogTest.kt` to cover cancel, confirm, and detail screen deletion flows.
+  - [x] Clean up icon content description redundancy inside `GistDetailScreen.kt` buttons to ensure clean accessibility semantics and button node targeting.
+  - [x] Execute full pipeline checks via `./harness.sh check` and verify compilation via `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `compile_applet`
+- **Definition of done**: Deletion confirmation dialog flows are fully verified with Robolectric JVM unit tests passing green, formatted with Spotless, and compiled without errors.
+
+---
+
+## 📂 36. Local Gist Content Encryption via androidx.security.crypto
+
+- **Goal**: Encrypt sensitive Gist file content using the `androidx.security.crypto` library before saving to the local Room database, and transparently decrypt when accessed via the repository.
+- **Files expected to change**: `GistContentEncryptor.kt`, `GistRepository.kt`, `GistRepositoryExtensions.kt`, `DoGistHubApp.kt`, `GistContentEncryptionTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Create `GistContentEncryptor.kt` using `androidx.security.crypto.MasterKey` with AES-256 GCM cipher encryption and decryption.
+  - [x] Integrate `GistContentEncryptor` into `GistRepository` to encrypt file content before persisting to Room DB and decrypt when reading.
+  - [x] Wire `GistContentEncryptor` instance in `DoGistHubApp.kt`.
+  - [x] Add comprehensive unit test `GistContentEncryptionTest.kt` verifying encryption/decryption, legacy unencrypted pass-through, and repository/Room integration.
+  - [x] Execute full pipeline checks via `./harness.sh check` and verify compilation via `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `compile_applet`
+- **Definition of done**: Sensitive Gist content is encrypted before persisting to the local Room database using `androidx.security.crypto`, transparently decrypted on access, verified via Robolectric JVM unit tests, formatted with Spotless, and compiled without errors.
+
+
+
 
 
 

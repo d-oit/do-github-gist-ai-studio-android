@@ -219,7 +219,7 @@ fun VaultScreen(
                     dismissValue == SwipeToDismissBoxValue.StartToEnd
                 ) {
                   onDelete(item.gist.id)
-                  true
+                  false
                 } else {
                   false
                 }

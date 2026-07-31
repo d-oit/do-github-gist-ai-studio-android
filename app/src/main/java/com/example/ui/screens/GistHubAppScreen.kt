@@ -51,6 +51,7 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
   val gists by viewModel.gists.collectAsState()
   val isRefreshing by viewModel.isRefreshing.collectAsState()
   val isSyncing by viewModel.isSyncing.collectAsState()
+  val isOnline by viewModel.isOnline.collectAsState()
   val statusMessage by viewModel.statusMessage.collectAsState()
   val errorMessage by viewModel.errorMessage.collectAsState()
   val syncStatus by viewModel.syncStatus.collectAsState()
@@ -205,9 +206,8 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
           showEditor = true
         },
         onDelete = {
-          val currentItem = selectedDetailGist
-          selectedDetailGistId = null
-          gistIdToDelete = currentItem.gist.id
+          println("DEBUG: GistDetailScreen onDelete called for id: ${selectedDetailGist.gist.id}")
+          gistIdToDelete = selectedDetailGist.gist.id
         },
         onTogglePin = { viewModel.togglePin(selectedDetailGist.gist.id) },
         onToggleStar = { viewModel.toggleStar(selectedDetailGist.gist.id) },
@@ -297,7 +297,8 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
               isForking = isForking,
               onForkClick = { viewModel.forkGist(it) },
               lastSyncTime = lastSyncTime,
-              syncStatus = syncStatus
+              syncStatus = syncStatus,
+              isOnline = isOnline
             )
           }
           "config" -> {
@@ -386,7 +387,7 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
       text = {
         Text(
           text =
-            "Are you sure you want to delete this locally saved Gist? This action cannot be undone.",
+            "Are you sure you want to delete this Gist? This action cannot be undone and will permanently remove it.",
           fontSize = 14.sp,
           color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -394,7 +395,12 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
       confirmButton = {
         TextButton(
           onClick = {
-            gistIdToDelete?.let { id -> viewModel.deleteGist(id) }
+            gistIdToDelete?.let { id ->
+              viewModel.deleteGist(id)
+              if (selectedDetailGistId == id) {
+                selectedDetailGistId = null
+              }
+            }
             gistIdToDelete = null
           },
           modifier = Modifier.testTag("delete_confirm_confirm")
