@@ -673,6 +673,45 @@ and upload SARIF to GitHub Security.
   - `compile_applet`
 - **Definition of done**: Sensitive Gist content is encrypted before persisting to the local Room database using `androidx.security.crypto`, transparently decrypted on access, verified via Robolectric JVM unit tests, formatted with Spotless, and compiled without errors.
 
+---
+
+## 📂 37. Visual Sync State Indicator Component
+
+- **Goal**: Create a visual sync state indicator component that tracks whether local Gist changes have been pushed to GitHub using the Room database sync status flags (`isLocalOnly`, `isDirty`, `isDeleted`).
+- **Files expected to change**: `GistSyncStateIndicator.kt`, `GistCard.kt`, `GistDetailScreen.kt`, `GistSyncStateIndicatorTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Create `GistSyncStateIndicator.kt` providing compact badges and detailed banner indicators for Room DB sync status flags (`isLocalOnly`, `isDirty`, `isDeleted`, `synced`).
+  - [x] Integrate `GistSyncStateIndicator` into `GistCard.kt` and `GistDetailScreen.kt`.
+  - [x] Write Robolectric test `GistSyncStateIndicatorTest.kt` verifying state resolution logic and UI rendering for all sync flags.
+  - [x] Execute pipeline checks via `./harness.sh format` and `./harness.sh check`.
+  - [x] Verify applet compilation via `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `compile_applet`
+- **Definition of done**: Visual sync state indicator component cleanly renders Room sync status flags (`isLocalOnly`, `isDirty`, `isDeleted`, `synced`), integrated in list and detail views, fully verified via Robolectric JVM tests, formatted with Spotless, and compiled without errors.
+
+---
+
+## 📂 38. Local Gists Repository Screen
+
+- **Goal**: Implement a screen that lists all local gists, showing their title, snippet, and sync status icon.
+- **Files expected to change**: `LocalGistsScreen.kt`, `VaultScreen.kt`, `LocalGistsScreenTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Create `LocalGistsScreen.kt` listing all local gists stored in Room database with title, code snippet preview box, and sync status icon indicator (`GistSyncStateIndicator`).
+  - [x] Add search filtering and category filter chips (All Local, Local Only, Unpushed Edits, Synced).
+  - [x] Integrate `LocalGistsScreen` into `VaultScreen.kt` with a seamless view mode toggle between Unsynced Drafts and All Local Gists.
+  - [x] Write Robolectric test `LocalGistsScreenTest.kt` verifying screen rendering, search/filter logic, and click action callbacks.
+  - [x] Execute pipeline checks via `./harness.sh format` and `./harness.sh check`.
+  - [x] Verify applet compilation via `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `compile_applet`
+- **Definition of done**: Local gists repository screen lists all local gists showing title, snippet, and sync status icon, fully integrated, verified via Robolectric JVM tests, formatted with Spotless, and compiled without errors.
+
+
+
 
 
 

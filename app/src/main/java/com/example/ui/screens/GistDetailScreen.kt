@@ -64,6 +64,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.entity.GistWithFiles
 import com.example.ui.components.DetailedCreationInfoCard
+import com.example.ui.components.GistSyncStateIndicator
 import com.example.ui.components.MarkdownText
 import com.example.ui.components.SyntaxHighlighter
 import com.example.ui.components.borderButtonStroke
@@ -218,6 +219,16 @@ fun GistDetailScreen(
 
       // Creator and Timestamps info card
       item { DetailedCreationInfoCard(item = item) }
+
+      // Sync state banner indicator
+      item {
+        GistSyncStateIndicator(
+          isLocalOnly = item.gist.isLocalOnly,
+          isDirty = item.gist.isDirty,
+          isDeleted = item.gist.isDeleted,
+          compact = false
+        )
+      }
 
       // Description & Tags card
       item {

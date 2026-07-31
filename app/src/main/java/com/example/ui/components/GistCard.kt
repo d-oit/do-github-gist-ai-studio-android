@@ -18,15 +18,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
-import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -50,9 +47,7 @@ import com.example.data.local.entity.GistWithFiles
 import com.example.ui.theme.ActivePurple
 import com.example.ui.theme.ActivePurpleContainer
 import com.example.ui.theme.DarkPurpleText
-import com.example.ui.theme.DarkRedText
 import com.example.ui.theme.ErrorRed
-import com.example.ui.theme.LightPinkContainer
 
 @Composable
 fun borderButtonStroke() =
@@ -224,78 +219,12 @@ fun GistCard(
             }
           }
 
-          if (item.gist.isLocalOnly) {
-            Box(
-              modifier =
-                Modifier.background(LightPinkContainer, RoundedCornerShape(8.dp))
-                  .padding(horizontal = 8.dp, vertical = 4.dp)
-                  .testTag("sync_status_local_only")
-            ) {
-              Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                  imageVector = Icons.Default.CloudOff,
-                  contentDescription = "Local Only",
-                  tint = DarkRedText,
-                  modifier = Modifier.size(12.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                  text = "Local Only",
-                  fontSize = 11.sp,
-                  fontWeight = FontWeight.Bold,
-                  color = DarkRedText
-                )
-              }
-            }
-          } else if (item.gist.isDirty) {
-            Box(
-              modifier =
-                Modifier.background(Color(0xFFFFF3E0), RoundedCornerShape(8.dp))
-                  .border(1.dp, Color(0xFFFFE082), RoundedCornerShape(8.dp))
-                  .padding(horizontal = 8.dp, vertical = 4.dp)
-                  .testTag("sync_status_pending")
-            ) {
-              Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                  imageVector = Icons.Default.Sync,
-                  contentDescription = "Pending Sync",
-                  tint = Color(0xFFE65100),
-                  modifier = Modifier.size(12.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                  text = "Pending",
-                  fontSize = 11.sp,
-                  fontWeight = FontWeight.Bold,
-                  color = Color(0xFFE65100)
-                )
-              }
-            }
-          } else {
-            Box(
-              modifier =
-                Modifier.background(Color(0xFFE8F5E9), RoundedCornerShape(8.dp))
-                  .border(1.dp, Color(0xFFA5D6A7), RoundedCornerShape(8.dp))
-                  .padding(horizontal = 8.dp, vertical = 4.dp)
-                  .testTag("sync_status_synced")
-            ) {
-              Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                  imageVector = Icons.Default.Check,
-                  contentDescription = "Synced",
-                  tint = Color(0xFF2E7D32),
-                  modifier = Modifier.size(12.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                  text = "Synced",
-                  fontSize = 11.sp,
-                  fontWeight = FontWeight.Bold,
-                  color = Color(0xFF2E7D32)
-                )
-              }
-            }
-          }
+          GistSyncStateIndicator(
+            isLocalOnly = item.gist.isLocalOnly,
+            isDirty = item.gist.isDirty,
+            isDeleted = item.gist.isDeleted,
+            compact = true
+          )
         }
 
         // Action buttons
