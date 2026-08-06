@@ -18,15 +18,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
-import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -36,12 +36,17 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -50,9 +55,7 @@ import com.example.data.local.entity.GistWithFiles
 import com.example.ui.theme.ActivePurple
 import com.example.ui.theme.ActivePurpleContainer
 import com.example.ui.theme.DarkPurpleText
-import com.example.ui.theme.DarkRedText
 import com.example.ui.theme.ErrorRed
-import com.example.ui.theme.LightPinkContainer
 
 @Composable
 fun borderButtonStroke() =
@@ -68,8 +71,10 @@ fun GistCard(
   onDelete: () -> Unit,
   onPreview: () -> Unit
 ) {
+  var isExpanded by remember { mutableStateOf(false) }
+
   Card(
-    onClick = onEdit,
+    onClick = onPreview,
     modifier = Modifier.fillMaxWidth().testTag("gist_card_${item.gist.id}"),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     border = borderButtonStroke(),
@@ -120,6 +125,7 @@ fun GistCard(
                         RoundedCornerShape(6.dp)
                       )
                       .padding(horizontal = 6.dp, vertical = 2.dp)
+                      .testTag("gist_card_tag_$tag")
                 ) {
                   Text(
                     text = "#$tag",
@@ -224,83 +230,31 @@ fun GistCard(
             }
           }
 
-          if (item.gist.isLocalOnly) {
-            Box(
-              modifier =
-                Modifier.background(LightPinkContainer, RoundedCornerShape(8.dp))
-                  .padding(horizontal = 8.dp, vertical = 4.dp)
-                  .testTag("sync_status_local_only")
-            ) {
-              Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                  imageVector = Icons.Default.CloudOff,
-                  contentDescription = "Local Only",
-                  tint = DarkRedText,
-                  modifier = Modifier.size(12.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                  text = "Local Only",
-                  fontSize = 11.sp,
-                  fontWeight = FontWeight.Bold,
-                  color = DarkRedText
-                )
-              }
-            }
-          } else if (item.gist.isDirty) {
-            Box(
-              modifier =
-                Modifier.background(Color(0xFFFFF3E0), RoundedCornerShape(8.dp))
-                  .border(1.dp, Color(0xFFFFE082), RoundedCornerShape(8.dp))
-                  .padding(horizontal = 8.dp, vertical = 4.dp)
-                  .testTag("sync_status_pending")
-            ) {
-              Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                  imageVector = Icons.Default.Sync,
-                  contentDescription = "Pending Sync",
-                  tint = Color(0xFFE65100),
-                  modifier = Modifier.size(12.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                  text = "Pending",
-                  fontSize = 11.sp,
-                  fontWeight = FontWeight.Bold,
-                  color = Color(0xFFE65100)
-                )
-              }
-            }
-          } else {
-            Box(
-              modifier =
-                Modifier.background(Color(0xFFE8F5E9), RoundedCornerShape(8.dp))
-                  .border(1.dp, Color(0xFFA5D6A7), RoundedCornerShape(8.dp))
-                  .padding(horizontal = 8.dp, vertical = 4.dp)
-                  .testTag("sync_status_synced")
-            ) {
-              Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                  imageVector = Icons.Default.Check,
-                  contentDescription = "Synced",
-                  tint = Color(0xFF2E7D32),
-                  modifier = Modifier.size(12.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                  text = "Synced",
-                  fontSize = 11.sp,
-                  fontWeight = FontWeight.Bold,
-                  color = Color(0xFF2E7D32)
-                )
-              }
-            }
-          }
+          GistSyncStateIndicator(
+            isLocalOnly = item.gist.isLocalOnly,
+            isDirty = item.gist.isDirty,
+            isDeleted = item.gist.isDeleted,
+            compact = true
+          )
         }
 
         // Action buttons
         Row {
-          IconButton(onClick = onPreview) {
+          IconButton(
+            onClick = { isExpanded = !isExpanded },
+            modifier = Modifier.testTag("expand_gist_button_${item.gist.id}")
+          ) {
+            Icon(
+              imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+              contentDescription = if (isExpanded) "Collapse Content" else "Expand Full Content",
+              tint = MaterialTheme.colorScheme.primary,
+              modifier = Modifier.size(20.dp)
+            )
+          }
+          IconButton(
+            onClick = onPreview,
+            modifier = Modifier.testTag("preview_button_${item.gist.id}")
+          ) {
             Icon(
               imageVector = Icons.Default.Visibility,
               contentDescription = "Preview Code",
@@ -326,6 +280,60 @@ fun GistCard(
               tint = ErrorRed,
               modifier = Modifier.size(18.dp)
             )
+          }
+        }
+      }
+
+      if (isExpanded) {
+        Spacer(modifier = Modifier.height(12.dp))
+        Column(
+          modifier =
+            Modifier.fillMaxWidth()
+              .testTag("expanded_content_${item.gist.id}")
+              .background(Color(0xFF1E1E1E), RoundedCornerShape(8.dp))
+              .padding(12.dp)
+        ) {
+          Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+          ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+              Icon(
+                imageVector = Icons.Default.LockOpen,
+                contentDescription = "Auto-Decrypted",
+                tint = Color(0xFF81C784),
+                modifier = Modifier.size(14.dp)
+              )
+              Spacer(modifier = Modifier.width(4.dp))
+              Text(
+                text = "Auto-Decrypted Content",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF81C784),
+                modifier = Modifier.testTag("auto_decrypted_badge_${item.gist.id}")
+              )
+            }
+            Text(text = "${item.files.size} file(s)", fontSize = 11.sp, color = Color.LightGray)
+          }
+          Spacer(modifier = Modifier.height(8.dp))
+          item.files.forEach { file ->
+            Text(
+              text = "📄 ${file.filename}",
+              fontSize = 12.sp,
+              fontWeight = FontWeight.Bold,
+              color = Color(0xFF80CBC4)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+              text = file.content.ifEmpty { "// Empty content" },
+              fontFamily = FontFamily.Monospace,
+              fontSize = 12.sp,
+              color = Color(0xFFD4D4D4),
+              maxLines = 15,
+              overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(8.dp))
           }
         }
       }

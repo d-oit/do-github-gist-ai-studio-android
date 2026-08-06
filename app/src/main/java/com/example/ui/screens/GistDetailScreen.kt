@@ -24,9 +24,12 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.CallSplit
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
@@ -44,6 +47,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,7 +55,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -59,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.entity.GistWithFiles
 import com.example.ui.components.DetailedCreationInfoCard
+import com.example.ui.components.GistSyncStateIndicator
 import com.example.ui.components.MarkdownText
 import com.example.ui.components.SyntaxHighlighter
 import com.example.ui.components.borderButtonStroke
@@ -174,7 +181,7 @@ fun GistDetailScreen(
           ) {
             Icon(
               imageVector = Icons.Default.Delete,
-              contentDescription = "Delete",
+              contentDescription = null,
               modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -189,7 +196,7 @@ fun GistDetailScreen(
           ) {
             Icon(
               imageVector = Icons.Default.Edit,
-              contentDescription = "Edit",
+              contentDescription = null,
               modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -202,13 +209,57 @@ fun GistDetailScreen(
     modifier = modifier.fillMaxSize().testTag("gist_detail_screen")
   ) { innerPadding ->
     LazyColumn(
-      modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = 16.dp),
+      modifier =
+        Modifier.fillMaxSize()
+          .padding(innerPadding)
+          .padding(horizontal = 16.dp)
+          .testTag("detail_screen_lazy_column"),
       verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
       item { Spacer(modifier = Modifier.height(8.dp)) }
 
       // Creator and Timestamps info card
       item { DetailedCreationInfoCard(item = item) }
+
+      // Sync state banner indicator
+      item {
+        GistSyncStateIndicator(
+          isLocalOnly = item.gist.isLocalOnly,
+          isDirty = item.gist.isDirty,
+          isDeleted = item.gist.isDeleted,
+          compact = false
+        )
+      }
+
+      // Auto-Decrypted Security Status Banner
+      item {
+        Card(
+          modifier = Modifier.fillMaxWidth().testTag("detail_decrypted_banner"),
+          shape = RoundedCornerShape(12.dp),
+          border =
+            androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF81C784).copy(alpha = 0.5f)),
+          colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9))
+        ) {
+          Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+          ) {
+            Icon(
+              imageVector = Icons.Default.LockOpen,
+              contentDescription = "Auto-Decrypted",
+              tint = Color(0xFF2E7D32),
+              modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+              text = "AES-256 Encrypted in Room Storage • Automatically Decrypted for Display",
+              fontSize = 11.sp,
+              fontWeight = FontWeight.Medium,
+              color = Color(0xFF1B5E20)
+            )
+          }
+        }
+      }
 
       // Description & Tags card
       item {
@@ -270,6 +321,7 @@ fun GistDetailScreen(
                           RoundedCornerShape(6.dp)
                         )
                         .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .testTag("gist_detail_tag_$tag")
                   ) {
                     Text(
                       text = "#$tag",
@@ -292,6 +344,15 @@ fun GistDetailScreen(
             file.filename.endsWith(".markdown", ignoreCase = true)
 
         var previewMode by remember { mutableStateOf(if (isMarkdown) "markdown" else "raw") }
+        val clipboardManager = LocalClipboardManager.current
+        var isCopied by remember { mutableStateOf(false) }
+
+        if (isCopied) {
+          LaunchedEffect(Unit) {
+            kotlinx.coroutines.delay(2000)
+            isCopied = false
+          }
+        }
 
         Card(
           modifier = Modifier.fillMaxWidth().testTag("detail_file_card_${file.filename}"),
@@ -321,11 +382,11 @@ fun GistDetailScreen(
                 )
               }
 
-              if (isMarkdown) {
-                Row(
-                  horizontalArrangement = Arrangement.spacedBy(4.dp),
-                  verticalAlignment = Alignment.CenterVertically
-                ) {
+              Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+              ) {
+                if (isMarkdown) {
                   TextButton(
                     onClick = { previewMode = "raw" },
                     modifier = Modifier.height(36.dp).testTag("file_mode_raw_${file.filename}")
@@ -353,6 +414,23 @@ fun GistDetailScreen(
                         else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                   }
+                }
+
+                IconButton(
+                  onClick = {
+                    clipboardManager.setText(AnnotatedString(file.content))
+                    isCopied = true
+                  },
+                  modifier = Modifier.size(36.dp).testTag("copy_file_button_${file.filename}")
+                ) {
+                  Icon(
+                    imageVector = if (isCopied) Icons.Default.Check else Icons.Default.ContentCopy,
+                    contentDescription = "Copy to Clipboard",
+                    tint =
+                      if (isCopied) MaterialTheme.colorScheme.primary
+                      else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp)
+                  )
                 }
               }
             }

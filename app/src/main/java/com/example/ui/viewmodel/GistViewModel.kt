@@ -66,6 +66,39 @@ class GistViewModel(
   private val _isSyncing = MutableStateFlow(false)
   val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
 
+  private val _isOnline = MutableStateFlow(true)
+  val isOnline: StateFlow<Boolean> = _isOnline.asStateFlow()
+
+  fun setOnlineState(online: Boolean) {
+    _isOnline.value = online
+  }
+
+  private val _isOfflineOnly = MutableStateFlow(configPrefs.isOfflineOnly())
+  val isOfflineOnly: StateFlow<Boolean> = _isOfflineOnly.asStateFlow()
+
+  fun toggleOfflineOnly() {
+    val newValue = !_isOfflineOnly.value
+    _isOfflineOnly.value = newValue
+    configPrefs.setOfflineOnly(newValue)
+    if (newValue) {
+      _statusMessage.value = "Offline-Only mode enabled. Network sync paused."
+    } else {
+      _statusMessage.value = "Offline-Only mode disabled. Network sync resumed."
+    }
+  }
+
+  fun setOfflineOnly(offlineOnly: Boolean) {
+    if (_isOfflineOnly.value != offlineOnly) {
+      _isOfflineOnly.value = offlineOnly
+      configPrefs.setOfflineOnly(offlineOnly)
+      if (offlineOnly) {
+        _statusMessage.value = "Offline-Only mode enabled. Network sync paused."
+      } else {
+        _statusMessage.value = "Offline-Only mode disabled. Network sync resumed."
+      }
+    }
+  }
+
   private val _statusMessage = MutableStateFlow<String?>(null)
   val statusMessage: StateFlow<String?> = _statusMessage.asStateFlow()
 
@@ -298,6 +331,10 @@ class GistViewModel(
   }
 
   fun refreshGists(context: Context? = null) {
+    if (_isOfflineOnly.value) {
+      _statusMessage.value = "Offline-Only mode is enabled. Sync is paused."
+      return
+    }
     viewModelScope.launch {
       clearMessages()
       if (context != null) {
@@ -485,6 +522,10 @@ class GistViewModel(
   }
 
   fun syncAll() {
+    if (_isOfflineOnly.value) {
+      _statusMessage.value = "Offline-Only mode is enabled. Sync is paused."
+      return
+    }
     viewModelScope.launch {
       _isSyncing.value = true
       clearMessages()
@@ -516,6 +557,10 @@ class GistViewModel(
   val isForking: StateFlow<String?> = _isForking.asStateFlow()
 
   fun forkGist(id: String) {
+    if (_isOfflineOnly.value) {
+      _errorMessage.value = "Cannot fork while in Offline-Only mode."
+      return
+    }
     viewModelScope.launch {
       _isForking.value = id
       repository
@@ -540,6 +585,10 @@ class GistViewModel(
   }
 
   fun fetchRemoteGistsDirectly() {
+    if (_isOfflineOnly.value) {
+      _remoteError.value = "Offline-Only mode is enabled."
+      return
+    }
     viewModelScope.launch {
       _isFetchingRemote.value = true
       _remoteError.value = null

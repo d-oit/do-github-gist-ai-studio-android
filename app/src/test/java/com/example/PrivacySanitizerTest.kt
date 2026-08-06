@@ -31,6 +31,15 @@ class PrivacySanitizerTest {
   }
 
   @Test
+  fun redactFineGrainedGithubPat() {
+    val pat =
+      "github_pat_11AAAAAAA0123456789_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_12345"
+    val input = "Log with fine-grained PAT: $pat"
+    val expected = "Log with fine-grained PAT: [REDACTED_PAT]"
+    assertEquals(expected, PrivacySanitizer.redact(input))
+  }
+
+  @Test
   fun redactBearerAuthorizationHeader() {
     val input = "Authorization: Bearer ghp_12345"
     val expected = "Authorization: Bearer [REDACTED]"

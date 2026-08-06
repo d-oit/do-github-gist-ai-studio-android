@@ -13,8 +13,12 @@ class FakeGitHubApiService : GitHubApiService {
   val gistsList = mutableListOf<GistResponse>()
   var shouldFailUser = false
   var shouldFailForkWith422 = false
+  var shouldThrowNetworkError = false
 
-  override suspend fun getGists(page: Int?, perPage: Int?): List<GistResponse> = gistsList
+  override suspend fun getGists(page: Int?, perPage: Int?): List<GistResponse> {
+    if (shouldThrowNetworkError) throw java.io.IOException("Network unavailable")
+    return gistsList
+  }
 
   override suspend fun getGist(id: String): GistResponse {
     return gistsList.find { it.id == id } ?: throw Exception("Gist Not Found")

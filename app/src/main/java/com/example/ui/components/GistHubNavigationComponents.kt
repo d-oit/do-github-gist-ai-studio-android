@@ -3,6 +3,7 @@ package com.example.ui.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Home
@@ -33,6 +35,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -54,7 +57,9 @@ fun GistHubTopAppBar(
   isRefreshing: Boolean,
   onRefresh: () -> Unit,
   lastSyncTime: Long = 0L,
-  syncStatus: SyncStatus = SyncStatus.Idle
+  syncStatus: SyncStatus = SyncStatus.Idle,
+  isOfflineOnly: Boolean = false,
+  onToggleOfflineOnly: (() -> Unit)? = null
 ) {
   Column(
     modifier =
@@ -112,6 +117,22 @@ fun GistHubTopAppBar(
       }
 
       Row(verticalAlignment = Alignment.CenterVertically) {
+        // Global Offline-Only Mode Toggle
+        IconButton(
+          onClick = { onToggleOfflineOnly?.invoke() },
+          modifier = Modifier.testTag("offline_only_toggle")
+        ) {
+          Icon(
+            imageVector = Icons.Default.CloudOff,
+            contentDescription =
+              if (isOfflineOnly) "Disable Offline-Only Mode" else "Enable Offline-Only Mode",
+            tint =
+              if (isOfflineOnly) MaterialTheme.colorScheme.error
+              else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp)
+          )
+        }
+
         // Search button
         IconButton(onClick = onToggleSearch, modifier = Modifier.testTag("search_toggle")) {
           Icon(
@@ -145,7 +166,48 @@ fun GistHubTopAppBar(
     Spacer(modifier = Modifier.height(6.dp))
 
     // Last Synced Status Bar
-    SyncStatusBar(lastSyncTime = lastSyncTime, syncStatus = syncStatus)
+    SyncStatusBar(
+      lastSyncTime = lastSyncTime,
+      syncStatus = syncStatus,
+      isOfflineOnly = isOfflineOnly
+    )
+
+    AnimatedVisibility(visible = isOfflineOnly) {
+      Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.errorContainer,
+        modifier = Modifier.fillMaxWidth().padding(top = 6.dp).testTag("top_bar_offline_banner")
+      ) {
+        Row(
+          modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+          Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+              imageVector = Icons.Default.CloudOff,
+              contentDescription = null,
+              tint = MaterialTheme.colorScheme.onErrorContainer,
+              modifier = Modifier.size(14.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+              text = "OFFLINE-ONLY MODE (Sync Paused)",
+              fontSize = 11.sp,
+              fontWeight = FontWeight.Bold,
+              color = MaterialTheme.colorScheme.onErrorContainer
+            )
+          }
+          Text(
+            text = "Tap to resume",
+            fontSize = 10.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onErrorContainer,
+            modifier = Modifier.clickable { onToggleOfflineOnly?.invoke() }
+          )
+        }
+      }
+    }
 
     AnimatedVisibility(visible = isSearchExpanded) {
       Column(modifier = Modifier.padding(top = 8.dp)) {

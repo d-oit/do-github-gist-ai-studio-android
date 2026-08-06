@@ -51,10 +51,12 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
   val gists by viewModel.gists.collectAsState()
   val isRefreshing by viewModel.isRefreshing.collectAsState()
   val isSyncing by viewModel.isSyncing.collectAsState()
+  val isOnline by viewModel.isOnline.collectAsState()
   val statusMessage by viewModel.statusMessage.collectAsState()
   val errorMessage by viewModel.errorMessage.collectAsState()
   val syncStatus by viewModel.syncStatus.collectAsState()
   val lastSyncTime by viewModel.lastSyncTime.collectAsState()
+  val isOfflineOnly by viewModel.isOfflineOnly.collectAsState()
   val pendingDeleteEvent by viewModel.pendingDeleteEvent.collectAsState()
 
   val selectedTag by viewModel.selectedTag.collectAsState()
@@ -113,16 +115,17 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
   }
 
   LaunchedEffect(syncStatus) {
-    when (val status = syncStatus) {
-      is com.example.data.repository.SyncStatus.Error -> {
-        scope.launch { snackbarHostState.showSnackbar("Sync Error: ${status.errorMessage}") }
-        viewModel.dismissSyncError()
+    if (
+      syncStatus is com.example.data.repository.SyncStatus.Error ||
+        syncStatus is com.example.data.repository.SyncStatus.Success
+    ) {
+      scope.launch {
+        com.example.ui.util.SyncNotificationUtil.showSyncStatusSnackbar(
+          snackbarHostState = snackbarHostState,
+          syncStatus = syncStatus,
+          onDismiss = { viewModel.dismissSyncError() }
+        )
       }
-      is com.example.data.repository.SyncStatus.Success -> {
-        scope.launch { snackbarHostState.showSnackbar(status.message) }
-        viewModel.dismissSyncError()
-      }
-      else -> {}
     }
   }
 
@@ -157,7 +160,9 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
           isRefreshing = isRefreshing,
           onRefresh = { viewModel.refreshGists(context) },
           lastSyncTime = lastSyncTime,
-          syncStatus = syncStatus
+          syncStatus = syncStatus,
+          isOfflineOnly = isOfflineOnly,
+          onToggleOfflineOnly = { viewModel.toggleOfflineOnly() }
         )
       }
     },
@@ -205,9 +210,8 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
           showEditor = true
         },
         onDelete = {
-          val currentItem = selectedDetailGist
-          selectedDetailGistId = null
-          gistIdToDelete = currentItem.gist.id
+          println("DEBUG: GistDetailScreen onDelete called for id: ${selectedDetailGist.gist.id}")
+          gistIdToDelete = selectedDetailGist.gist.id
         },
         onTogglePin = { viewModel.togglePin(selectedDetailGist.gist.id) },
         onToggleStar = { viewModel.toggleStar(selectedDetailGist.gist.id) },
@@ -248,12 +252,21 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
                 showEditor = true
               },
               onDelete = { gistIdToDelete = it },
-              onPreview = { selectedDetailGistId = it.gist.id },
+              onPreview = { previewGist = it },
               lastSyncTime = lastSyncTime,
               searchHistory = searchHistory,
               onSaveSearchQuery = { viewModel.saveSearchQuery(it) },
               onDeleteSearchQuery = { viewModel.deleteSearchQuery(it) },
-              onClearSearchHistory = { viewModel.clearSearchHistory() }
+              onClearSearchHistory = { viewModel.clearSearchHistory() },
+              onCreateDraftClick = {
+                editingGistId = null
+                editorDescription = ""
+                editorFiles = emptyList()
+                editorIsPublic = true
+                editorIsPinned = false
+                editorTags = emptyList()
+                showEditor = true
+              }
             )
           }
           "vault" -> {
@@ -282,7 +295,9 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
                 editorTags = emptyList()
                 showEditor = true
               },
-              onPreview = { selectedDetailGistId = it.gist.id }
+              onPreview = { previewGist = it },
+              isRefreshing = isRefreshing,
+              onRefresh = { viewModel.refreshGists(context) }
             )
           }
           "sync" -> {
@@ -297,7 +312,10 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
               isForking = isForking,
               onForkClick = { viewModel.forkGist(it) },
               lastSyncTime = lastSyncTime,
-              syncStatus = syncStatus
+              syncStatus = syncStatus,
+              isOnline = isOnline,
+              isOfflineOnly = isOfflineOnly,
+              onToggleOfflineOnly = { viewModel.toggleOfflineOnly() }
             )
           }
           "config" -> {
@@ -386,7 +404,7 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
       text = {
         Text(
           text =
-            "Are you sure you want to delete this locally saved Gist? This action cannot be undone.",
+            "Are you sure you want to delete this Gist? This action cannot be undone and will permanently remove it.",
           fontSize = 14.sp,
           color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -394,7 +412,12 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
       confirmButton = {
         TextButton(
           onClick = {
-            gistIdToDelete?.let { id -> viewModel.deleteGist(id) }
+            gistIdToDelete?.let { id ->
+              viewModel.deleteGist(id)
+              if (selectedDetailGistId == id) {
+                selectedDetailGistId = null
+              }
+            }
             gistIdToDelete = null
           },
           modifier = Modifier.testTag("delete_confirm_confirm")

@@ -199,6 +199,14 @@ class ConfigPrefs(private val context: Context) {
     prefs.edit().putLong("last_sync_time", time).apply()
   }
 
+  fun isOfflineOnly(): Boolean {
+    return prefs.getBoolean("offline_only_mode", false)
+  }
+
+  fun setOfflineOnly(offlineOnly: Boolean) {
+    prefs.edit().putBoolean("offline_only_mode", offlineOnly).apply()
+  }
+
   fun clear() {
     prefs.edit().clear().apply()
     try {

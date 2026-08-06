@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.example.data.local.AppDatabase
 import com.example.data.local.entity.GistEntity
 import com.example.data.local.entity.GistFileEntity
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -137,5 +138,93 @@ class GistDaoTest {
     val unsynced = dao.getUnsynchronizedGists()
     assertEquals(1, unsynced.size)
     assertEquals("dirty-id", unsynced[0].gist.id)
+  }
+
+  @Test
+  fun searchLocalGistsFiltersByFilenameDescriptionAndContentSnippet() = runBlocking {
+    val dao = db.gistDao()
+    val gist1 =
+      GistEntity(
+        id = "gist-1",
+        description = "Alpha project setup",
+        isPublic = true,
+        createdAt = "2026-08-01T10:00:00Z",
+        updatedAt = "2026-08-01T10:00:00Z",
+        ownerLogin = "test-user",
+        ownerAvatarUrl = "https://test.com/avatar.png",
+        htmlUrl = "",
+        url = "",
+        nodeId = "node-1",
+        isPinned = false,
+        isLocalOnly = false,
+        isDirty = false,
+        isDeleted = false,
+        isStarred = false,
+        isStarredDirty = false,
+        tags = emptyList(),
+        ownerId = 1
+      )
+    val file1 =
+      GistFileEntity(
+        fileId = "file-1",
+        gistId = "gist-1",
+        filename = "main.kt",
+        type = "Kotlin",
+        language = "Kotlin",
+        rawUrl = "",
+        size = 50,
+        content = "fun helloWorld() { println(\"quantum computing\") }"
+      )
+
+    val gist2 =
+      GistEntity(
+        id = "gist-2",
+        description = "Beta notes",
+        isPublic = true,
+        createdAt = "2026-08-02T10:00:00Z",
+        updatedAt = "2026-08-02T10:00:00Z",
+        ownerLogin = "test-user",
+        ownerAvatarUrl = "https://test.com/avatar.png",
+        htmlUrl = "",
+        url = "",
+        nodeId = "node-2",
+        isPinned = false,
+        isLocalOnly = false,
+        isDirty = false,
+        isDeleted = false,
+        isStarred = false,
+        isStarredDirty = false,
+        tags = emptyList(),
+        ownerId = 1
+      )
+    val file2 =
+      GistFileEntity(
+        fileId = "file-2",
+        gistId = "gist-2",
+        filename = "script_quantum.py",
+        type = "Python",
+        language = "Python",
+        rawUrl = "",
+        size = 30,
+        content = "print('hello')"
+      )
+
+    dao.upsertGistWithFiles(gist1, listOf(file1))
+    dao.upsertGistWithFiles(gist2, listOf(file2))
+
+    // Search by content snippet ("quantum computing") -> Should find gist1
+    val contentResults = dao.searchLocalGists("quantum computing").first()
+    assertEquals(1, contentResults.size)
+    assertEquals("gist-1", contentResults[0].gist.id)
+
+    // Search by filename ("script_quantum") -> Should find gist2
+    val filenameResults = dao.searchLocalGists("script_quantum").first()
+    assertEquals(1, filenameResults.size)
+    assertEquals("gist-2", filenameResults[0].gist.id)
+
+    // Search by description ("Alpha") -> Should find gist1
+    val descResults = dao.searchLocalGists("Alpha").first()
+    assertEquals(1, descResults.size)
+    assertEquals("gist-1", descResults[0].gist.id)
   }
 }

@@ -63,33 +63,45 @@ private data class StatusUiState<A, B, C, D>(val text: A, val bg: B, val fg: C, 
  * current sync status to improve user trust in data freshness.
  */
 @Composable
-fun SyncStatusBar(lastSyncTime: Long, syncStatus: SyncStatus, modifier: Modifier = Modifier) {
+fun SyncStatusBar(
+  lastSyncTime: Long,
+  syncStatus: SyncStatus,
+  isOfflineOnly: Boolean = false,
+  modifier: Modifier = Modifier
+) {
   val formattedTime = formatLastSyncTime(lastSyncTime)
 
   val uiState =
-    when (syncStatus) {
-      is SyncStatus.Syncing ->
+    when {
+      isOfflineOnly ->
+        StatusUiState(
+          "Paused",
+          MaterialTheme.colorScheme.errorContainer,
+          MaterialTheme.colorScheme.onErrorContainer,
+          Icons.Default.CloudOff
+        )
+      syncStatus is SyncStatus.Syncing ->
         StatusUiState(
           "Syncing...",
           MaterialTheme.colorScheme.primaryContainer,
           MaterialTheme.colorScheme.onPrimaryContainer,
           null
         )
-      is SyncStatus.Success ->
+      syncStatus is SyncStatus.Success ->
         StatusUiState(
           "Synced",
           MaterialTheme.colorScheme.secondaryContainer,
           MaterialTheme.colorScheme.onSecondaryContainer,
           Icons.Default.CloudDone
         )
-      is SyncStatus.Error ->
+      syncStatus is SyncStatus.Error ->
         StatusUiState(
           "Sync Error",
           MaterialTheme.colorScheme.errorContainer,
           MaterialTheme.colorScheme.onErrorContainer,
           Icons.Default.ErrorOutline
         )
-      is SyncStatus.Idle -> {
+      else -> {
         if (lastSyncTime > 0L) {
           StatusUiState(
             "Synced",

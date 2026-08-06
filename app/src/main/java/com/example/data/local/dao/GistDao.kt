@@ -63,7 +63,8 @@ interface GistDao {
         SELECT DISTINCT gists.* FROM gists
         LEFT JOIN gist_files ON gists.id = gist_files.gistId
         WHERE gists.isDeleted = 0 AND (gists.description LIKE '%' || :query || '%'
-           OR gist_files.filename LIKE '%' || :query || '%')
+           OR gist_files.filename LIKE '%' || :query || '%'
+           OR gist_files.content LIKE '%' || :query || '%')
         ORDER BY gists.createdAt DESC
     """
   )

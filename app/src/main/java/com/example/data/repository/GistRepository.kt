@@ -24,10 +24,26 @@ class GistRepository(
   val gistDao: GistDao,
   val apiService: GitHubApiService,
   val configPrefs: ConfigPrefs,
-  val searchHistoryDao: SearchHistoryDao? = null
+  val searchHistoryDao: SearchHistoryDao? = null,
+  val contentEncryptor: com.example.core.security.GistContentEncryptor? = null
 ) {
   private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
   val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
+
+  fun encryptContent(content: String): String = contentEncryptor?.encrypt(content) ?: content
+
+  fun decryptContent(content: String): String = contentEncryptor?.decrypt(content) ?: content
+
+  private fun decryptGistWithFiles(gistWithFiles: GistWithFiles?): GistWithFiles? {
+    if (gistWithFiles == null) return null
+    val decryptedFiles =
+      gistWithFiles.files.map { file -> file.copy(content = decryptContent(file.content)) }
+    return gistWithFiles.copy(files = decryptedFiles)
+  }
+
+  private fun decryptGistWithFilesList(list: List<GistWithFiles>): List<GistWithFiles> {
+    return list.map { decryptGistWithFiles(it)!! }
+  }
 
   val searchHistory: Flow<List<SearchHistoryEntity>> =
     searchHistoryDao?.observeRecentSearchHistory() ?: flowOf(emptyList())
@@ -78,17 +94,24 @@ class GistRepository(
   }
 
   val allGists: Flow<List<GistWithFiles>> =
-    gistDao.observeAllGists().map { list -> list.filter { !it.gist.isDeleted } }
-  val unsynchronizedGists: Flow<List<GistWithFiles>> = gistDao.observeUnsynchronizedGists()
+    gistDao.observeAllGists().map { list ->
+      list.filter { !it.gist.isDeleted }.map { decryptGistWithFiles(it)!! }
+    }
+  val unsynchronizedGists: Flow<List<GistWithFiles>> =
+    gistDao.observeUnsynchronizedGists().map { decryptGistWithFilesList(it) }
 
-  suspend fun getUnsynchronizedGists(): List<GistWithFiles> = gistDao.getUnsynchronizedGists()
+  suspend fun getUnsynchronizedGists(): List<GistWithFiles> =
+    decryptGistWithFilesList(gistDao.getUnsynchronizedGists())
 
   fun searchLocalGists(query: String): Flow<List<GistWithFiles>> =
-    gistDao.searchLocalGists(query).map { list -> list.filter { !it.gist.isDeleted } }
+    gistDao.searchLocalGists(query).map { list ->
+      list.filter { !it.gist.isDeleted }.map { decryptGistWithFiles(it)!! }
+    }
 
-  fun observeGist(id: String): Flow<GistWithFiles?> = gistDao.observeGistById(id)
+  fun observeGist(id: String): Flow<GistWithFiles?> =
+    gistDao.observeGistById(id).map { decryptGistWithFiles(it) }
 
-  suspend fun getGist(id: String): GistWithFiles? = gistDao.getGistById(id)
+  suspend fun getGist(id: String): GistWithFiles? = decryptGistWithFiles(gistDao.getGistById(id))
 
   suspend fun updateGistTags(id: String, tags: List<String>) = gistDao.updateTags(id, tags)
 
@@ -298,7 +321,7 @@ class GistRepository(
           language = detectLanguage(name),
           rawUrl = "",
           size = content.length.toLong(),
-          content = content
+          content = encryptContent(content)
         )
       }
 
@@ -340,7 +363,7 @@ class GistRepository(
           language = detectLanguage(name),
           rawUrl = "",
           size = content.length.toLong(),
-          content = content
+          content = encryptContent(content)
         )
       }
 
@@ -455,7 +478,9 @@ class GistRepository(
 
   suspend fun restoreGist(gistWithFiles: GistWithFiles) {
     val restoredGist = gistWithFiles.gist.copy(isDeleted = false)
-    gistDao.upsertGistWithFiles(restoredGist, gistWithFiles.files)
+    val reEncryptedFiles =
+      gistWithFiles.files.map { file -> file.copy(content = encryptContent(file.content)) }
+    gistDao.upsertGistWithFiles(restoredGist, reEncryptedFiles)
   }
 
   suspend fun clearAllLocalData() {

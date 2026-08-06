@@ -26,6 +26,14 @@ class GistSyncWorker(
 ) : CoroutineWorker(context, workerParams) {
 
   override suspend fun doWork(): Result {
+    if (repository.configPrefs.isOfflineOnly()) {
+      Log.d(
+        TAG,
+        "Offline-Only mode active in preferences. Skipping background Gist synchronization."
+      )
+      return Result.success()
+    }
+
     Log.d(TAG, "Starting background Gist synchronization...")
 
     return try {

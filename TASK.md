@@ -602,6 +602,256 @@ and upload SARIF to GitHub Security.
   - `compile_applet`
 - **Definition of done**: WorkManager periodic background synchronization task is fully configured and scheduled, supported by `Configuration.Provider` in `DoGistHubApp`, verified via Robolectric JVM tests, formatted with Spotless, and compiled without errors.
 
+---
+
+## 📂 33. Synchronization Status Dashboard View for Locally Modified Gists
+
+- **Goal**: Create a status dashboard view that displays the current synchronization state (e.g., 'Synced', 'Pending', 'Offline') for locally modified Gists.
+- **Files expected to change**: `SyncStatusDashboardView.kt`, `SyncScreen.kt`, `GistViewModel.kt`, `GistHubAppScreen.kt`, `SyncStatusDashboardTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Create `SyncStatusDashboardView.kt` featuring overall status state badges ('Synced', 'Pending', 'Offline'), metrics summary boxes (Total Local, Pending Sync, Network), list of locally modified Gists (Drafts, Modified, Pending Delete), and a push sync CTA button with test tags.
+  - [x] Add `isOnline` StateFlow to `GistViewModel.kt` and integrate it into `GistHubAppScreen.kt` and `SyncScreen.kt`.
+  - [x] Embed `SyncStatusDashboardView` into `SyncScreen.kt` to present a unified synchronization status view for locally modified Gists.
+  - [x] Create `SyncStatusDashboardTest.kt` verifying rendering of 'Synced', 'Pending', and 'Offline' status badges and metrics under all network and local modification conditions.
+  - [x] Format codebase using `./harness.sh format`.
+  - [x] Execute full pipeline checks via `./harness.sh check` and verify compilation via `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `compile_applet`
+- **Definition of done**: Synchronization status dashboard view is fully implemented and integrated, displaying current sync state ('Synced', 'Pending', 'Offline') and locally modified Gists, verified with Compose test rules on JVM Robolectric, formatted with Spotless, and compiled without errors.
+
+---
+
+## 📂 34. Gist List View Empty State UI Component
+
+- **Goal**: Create an empty state UI component for the Gist list view that displays a helpful message and a call-to-action button when there are no Gists synchronized or stored locally.
+- **Files expected to change**: `GistListEmptyState.kt`, `HomeScreen.kt`, `GistListEmptyStateTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Create `GistListEmptyState.kt` with modern M3 styling, illustration icon, helpful message, and "Fetch / Sync Gists" CTA button with test tag `empty_state_fetch_btn`.
+  - [x] Integrate `GistListEmptyState` in `HomeScreen.kt` when the local database contains zero Gists.
+  - [x] Add unit test `GistListEmptyStateTest.kt` verifying rendering and CTA click behavior.
+  - [x] Format codebase using `./harness.sh format`.
+  - [x] Execute full verification via `./harness.sh check` and `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `compile_applet`
+- **Definition of done**: Gist list view empty state component is fully implemented, integrated into `HomeScreen.kt`, verified via Robolectric JVM tests, formatted with Spotless, and compiled without errors.
+
+---
+
+## 📂 35. Deletion Confirmation Dialog Flow Verification
+
+- **Goal**: Verify and refine the deletion confirmation dialog flow across Home screen and Detail screen.
+- **Files expected to change**: `DeleteConfirmationDialogTest.kt`, `GistDetailScreen.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Refine `DeleteConfirmationDialogTest.kt` to cover cancel, confirm, and detail screen deletion flows.
+  - [x] Clean up icon content description redundancy inside `GistDetailScreen.kt` buttons to ensure clean accessibility semantics and button node targeting.
+  - [x] Execute full pipeline checks via `./harness.sh check` and verify compilation via `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `compile_applet`
+- **Definition of done**: Deletion confirmation dialog flows are fully verified with Robolectric JVM unit tests passing green, formatted with Spotless, and compiled without errors.
+
+---
+
+## 📂 36. Local Gist Content Encryption via androidx.security.crypto
+
+- **Goal**: Encrypt sensitive Gist file content using the `androidx.security.crypto` library before saving to the local Room database, and transparently decrypt when accessed via the repository.
+- **Files expected to change**: `GistContentEncryptor.kt`, `GistRepository.kt`, `GistRepositoryExtensions.kt`, `DoGistHubApp.kt`, `GistContentEncryptionTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Create `GistContentEncryptor.kt` using `androidx.security.crypto.MasterKey` with AES-256 GCM cipher encryption and decryption.
+  - [x] Integrate `GistContentEncryptor` into `GistRepository` to encrypt file content before persisting to Room DB and decrypt when reading.
+  - [x] Wire `GistContentEncryptor` instance in `DoGistHubApp.kt`.
+  - [x] Add comprehensive unit test `GistContentEncryptionTest.kt` verifying encryption/decryption, legacy unencrypted pass-through, and repository/Room integration.
+  - [x] Execute full pipeline checks via `./harness.sh check` and verify compilation via `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `compile_applet`
+- **Definition of done**: Sensitive Gist content is encrypted before persisting to the local Room database using `androidx.security.crypto`, transparently decrypted on access, verified via Robolectric JVM unit tests, formatted with Spotless, and compiled without errors.
+
+---
+
+## 📂 37. Visual Sync State Indicator Component
+
+- **Goal**: Create a visual sync state indicator component that tracks whether local Gist changes have been pushed to GitHub using the Room database sync status flags (`isLocalOnly`, `isDirty`, `isDeleted`).
+- **Files expected to change**: `GistSyncStateIndicator.kt`, `GistCard.kt`, `GistDetailScreen.kt`, `GistSyncStateIndicatorTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Create `GistSyncStateIndicator.kt` providing compact badges and detailed banner indicators for Room DB sync status flags (`isLocalOnly`, `isDirty`, `isDeleted`, `synced`).
+  - [x] Integrate `GistSyncStateIndicator` into `GistCard.kt` and `GistDetailScreen.kt`.
+  - [x] Write Robolectric test `GistSyncStateIndicatorTest.kt` verifying state resolution logic and UI rendering for all sync flags.
+  - [x] Execute pipeline checks via `./harness.sh format` and `./harness.sh check`.
+  - [x] Verify applet compilation via `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `compile_applet`
+- **Definition of done**: Visual sync state indicator component cleanly renders Room sync status flags (`isLocalOnly`, `isDirty`, `isDeleted`, `synced`), integrated in list and detail views, fully verified via Robolectric JVM tests, formatted with Spotless, and compiled without errors.
+
+---
+
+## 📂 38. Local Gists Repository Screen
+
+- **Goal**: Implement a screen that lists all local gists, showing their title, snippet, and sync status icon.
+- **Files expected to change**: `LocalGistsScreen.kt`, `VaultScreen.kt`, `LocalGistsScreenTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Create `LocalGistsScreen.kt` listing all local gists stored in Room database with title, code snippet preview box, and sync status icon indicator (`GistSyncStateIndicator`).
+  - [x] Add search filtering and category filter chips (All Local, Local Only, Unpushed Edits, Synced).
+  - [x] Integrate `LocalGistsScreen` into `VaultScreen.kt` with a seamless view mode toggle between Unsynced Drafts and All Local Gists.
+  - [x] Write Robolectric test `LocalGistsScreenTest.kt` verifying screen rendering, search/filter logic, and click action callbacks.
+  - [x] Execute pipeline checks via `./harness.sh format` and `./harness.sh check`.
+  - [x] Verify applet compilation via `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `compile_applet`
+- **Definition of done**: Local gists repository screen lists all local gists showing title, snippet, and sync status icon, fully integrated, verified via Robolectric JVM tests, formatted with Spotless, and compiled without errors.
+
+---
+
+## 📂 39. Expandable Content View and Detail Screen with Auto-Decryption Display
+
+- **Goal**: Create/enhance an expandable view and detail screen that displays the full content of a selected Gist, automatically decrypting the content for display and showing explicit decryption status indicators.
+- **Files expected to change**: `GistCard.kt`, `GistDetailScreen.kt`, `ExpandableGistViewTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Add inline expandable full content view (`isExpanded` state) in `GistCard.kt` with `expand_gist_button` toggle and `auto_decrypted_badge`.
+  - [x] Add `detail_decrypted_banner` security status card to `GistDetailScreen.kt` indicating automatic AES-256 decryption for display.
+  - [x] Create JVM Robolectric unit test `ExpandableGistViewTest.kt` verifying expandable card view toggle behavior, auto-decrypted badge rendering, and detail screen full content display.
+  - [x] Format codebase using `./harness.sh format`.
+  - [x] Execute pipeline checks via `./harness.sh check` and verify compilation via `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `compile_applet`
+- **Definition of done**: Expandable view in Gist cards and full detail screen display full auto-decrypted content with clear decryption status indicators, fully verified via Robolectric JVM tests, formatted with Spotless, and compiled without errors.
+
+---
+
+## 📂 40. Gist Creation and Edit Screen with Integrated Room Storage Encryption
+
+- **Goal**: Create a dedicated screen for creating and editing Gists, including fields for title/filename and description, integrated with the Room storage encryption logic (`GistContentEncryptor`).
+- **Files expected to change**: `CreateEditGistScreen.kt`, `CreateEditGistScreenTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Create `CreateEditGistScreen.kt` with fields for Title/Filename, Description, File Content, Tags, Public/Secret toggle, and explicit Room AES-256 Encryption Security status card.
+  - [x] Create JVM Robolectric unit test `CreateEditGistScreenTest.kt` verifying rendering of fields, pre-populating existing Gists for editing, encryption badge visibility, and onSave callback invocation.
+  - [x] Format codebase using `./harness.sh format`.
+  - [x] Execute pipeline checks via `./harness.sh check` and verify compilation via `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `compile_applet`
+- **Definition of done**: Dedicated Gist creation and edit screen with title, description, content fields, and Room AES-256 encryption status card implemented, fully verified via Robolectric JVM tests, formatted with Spotless, and compiled without errors.
+
+---
+
+## 🏷️ 41. Custom Gist Tagging System & Room Storage Integration
+
+- **Goal**: Add a tagging system for Gists to allow users to categorize their snippets with custom labels, updating Room schema and UI accordingly.
+- **Files expected to change**: `GistEntity.kt`, `RoomConverters.kt`, `LocalGistsScreen.kt`, `GistCard.kt`, `GistDetailScreen.kt`, `TaggingSystemTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Verify Room entity `tags: List<String>` and `RoomConverters` JSON list adapter in SQLite database schema.
+  - [x] Add tag chip filtering and tag-based search matching in `LocalGistsScreen.kt`.
+  - [x] Add explicit `testTag` attributes for tag chips across `GistCard.kt`, `GistDetailScreen.kt`, and `LocalGistsScreen.kt`.
+  - [x] Create JVM Robolectric test `TaggingSystemTest.kt` testing RoomConverters serialization, entity custom tags support, and tag chip filter rendering/selection in `LocalGistsScreen`.
+  - [x] Format code via `./harness.sh format`.
+  - [x] Execute pipeline checks via `./harness.sh check` and compile applet via `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `compile_applet`
+- **Definition of done**: Custom Gist tagging system with Room schema JSON converters, tag filter chips, and tag search in UI fully implemented, verified with Robolectric tests, formatted, and compiled cleanly.
+
+---
+
+## 💾 42. Offline Room Persistence Layer for GitHub Gists Data
+
+- **Goal**: Implement a Room-based local persistence layer to store GitHub Gist data for offline access, ensuring the app functions seamlessly when the network is unavailable.
+- **Files expected to change**: `GistRepository.kt`, `GistDao.kt`, `FakeGitHubApiService.kt`, `OfflineRoomPersistenceTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Verify Room database schema and DAO entities (`GistEntity`, `GistFileEntity`, `GistWithFiles`) providing local SQLite caching for Gist metadata and file content.
+  - [x] Configure reactive `Flow<List<GistWithFiles>>` streams in `GistRepository` ensuring offline UI access to all cached and draft gists.
+  - [x] Implement offline fallback mechanism in `GistRepository` so network connection failures gracefully fall back to local Room persistence.
+  - [x] Enable network error simulation in `FakeGitHubApiService` for offline testing.
+  - [x] Create JVM Robolectric unit test `OfflineRoomPersistenceTest.kt` verifying offline draft creation, offline cached data retrieval, offline local edits with dirty-flag management, and local search queries.
+  - [x] Format codebase using `./harness.sh format`.
+  - [x] Execute pipeline checks via `./harness.sh check` and verify compilation via `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `compile_applet`
+- **Definition of done**: Room-based local persistence layer for storing GitHub Gist data offline implemented and thoroughly tested with Robolectric unit tests, formatted with Spotless, and compiled without errors.
+
+---
+
+## 🔍 43. Full-Text Search Bar with Local Room Database Content Snippet Query
+- **Goal**: Implement a full-text search bar at the top of the Gist list that queries the local Room database to filter results by file names, descriptions, or content snippets.
+- **Files expected to change**: `GistDao.kt`, `HomeScreen.kt`, `GistDaoTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Update Room DAO query in `GistDao.kt` (`searchLocalGists`) to match file names (`filename`), descriptions (`description`), or file content snippets (`content`).
+  - [x] Update search bar placeholder in `HomeScreen.kt` to clearly indicate filename, content snippet, or description full-text search capability.
+  - [x] Create/update Robolectric unit tests in `GistDaoTest.kt` verifying Room full-text search queries filtering across filename, description, and content snippets.
+  - [x] Format codebase using `./harness.sh format`.
+  - [x] Execute static analysis and test suite via `./harness.sh check` and `./harness.sh test`.
+  - [x] Verify applet compilation via `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `./harness.sh test`
+  - `compile_applet`
+- **Definition of done**: Full-text search bar querying Room database for file names, descriptions, and content snippets implemented, verified via Robolectric unit tests, formatted with Spotless, checked with static analysis, and compiled cleanly.
+
+---
+
+## 📴 44. Global Offline-Only Mode Toggle in Dashboard Header
+- **Goal**: Add a global 'Offline-Only' mode toggle in the dashboard header that pauses network synchronization and displays a clear visual indicator when enabled.
+- **Files expected to change**: `ConfigPrefs.kt`, `GistViewModel.kt`, `GistHubNavigationComponents.kt`, `SyncStatusDashboardView.kt`, `SyncStatusBar.kt`, `SyncScreen.kt`, `GistHubAppScreen.kt`, `GistSyncWorker.kt`, `DoGistHubApp.kt`, `OfflineOnlyModeTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Add `isOfflineOnly` flag and preference setter/getter in `ConfigPrefs.kt`.
+  - [x] Expose `isOfflineOnly` state flow and toggle logic in `GistViewModel.kt` to pause manual and background network synchronization when enabled.
+  - [x] Update `GistHubNavigationComponents.kt` and `SyncStatusDashboardView.kt` with header toggle button, switch, and active warning banner.
+  - [x] Update `GistSyncWorker.kt` and `DoGistHubApp.kt` to respect offline-only preference before enqueuing or triggering sync workers.
+  - [x] Add Robolectric unit tests in `OfflineOnlyModeTest.kt` verifying preferences persistence, ViewModel state transitions, and Compose UI header indicators.
+  - [x] Format codebase using `./harness.sh format`.
+  - [x] Run static analysis and tests via `./harness.sh check` and `./harness.sh test`.
+  - [x] Verify applet compilation via `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `./harness.sh test`
+  - `compile_applet`
+- **Definition of done**: Global Offline-Only mode header toggle implemented with visual indicators and network sync pause logic, verified with Robolectric unit tests, formatted, and compiled without errors.
+
+---
+
+## 🔔 45. Sync Snackbar Notification Utility
+- **Goal**: Implement a utility to show snackbar notifications when sync operations succeed or fail, ensuring the user knows the status of their local data.
+- **Files expected to change**: `SyncNotificationUtil.kt`, `GistHubAppScreen.kt`, `SyncNotificationUtilTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Create `SyncNotificationUtil.kt` providing a reusable utility to present structured snackbars for sync success and failure states.
+  - [x] Integrate `SyncNotificationUtil.showSyncStatusSnackbar` into `GistHubAppScreen.kt` reactive syncStatus flow collector.
+  - [x] Create Robolectric unit tests in `SyncNotificationUtilTest.kt` testing snackbar display logic and dismiss callbacks.
+  - [x] Format codebase using `./harness.sh format`.
+  - [x] Execute static analysis and test suite via `./harness.sh check` and `./harness.sh test`.
+  - [x] Verify applet compilation via `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `./harness.sh test`
+  - `compile_applet`
+- **Definition of done**: Sync notification utility displaying snackbars for sync success and error statuses implemented, integrated into the UI lifecycle, tested with Robolectric, formatted, and compiled cleanly.
+
+
+
+
+
+
+
+
+
+
 
 
 
