@@ -59,7 +59,10 @@ fun GistHubTopAppBar(
   lastSyncTime: Long = 0L,
   syncStatus: SyncStatus = SyncStatus.Idle,
   isOfflineOnly: Boolean = false,
-  onToggleOfflineOnly: (() -> Unit)? = null
+  onToggleOfflineOnly: (() -> Unit)? = null,
+  token: String = "",
+  ownerLogin: String = "",
+  onAuthStatusClick: (() -> Unit)? = null
 ) {
   Column(
     modifier =
@@ -117,6 +120,15 @@ fun GistHubTopAppBar(
       }
 
       Row(verticalAlignment = Alignment.CenterVertically) {
+        if (onAuthStatusClick != null) {
+          AuthStatusIndicatorChip(
+            token = token,
+            ownerLogin = ownerLogin,
+            onClick = onAuthStatusClick,
+            modifier = Modifier.padding(end = 4.dp)
+          )
+        }
+
         // Global Offline-Only Mode Toggle
         IconButton(
           onClick = { onToggleOfflineOnly?.invoke() },

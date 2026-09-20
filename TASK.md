@@ -843,6 +843,46 @@ and upload SARIF to GitHub Security.
   - `compile_applet`
 - **Definition of done**: Sync notification utility displaying snackbars for sync success and error statuses implemented, integrated into the UI lifecycle, tested with Robolectric, formatted, and compiled cleanly.
 
+---
+
+## 🔑 46. GitHub PAT Authentication Status Indicator & Update Dialog
+- **Goal**: Implement a simple status indicator or dialog that displays whether the user is authenticated via their GitHub PAT, with an option to update or clear the token.
+- **Files expected to change**: `AuthStatusDialog.kt`, `GistHubNavigationComponents.kt`, `GistHubAppScreen.kt`, `AuthStatusDialogTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Create `AuthStatusIndicatorChip` badge displaying current PAT authentication state (`PAT Active` / `@username` when authenticated, `No PAT` when unauthenticated).
+  - [x] Create `AuthStatusDialog` presenting authentication status card, PAT token input field with show/hide password toggle, verification progress feedback, "Verify & Save Token" action, "Clear Token" option, and "Done" close button.
+  - [x] Integrate `AuthStatusIndicatorChip` into `GistHubTopAppBar` (`GistHubNavigationComponents.kt`).
+  - [x] Connect `AuthStatusDialog` state and callbacks (`viewModel.updateToken`, `viewModel.validateAndFetchProfile`, `viewModel.clearConfig`) in `GistHubAppScreen.kt`.
+  - [x] Write `AuthStatusDialogTest.kt` verifying status chip rendering, dialog layout, token updates, verification triggers, clear actions, and dismissal.
+  - [x] Format codebase using `./harness.sh format`.
+  - [x] Verify applet compilation via `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `compile_applet`
+- **Definition of done**: GitHub PAT authentication status indicator chip and interactive update dialog implemented, connected to GistViewModel, tested with Compose Robolectric rules, formatted with Spotless, and compiled without errors.
+
+---
+
+## 📏 47. Strict 600 LOC Ceiling Modularization & Extraction
+- **Goal**: Enforce Section 5.1 rule that no Kotlin source file should exceed 600 LOC by extracting components and viewmodel extensions.
+- **Files expected to change**: `GistViewModel.kt`, `LocalGistsScreen.kt`, `LocalGistItemCard.kt`, `GistViewModelRemoteExtensions.kt`, `GistHubAppScreen.kt`, `GistAppE2ETest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Extract `LocalGistItemCard` composable out of `LocalGistsScreen.kt` into `app/src/main/java/com/example/ui/components/LocalGistItemCard.kt` (reducing `LocalGistsScreen.kt` from 628 to 399 LOC).
+  - [x] Extract `forkGist` and `fetchRemoteGistsDirectly` from `GistViewModel.kt` into `app/src/main/java/com/example/ui/viewmodel/GistViewModelRemoteExtensions.kt` (reducing `GistViewModel.kt` from 640 to 593 LOC).
+  - [x] Provide explicit imports across consumer files (`GistHubAppScreen.kt`, `GistAppE2ETest.kt`) per Rule 5.6.
+  - [x] Enforce Detekt suppression annotations (`@Suppress("VariableNaming")`) for internal state properties per Rule 5.7.
+  - [x] Verify zero Kotlin source files across the entire codebase exceed 600 LOC.
+  - [x] Run `./harness.sh format` and `./harness.sh check` to pass Spotless, Detekt, Android Lint, and all Robolectric unit/E2E tests.
+  - [x] Verify compilation using `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `compile_applet`
+- **Definition of done**: All Kotlin source files remain strictly under 600 LOC, with spotless formatting, clean Detekt analysis, full test green status, and clean applet compilation.
+
+
+
 
 
 

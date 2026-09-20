@@ -37,9 +37,12 @@ import com.example.ui.components.GistPreviewDialog
 import com.example.ui.components.LoadingFeedbackBar
 import com.example.ui.components.LoadingFeedbackOverlay
 import com.example.ui.viewmodel.GistViewModel
+import com.example.ui.viewmodel.TokenVerificationState
 import com.example.ui.viewmodel.clearAutoSavedDraft
 import com.example.ui.viewmodel.clearSearchHistory
 import com.example.ui.viewmodel.deleteSearchQuery
+import com.example.ui.viewmodel.fetchRemoteGistsDirectly
+import com.example.ui.viewmodel.forkGist
 import com.example.ui.viewmodel.getAutoSavedDraft
 import com.example.ui.viewmodel.saveAutoSavedDraft
 import com.example.ui.viewmodel.saveSearchQuery
@@ -69,7 +72,11 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
   val remoteError by viewModel.remoteError.collectAsState()
   val isForking by viewModel.isForking.collectAsState()
   val isFetchingProfile by viewModel.isFetchingProfile.collectAsState()
+  val token by viewModel.token.collectAsState()
+  val ownerLogin by viewModel.ownerLogin.collectAsState()
+  val tokenVerificationState by viewModel.tokenVerificationState.collectAsState()
 
+  var showAuthDialog by remember { mutableStateOf(false) }
   var activeTab by remember { mutableStateOf("home") }
   val searchQuery by viewModel.searchQuery.collectAsState()
   val searchHistory by viewModel.searchHistory.collectAsState()
@@ -162,7 +169,10 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
           lastSyncTime = lastSyncTime,
           syncStatus = syncStatus,
           isOfflineOnly = isOfflineOnly,
-          onToggleOfflineOnly = { viewModel.toggleOfflineOnly() }
+          onToggleOfflineOnly = { viewModel.toggleOfflineOnly() },
+          token = token,
+          ownerLogin = ownerLogin,
+          onAuthStatusClick = { showAuthDialog = true }
         )
       }
     },
@@ -444,6 +454,21 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
       containerColor = MaterialTheme.colorScheme.surface,
       shape = RoundedCornerShape(28.dp),
       modifier = Modifier.testTag("delete_confirm_dialog")
+    )
+  }
+
+  // Auth Status & PAT Update Dialog
+  if (showAuthDialog) {
+    com.example.ui.components.AuthStatusDialog(
+      show = showAuthDialog,
+      token = token,
+      ownerLogin = ownerLogin,
+      verificationState = tokenVerificationState,
+      isVerifying = isFetchingProfile || tokenVerificationState is TokenVerificationState.Verifying,
+      onUpdateToken = { viewModel.updateToken(it) },
+      onVerifyToken = { viewModel.validateAndFetchProfile() },
+      onClearToken = { viewModel.clearConfig() },
+      onDismiss = { showAuthDialog = false }
     )
   }
 
