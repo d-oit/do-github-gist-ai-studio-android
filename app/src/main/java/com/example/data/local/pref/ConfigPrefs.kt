@@ -87,6 +87,15 @@ class ConfigPrefs(private val context: Context) {
     }
   }
 
+  private fun containsSecureKey(key: String): Boolean {
+    val sp = securePrefs
+    return if (sp != null) {
+      sp.contains(key)
+    } else {
+      prefs.contains(key)
+    }
+  }
+
   var overrideToken: String? = null
 
   fun getGithubToken(): String {
@@ -94,12 +103,11 @@ class ConfigPrefs(private val context: Context) {
     if (ot != null) {
       return ot
     }
-    val savedSecure = getSecureString("github_token", "")
-    if (savedSecure.isNotEmpty()) {
-      return savedSecure
+    if (containsSecureKey("github_token")) {
+      return getSecureString("github_token", "")
     }
-    val savedPlain = prefs.getString("github_token", "") ?: ""
-    if (savedPlain.isNotEmpty()) {
+    val savedPlain = prefs.getString("github_token", null)
+    if (savedPlain != null) {
       setGithubToken(savedPlain)
       prefs.edit().remove("github_token").apply()
       return savedPlain
@@ -117,6 +125,7 @@ class ConfigPrefs(private val context: Context) {
   }
 
   fun setGithubToken(token: String) {
+    overrideToken = null
     setSecureString("github_token", token)
   }
 
@@ -214,6 +223,7 @@ class ConfigPrefs(private val context: Context) {
     } catch (e: Exception) {
       Log.e("ConfigPrefs", "Failed to clear secure preferences", e)
     }
+    overrideToken = ""
   }
 
   private val draftMoshi by lazy { Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build() }

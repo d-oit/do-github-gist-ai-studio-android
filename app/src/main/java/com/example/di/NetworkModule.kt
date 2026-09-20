@@ -1,5 +1,6 @@
 package com.example.di
 
+import com.example.data.remote.api.GistApiService
 import com.example.data.remote.api.GitHubApiService
 import com.example.data.remote.interceptor.GitHubAuthInterceptor
 import com.squareup.moshi.Moshi
@@ -54,5 +55,9 @@ object NetworkModule {
 
   fun provideGitHubApiService(retrofit: Retrofit): GitHubApiService {
     return retrofit.create(GitHubApiService::class.java)
+  }
+
+  fun provideGistApiService(retrofit: Retrofit): GistApiService {
+    return retrofit.create(GistApiService::class.java)
   }
 }

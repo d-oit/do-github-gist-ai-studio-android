@@ -102,7 +102,7 @@ class GistViewModel(
   private val _statusMessage = MutableStateFlow<String?>(null)
   val statusMessage: StateFlow<String?> = _statusMessage.asStateFlow()
 
-  private val _errorMessage = MutableStateFlow<String?>(null)
+  @Suppress("VariableNaming") internal val _errorMessage = MutableStateFlow<String?>(null)
   val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
   private val _recentlyDeletedGist = MutableStateFlow<GistWithFiles?>(null)
@@ -154,15 +154,16 @@ class GistViewModel(
   val appTheme: StateFlow<String> = _appTheme.asStateFlow()
 
   // Remote direct API states
-  private val _remoteGists =
+  @Suppress("VariableNaming")
+  internal val _remoteGists =
     MutableStateFlow<List<com.example.data.remote.model.GistResponse>>(emptyList())
   val remoteGists: StateFlow<List<com.example.data.remote.model.GistResponse>> =
     _remoteGists.asStateFlow()
 
-  private val _isFetchingRemote = MutableStateFlow(false)
+  @Suppress("VariableNaming") internal val _isFetchingRemote = MutableStateFlow(false)
   val isFetchingRemote: StateFlow<Boolean> = _isFetchingRemote.asStateFlow()
 
-  private val _remoteError = MutableStateFlow<String?>(null)
+  @Suppress("VariableNaming") internal val _remoteError = MutableStateFlow<String?>(null)
   val remoteError: StateFlow<String?> = _remoteError.asStateFlow()
 
   init {
@@ -553,54 +554,8 @@ class GistViewModel(
     repository.clearSyncStatus()
   }
 
-  private val _isForking = MutableStateFlow<String?>(null)
+  @Suppress("VariableNaming") internal val _isForking = MutableStateFlow<String?>(null)
   val isForking: StateFlow<String?> = _isForking.asStateFlow()
-
-  fun forkGist(id: String) {
-    if (_isOfflineOnly.value) {
-      _errorMessage.value = "Cannot fork while in Offline-Only mode."
-      return
-    }
-    viewModelScope.launch {
-      _isForking.value = id
-      repository
-        .forkGist(id)
-        .onSuccess {
-          repository.updateSyncStatus(
-            com.example.data.repository.SyncStatus.Success(
-              "Successfully forked and saved locally!",
-              System.currentTimeMillis()
-            )
-          )
-          fetchRemoteGistsDirectly()
-        }
-        .onFailure { error ->
-          val classified = com.example.core.error.SyncErrorHandler.classifyError(error)
-          repository.updateSyncStatus(
-            com.example.data.repository.SyncStatus.Error(classified, System.currentTimeMillis())
-          )
-        }
-      _isForking.value = null
-    }
-  }
-
-  fun fetchRemoteGistsDirectly() {
-    if (_isOfflineOnly.value) {
-      _remoteError.value = "Offline-Only mode is enabled."
-      return
-    }
-    viewModelScope.launch {
-      _isFetchingRemote.value = true
-      _remoteError.value = null
-      repository
-        .fetchGistsDirectly()
-        .onSuccess { list -> _remoteGists.value = list }
-        .onFailure { error ->
-          _remoteError.value = error.localizedMessage ?: error.message ?: "Unknown error"
-        }
-      _isFetchingRemote.value = false
-    }
-  }
 
   // Gist Revision/History States for Preview Dialog
   @Suppress("VariableNaming")

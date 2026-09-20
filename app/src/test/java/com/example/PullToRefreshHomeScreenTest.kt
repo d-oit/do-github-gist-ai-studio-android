@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import com.example.ui.screens.HomeScreen
+import com.example.ui.screens.VaultScreen
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -54,5 +55,26 @@ class PullToRefreshHomeScreenTest {
     }
 
     composeTestRule.onNodeWithTag("pull_refresh_indicator").assertExists()
+  }
+
+  @Test
+  fun vaultScreen_rendersPullRefreshIndicatorWhenRefreshing() {
+    composeTestRule.setContent {
+      VaultScreen(
+        gists = emptyList(),
+        searchQuery = "",
+        onSearchQueryChange = {},
+        onTogglePin = {},
+        onToggleStar = {},
+        onEdit = {},
+        onDelete = {},
+        onCreateDraftClick = {},
+        onPreview = {},
+        isRefreshing = true,
+        onRefresh = {}
+      )
+    }
+
+    composeTestRule.onNodeWithTag("vault_pull_refresh_indicator").assertIsDisplayed()
   }
 }

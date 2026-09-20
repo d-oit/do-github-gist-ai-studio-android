@@ -17,11 +17,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,7 +53,7 @@ import com.example.ui.theme.ActivePurple
 import com.example.ui.theme.ActivePurpleContainer
 import com.example.ui.theme.DarkPurpleText
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun VaultScreen(
   gists: List<GistWithFiles>,
@@ -152,154 +156,53 @@ fun VaultScreen(
         }
       }
 
-    Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
-      // View Mode Toggle Banner
-      Row(
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-      ) {
-        Text(
-          text = "Vault Mode:",
-          fontSize = 12.sp,
-          color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-          Box(
-            modifier =
-              Modifier.background(ActivePurpleContainer, RoundedCornerShape(8.dp))
-                .padding(horizontal = 10.dp, vertical = 4.dp)
-          ) {
-            Text(
-              text = "Unsynced Drafts",
-              fontSize = 11.sp,
-              fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-              color = DarkPurpleText
-            )
-          }
-          Box(
-            modifier =
-              Modifier.background(
-                  MaterialTheme.colorScheme.surfaceVariant,
-                  RoundedCornerShape(8.dp)
-                )
-                .clickable { viewAllLocalGists = true }
-                .padding(horizontal = 10.dp, vertical = 4.dp)
-                .testTag("switch_to_all_local_gists_button")
-          ) {
-            Text(
-              text = "All Local Gists (${gists.size})",
-              fontSize = 11.sp,
-              color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          }
-        }
-      }
+    val pullRefreshState =
+      if (onRefresh != null)
+        rememberPullRefreshState(refreshing = isRefreshing, onRefresh = onRefresh)
+      else null
 
-      // Persistent Search Bar
-      OutlinedTextField(
-        value = searchQuery,
-        onValueChange = onSearchQueryChange,
-        placeholder = { Text("Search drafts by filename or description...", fontSize = 14.sp) },
-        leadingIcon = {
-          Icon(
-            imageVector = Icons.Default.Search,
-            contentDescription = "Search icon",
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-          )
-        },
-        trailingIcon = {
-          if (searchQuery.isNotEmpty()) {
-            IconButton(
-              onClick = { onSearchQueryChange("") },
-              modifier = Modifier.testTag("clear_vault_search_button")
-            ) {
-              Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Clear search",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-              )
-            }
-          }
-        },
-        modifier =
-          Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp).testTag("vault_search_bar"),
-        singleLine = true,
-        shape = RoundedCornerShape(24.dp),
-        colors =
-          OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-          )
-      )
-
-      Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-      ) {
-        Text(
-          text = "Unsaved Drafts & Local Vault",
-          fontSize = 12.sp,
-          fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-          color = ActivePurple,
-          letterSpacing = 1.sp
-        )
-        Box(
-          modifier =
-            Modifier.background(ActivePurpleContainer, RoundedCornerShape(10.dp))
-              .padding(horizontal = 8.dp, vertical = 2.dp)
+    Box(
+      modifier =
+        Modifier.fillMaxSize()
+          .then(if (pullRefreshState != null) Modifier.pullRefresh(pullRefreshState) else Modifier)
+    ) {
+      Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
+        // View Mode Toggle Banner
+        Row(
+          modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically
         ) {
           Text(
-            text = "${filtered.size} Unsynced",
-            fontSize = 11.sp,
-            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-            color = DarkPurpleText
+            text = "Vault Mode:",
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
           )
-        }
-      }
-
-      LazyColumn(
-        modifier = Modifier.weight(1f),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-      ) {
-        item {
-          // Dashed Add Card
-          Box(
-            modifier =
-              Modifier.fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
-                .clickable(onClick = onCreateDraftClick)
-                .padding(vertical = 24.dp),
-            contentAlignment = Alignment.Center
-          ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-              Box(
-                modifier =
-                  Modifier.size(40.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surface),
-                contentAlignment = Alignment.Center
-              ) {
-                Icon(
-                  imageVector = Icons.Default.Add,
-                  contentDescription = "Add Draft",
-                  tint = MaterialTheme.colorScheme.primary
-                )
-              }
-              Spacer(modifier = Modifier.height(8.dp))
+          Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Box(
+              modifier =
+                Modifier.background(ActivePurpleContainer, RoundedCornerShape(8.dp))
+                  .padding(horizontal = 10.dp, vertical = 4.dp)
+            ) {
               Text(
-                text = "New Local Draft",
+                text = "Unsynced Drafts",
+                fontSize = 11.sp,
                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurface
+                color = DarkPurpleText
               )
+            }
+            Box(
+              modifier =
+                Modifier.background(
+                    MaterialTheme.colorScheme.surfaceVariant,
+                    RoundedCornerShape(8.dp)
+                  )
+                  .clickable { viewAllLocalGists = true }
+                  .padding(horizontal = 10.dp, vertical = 4.dp)
+                  .testTag("switch_to_all_local_gists_button")
+            ) {
               Text(
-                text = "Auto-tracks with isLocalOnly: true",
+                text = "All Local Gists (${gists.size})",
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
               )
@@ -307,103 +210,226 @@ fun VaultScreen(
           }
         }
 
-        if (filtered.isEmpty()) {
+        // Persistent Search Bar
+        OutlinedTextField(
+          value = searchQuery,
+          onValueChange = onSearchQueryChange,
+          placeholder = { Text("Search drafts by filename or description...", fontSize = 14.sp) },
+          leadingIcon = {
+            Icon(
+              imageVector = Icons.Default.Search,
+              contentDescription = "Search icon",
+              tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+          },
+          trailingIcon = {
+            if (searchQuery.isNotEmpty()) {
+              IconButton(
+                onClick = { onSearchQueryChange("") },
+                modifier = Modifier.testTag("clear_vault_search_button")
+              ) {
+                Icon(
+                  imageVector = Icons.Default.Close,
+                  contentDescription = "Clear search",
+                  tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+              }
+            }
+          },
+          modifier =
+            Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp).testTag("vault_search_bar"),
+          singleLine = true,
+          shape = RoundedCornerShape(24.dp),
+          colors =
+            OutlinedTextFieldDefaults.colors(
+              focusedBorderColor = MaterialTheme.colorScheme.primary,
+              unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+              focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+              unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+            )
+        )
+
+        Row(
+          modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          Text(
+            text = "Unsaved Drafts & Local Vault",
+            fontSize = 12.sp,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            color = ActivePurple,
+            letterSpacing = 1.sp
+          )
+          Box(
+            modifier =
+              Modifier.background(ActivePurpleContainer, RoundedCornerShape(10.dp))
+                .padding(horizontal = 8.dp, vertical = 2.dp)
+          ) {
+            Text(
+              text = "${filtered.size} Unsynced",
+              fontSize = 11.sp,
+              fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+              color = DarkPurpleText
+            )
+          }
+        }
+
+        LazyColumn(
+          modifier = Modifier.weight(1f),
+          verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
           item {
+            // Dashed Add Card
             Box(
-              modifier = Modifier.fillMaxWidth().padding(top = 40.dp),
+              modifier =
+                Modifier.fillMaxWidth()
+                  .clip(RoundedCornerShape(16.dp))
+                  .background(MaterialTheme.colorScheme.surfaceVariant)
+                  .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
+                  .clickable(onClick = onCreateDraftClick)
+                  .padding(vertical = 24.dp),
               contentAlignment = Alignment.Center
             ) {
-              Text(
-                text = "No offline changes or local drafts.",
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-              )
-            }
-          }
-        } else {
-          items(filtered, key = { it.gist.id }) { item ->
-            val dismissState =
-              rememberSwipeToDismissBoxState(
-                confirmValueChange = { dismissValue ->
-                  if (
-                    dismissValue == SwipeToDismissBoxValue.EndToStart ||
-                      dismissValue == SwipeToDismissBoxValue.StartToEnd
-                  ) {
-                    onDelete(item.gist.id)
-                    false
-                  } else {
-                    false
-                  }
-                }
-              )
-
-            SwipeToDismissBox(
-              state = dismissState,
-              modifier = Modifier.fillMaxWidth().testTag("vault_swipe_to_dismiss_${item.gist.id}"),
-              backgroundContent = {
-                val isDismissed = dismissState.targetValue != SwipeToDismissBoxValue.Settled
-                val color =
-                  if (isDismissed) MaterialTheme.colorScheme.errorContainer
-                  else androidx.compose.ui.graphics.Color.Transparent
+              Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(
                   modifier =
-                    Modifier.fillMaxSize()
-                      .background(color, RoundedCornerShape(16.dp))
-                      .padding(horizontal = 20.dp),
-                  contentAlignment =
-                    if (dismissState.targetValue == SwipeToDismissBoxValue.StartToEnd) {
-                      Alignment.CenterStart
-                    } else {
-                      Alignment.CenterEnd
-                    }
+                    Modifier.size(40.dp)
+                      .clip(CircleShape)
+                      .background(MaterialTheme.colorScheme.surface),
+                  contentAlignment = Alignment.Center
                 ) {
-                  if (isDismissed) {
-                    Row(
-                      verticalAlignment = Alignment.CenterVertically,
-                      horizontalArrangement = Arrangement.spacedBy(8.dp)
+                  Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add Draft",
+                    tint = MaterialTheme.colorScheme.primary
+                  )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                  text = "New Local Draft",
+                  fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                  fontSize = 14.sp,
+                  color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                  text = "Auto-tracks with isLocalOnly: true",
+                  fontSize = 11.sp,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+              }
+            }
+          }
+
+          if (filtered.isEmpty()) {
+            item {
+              Box(
+                modifier = Modifier.fillMaxWidth().padding(top = 40.dp),
+                contentAlignment = Alignment.Center
+              ) {
+                Text(
+                  text = "No offline changes or local drafts.",
+                  fontSize = 13.sp,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+              }
+            }
+          } else {
+            items(filtered, key = { it.gist.id }) { item ->
+              val dismissState =
+                rememberSwipeToDismissBoxState(
+                  confirmValueChange = { dismissValue ->
+                    if (
+                      dismissValue == SwipeToDismissBoxValue.EndToStart ||
+                        dismissValue == SwipeToDismissBoxValue.StartToEnd
                     ) {
+                      onDelete(item.gist.id)
+                      false
+                    } else {
+                      false
+                    }
+                  }
+                )
+
+              SwipeToDismissBox(
+                state = dismissState,
+                modifier =
+                  Modifier.fillMaxWidth().testTag("vault_swipe_to_dismiss_${item.gist.id}"),
+                backgroundContent = {
+                  val isDismissed = dismissState.targetValue != SwipeToDismissBoxValue.Settled
+                  val color =
+                    if (isDismissed) MaterialTheme.colorScheme.errorContainer
+                    else androidx.compose.ui.graphics.Color.Transparent
+                  Box(
+                    modifier =
+                      Modifier.fillMaxSize()
+                        .background(color, RoundedCornerShape(16.dp))
+                        .padding(horizontal = 20.dp),
+                    contentAlignment =
                       if (dismissState.targetValue == SwipeToDismissBoxValue.StartToEnd) {
-                        Icon(
-                          imageVector = Icons.Default.Delete,
-                          contentDescription = "Swipe to delete",
-                          tint = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                        Text(
-                          text = "Delete",
-                          color = MaterialTheme.colorScheme.onErrorContainer,
-                          fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                          fontSize = 14.sp
-                        )
+                        Alignment.CenterStart
                       } else {
-                        Text(
-                          text = "Delete",
-                          color = MaterialTheme.colorScheme.onErrorContainer,
-                          fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                          fontSize = 14.sp
-                        )
-                        Icon(
-                          imageVector = Icons.Default.Delete,
-                          contentDescription = "Swipe to delete",
-                          tint = MaterialTheme.colorScheme.onErrorContainer
-                        )
+                        Alignment.CenterEnd
+                      }
+                  ) {
+                    if (isDismissed) {
+                      Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                      ) {
+                        if (dismissState.targetValue == SwipeToDismissBoxValue.StartToEnd) {
+                          Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Swipe to delete",
+                            tint = MaterialTheme.colorScheme.onErrorContainer
+                          )
+                          Text(
+                            text = "Delete",
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                            fontSize = 14.sp
+                          )
+                        } else {
+                          Text(
+                            text = "Delete",
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                            fontSize = 14.sp
+                          )
+                          Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Swipe to delete",
+                            tint = MaterialTheme.colorScheme.onErrorContainer
+                          )
+                        }
                       }
                     }
                   }
                 }
+              ) {
+                GistCard(
+                  item = item,
+                  onTogglePin = { onTogglePin(item.gist.id) },
+                  onToggleStar = { onToggleStar(item.gist.id) },
+                  onEdit = { onEdit(item) },
+                  onDelete = { onDelete(item.gist.id) },
+                  onPreview = { onPreview(item) }
+                )
               }
-            ) {
-              GistCard(
-                item = item,
-                onTogglePin = { onTogglePin(item.gist.id) },
-                onToggleStar = { onToggleStar(item.gist.id) },
-                onEdit = { onEdit(item) },
-                onDelete = { onDelete(item.gist.id) },
-                onPreview = { onPreview(item) }
-              )
             }
           }
+          item { Spacer(modifier = Modifier.height(80.dp)) }
         }
-        item { Spacer(modifier = Modifier.height(80.dp)) }
+      }
+
+      if (pullRefreshState != null) {
+        PullRefreshIndicator(
+          refreshing = isRefreshing,
+          state = pullRefreshState,
+          modifier = Modifier.align(Alignment.TopCenter).testTag("vault_pull_refresh_indicator"),
+          backgroundColor = MaterialTheme.colorScheme.surface,
+          contentColor = MaterialTheme.colorScheme.primary
+        )
       }
     }
   }
