@@ -1,18 +1,11 @@
 ---
 name: engage-sdk-integration
-description: Helps developers integrate, debug, and resolve Play Engage SDK implementation
-  issues. Use when adding Engage SDK support, generating publishing code, mapping
-  data classes to entities, or fixing SDK-related errors.
+description: Guides the integration, debugging, and verification of the Google Play Engage SDK. Use this skill when adding user engagement clusters, generating Engage publishing code, mapping domain models to Engage entities, or troubleshooting Play Engage client errors.
 license: Complete terms in LICENSE.txt
 metadata:
-  author: Google LLC
-  last-updated: '2026-07-09'
-  keywords:
-  - android
-  - engage
-  - engage sdk
-  - play engage library
-  - google play
+  author: "Google LLC"
+  last-updated: "2026-07-09"
+  keywords: "android, engage, engage sdk, play engage library, google play"
 ---
 
 This skill guides you through integrating the Play Engage SDK into an Android

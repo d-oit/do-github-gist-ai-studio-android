@@ -1,29 +1,11 @@
 ---
 name: camerax
-description: Provide technical guidance for Android camera development with CameraX.
-  Use when implementing camera features, handling asynchronous recording lifecycles,
-  wiring low-level hardware interop using CameraX, or integrating ML Kit or Media3
-  effects.
+description: Technical guidance for modern Android camera development using CameraX and Jetpack Compose. Use this skill when implementing camera capture, configuring PreviewView or CameraXViewfinder, handling asynchronous recording lifecycles, wiring hardware interop, or integrating ML Kit and Media3 effects.
 license: Complete terms in LICENSE.txt
 metadata:
-  author: Google LLC
-  last-updated: '2026-07-07'
-  keywords:
-  - recipe
-  - Android
-  - Camera
-  - Camera1
-  - Camera2
-  - CameraX
-  - migration
-  - Compose
-  - guide
-  - dependencies
-  - PreviewView
-  - CameraXViewfinder
-  - ImageCapture
-  - VideoCapture
-  - ImageAnalysis.
+  author: "Google LLC"
+  last-updated: "2026-07-07"
+  keywords: "recipe, Android, Camera, Camera1, Camera2, CameraX, migration, Compose, guide, dependencies, PreviewView, CameraXViewfinder, ImageCapture, VideoCapture, ImageAnalysis"
 ---
 
 This skill provides procedural guidance and standard patterns for building

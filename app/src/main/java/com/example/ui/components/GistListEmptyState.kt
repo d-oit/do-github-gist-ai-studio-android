@@ -29,8 +29,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ui.theme.ActivePurple
-import com.example.ui.theme.ActivePurpleContainer
 
 /**
  * Reusable empty state UI component displayed when there are no Gists synchronized or stored
@@ -52,29 +50,29 @@ fun GistListEmptyState(
     verticalArrangement = Arrangement.Center,
     modifier = modifier.fillMaxWidth().padding(24.dp).testTag("gist_list_empty_state")
   ) {
-    // Friendly, high-fidelity decorative illustration/avatar container
+    // Friendly, high-fidelity decorative illustration container
     Box(
       modifier =
-        Modifier.size(96.dp)
+        Modifier.size(100.dp)
           .background(
-            color = ActivePurpleContainer.copy(alpha = 0.3f),
-            shape = RoundedCornerShape(48.dp)
+            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+            shape = RoundedCornerShape(32.dp)
           ),
       contentAlignment = Alignment.Center
     ) {
       Box(
         modifier =
-          Modifier.size(72.dp)
+          Modifier.size(68.dp)
             .background(
-              color = ActivePurpleContainer.copy(alpha = 0.6f),
-              shape = RoundedCornerShape(36.dp)
+              color = MaterialTheme.colorScheme.primaryContainer,
+              shape = RoundedCornerShape(22.dp)
             ),
         contentAlignment = Alignment.Center
       ) {
         Icon(
           imageVector = Icons.Default.CloudSync,
           contentDescription = "Cloud Synchronize",
-          tint = ActivePurple,
+          tint = MaterialTheme.colorScheme.primary,
           modifier = Modifier.size(36.dp)
         )
       }
@@ -84,7 +82,7 @@ fun GistListEmptyState(
 
     Text(
       text = title,
-      fontSize = 18.sp,
+      fontSize = 19.sp,
       fontWeight = FontWeight.Bold,
       color = MaterialTheme.colorScheme.onSurface,
       textAlign = TextAlign.Center,
@@ -96,6 +94,7 @@ fun GistListEmptyState(
     Text(
       text = message,
       fontSize = 13.sp,
+      lineHeight = 18.sp,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
       textAlign = TextAlign.Center,
       modifier = Modifier.padding(horizontal = 16.dp).testTag("empty_state_message")
@@ -109,10 +108,10 @@ fun GistListEmptyState(
       enabled = !isRefreshing,
       colors =
         ButtonDefaults.buttonColors(
-          containerColor = ActivePurple,
+          containerColor = MaterialTheme.colorScheme.primary,
           contentColor = MaterialTheme.colorScheme.onPrimary
         ),
-      shape = RoundedCornerShape(24.dp),
+      shape = RoundedCornerShape(16.dp),
       modifier = Modifier.fillMaxWidth().height(48.dp).testTag("fetch_from_github_btn")
     ) {
       if (isRefreshing) {
@@ -138,7 +137,12 @@ fun GistListEmptyState(
       Spacer(modifier = Modifier.height(12.dp))
       OutlinedButton(
         onClick = onCreateDraftClick,
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(16.dp),
+        border =
+          androidx.compose.foundation.BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+          ),
         modifier = Modifier.fillMaxWidth().height(48.dp).testTag("empty_state_create_draft_btn")
       ) {
         Icon(
@@ -150,6 +154,7 @@ fun GistListEmptyState(
         Text("Create Local Draft", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
       }
     } else {
+
       Spacer(modifier = Modifier.height(12.dp))
       Text(
         text = "Or tap the '+' button in the bottom right to create a new draft offline.",

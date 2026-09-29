@@ -1,18 +1,11 @@
 ---
 name: testing-setup
-description: Analyze and create a testing strategy for native Android apps - install
-  testing libraries, set up test infrastructure, create harnesses for unit tests,
-  UI tests, screenshot tests, and end-to-end tests.
+description: Establishes a comprehensive testing infrastructure for native Android applications. Use this skill when configuring dependencies, creating test harnesses, setting up local JVM unit tests, Robolectric UI tests, Roborazzi screenshot verification, or end-to-end integration test suites.
 license: Complete terms in LICENSE.txt
 metadata:
-  author: Google LLC
-  last-updated: '2026-06-25'
-  keywords:
-  - android
-  - testing
-  - ui tests
-  - screenshot tests
-  - coverage
+  author: "Google LLC"
+  last-updated: "2026-06-25"
+  keywords: "android, testing, ui tests, screenshot tests, coverage, robolectric, roborazzi"
 ---
 
 ## Step 1: analyze the current testing setup

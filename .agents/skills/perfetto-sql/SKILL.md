@@ -1,21 +1,11 @@
 ---
 name: perfetto-sql
-description: Translates natural language data intents into syntactically valid Perfetto
-  SQL queries and executes them against a local trace file. Use this skill to extract
-  slice, thread, or memory data from Android Perfetto traces using trace_processor.
+description: Translates natural language performance queries into syntactically valid Perfetto SQL queries and executes them against trace files. Use this skill when extracting slices, thread scheduling, memory allocations, or flamegraph metrics from Android Perfetto traces using trace_processor.
 license: Complete terms in LICENSE.txt
 metadata:
-  author: Google LLC
-  last-updated: '2026-05-14'
-  keywords:
-  - Android
-  - Perfetto SQL
-  - Query Guidelines
-  - Performance Profiling
-  - Trace Analysis
-  - SQL Best Practices
-  - SPAN_JOIN
-  - Idempotency
+  author: "Google LLC"
+  last-updated: "2026-05-14"
+  keywords: "Android, Perfetto SQL, Query Guidelines, Performance Profiling, Trace Analysis, SQL Best Practices, SPAN_JOIN, Idempotency"
 ---
 
 ## Guidelines and Hints

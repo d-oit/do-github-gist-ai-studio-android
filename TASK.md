@@ -881,6 +881,109 @@ and upload SARIF to GitHub Security.
   - `compile_applet`
 - **Definition of done**: All Kotlin source files remain strictly under 600 LOC, with spotless formatting, clean Detekt analysis, full test green status, and clean applet compilation.
 
+---
+
+## 📜 48. Revision History & Visual Diff Viewer in GistDetailScreen
+- **Goal**: Integrate existing revision history and visual diff viewer capabilities directly into `GistDetailScreen`, providing seamless inspection of past commits and changes with split/unified views while keeping source files strictly under 600 LOC.
+- **Files expected to change**: `GistDetailScreen.kt`, `DetailFileItemCard.kt`, `GistHubAppScreen.kt`, `GistDetailCopyTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Extract `DetailFileItemCard` composable out of `GistDetailScreen.kt` to preserve modularity and maintain LOC well below the 600 LOC ceiling.
+  - [x] Add Revisions toggle button in top bar and interactive "Files" / "Revisions" tab selector in `GistDetailScreen`.
+  - [x] Connect `GistDetailScreen` to `GistViewModel` reactive revision state flows (`historyList`, `selectedRevisionSha`, `currentRevisionGist`, `parentRevisionGist`, `diffViewMode`, etc.).
+  - [x] Integrate `RevisionHistoryListView` and `DetailedRevisionChangesView` with unified and split visual diffing.
+  - [x] Pass `viewModel` parameter from `GistHubAppScreen.kt` to `GistDetailScreen`.
+  - [x] Add test coverage in `GistDetailCopyTest.kt` verifying file rendering, markdown preview mode toggling, and copy actions.
+  - [x] Format codebase using `./harness.sh format`.
+  - [x] Verify local tests pass via `gradle :app:testDebugUnitTest`.
+  - [x] Verify applet compilation via `compile_applet`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `compile_applet`
+- **Definition of done**: Revision history and visual diff viewer are fully integrated into GistDetailScreen, modularized into reusable components, tested, formatted with Spotless, and compiled without errors.
+
+---
+
+## 🔧 49. Resolution of FrameTracker IME Inset Animation Timeouts
+- **Goal**: Fix `FrameTracker` error (`time out: J<IME_INSETS_SHOW_ANIMATION>`) during soft keyboard show/hide animations across dialogs and search inputs.
+- **Files expected to change**: `AndroidManifest.xml`, `DraftEditorDialog.kt`, `HomeScreen.kt`, `GistHubNavigationComponents.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Configure `android:windowSoftInputMode="adjustResize"` on `MainActivity` in `AndroidManifest.xml` to guarantee proper window resizing during IME insets transition.
+  - [x] Apply `.imePadding()` to the root dialog surface in `DraftEditorDialog.kt` to ensure dialog container honors keyboard insets without blocking animation frames.
+  - [x] Wire `LocalFocusManager.current.clearFocus()` and `ImeAction.Search` to search inputs in `HomeScreen.kt` and `GistHubNavigationComponents.kt` for responsive keyboard dismissal.
+  - [x] Format codebase with `./harness.sh format`.
+  - [x] Run `./harness.sh check`, `./harness.sh e2e`, and `./harness.sh build` to verify static analysis, tests, and build stability.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `./harness.sh e2e`
+  - `./harness.sh build`
+- **Definition of done**: Manifest, dialogs, and top-level search inputs handle IME insets cleanly without animation timeouts, with all verification checks and builds passing green.
+
+---
+
+## 🎨 50. Modernize UI/UX Design System & Component Hierarchy
+- **Goal**: Elevate application aesthetics with modern Material 3 styling, refined typography scale, language-specific syntax dot indicators, enriched color scheme supporting system dark mode, modernized navigation bar with pill indicators, and polished empty/card states adhering to 8dp grid and accessibility standards.
+- **Files expected to change**: `Type.kt`, `Color.kt`, `Theme.kt`, `GistCard.kt`, `GistHubNavigationComponents.kt`, `HomeScreen.kt`, `GistListEmptyState.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Complete Material 3 typography hierarchy with optimal line heights, letter spacing, and semantic weights (`Type.kt`).
+  - [x] Add developer-focused language badge colors (Kotlin, Python, JS, TS, Markdown, JSON, Shell) and semantic status colors (`Color.kt`).
+  - [x] Support automatic system dark theme switching and rich dark slate/OLED GitHub tones in `Theme.kt`.
+  - [x] Modernize `GistHubTopAppBar` with squircle brand mark, responsive search field, and clean offline warning banner (`GistHubNavigationComponents.kt`).
+  - [x] Modernize `GistHubBottomBar` with pill-shaped active tab indicator and accessible 48dp touch targets (`GistHubNavigationComponents.kt`).
+  - [x] Modernize `GistCard` with language dot badges, clean elevation, quick copy action, and dark terminal code preview container (`GistCard.kt`).
+  - [x] Modernize `HomeScreen` search bar, filter chips, items counter badge, and sort dropdown (`HomeScreen.kt`).
+  - [x] Enhance `GistListEmptyState` with squircle layered illustrations and clean button styling (`GistListEmptyState.kt`).
+  - [x] Format all code with `./harness.sh format` and verify with `./harness.sh check` & `./harness.sh test`.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `./harness.sh test`
+  - `compile_applet`
+- **Definition of done**: UI/UX modernized across theme, navigation, cards, and empty states while preserving all test tags and passing all linters and tests.
+
+---
+
+## 🛠️ 51. Standardize Agent Skills to agentskills.io Specification & llms.txt Best Practices
+- **Goal**: Align all 24 skills under `.agents/skills/` with the open Agent Skills standard (https://agentskills.io) and `llms.txt` best practices.
+- **Files expected to change**: `.agents/skills/*/SKILL.md`, `.agents/skills/android-intent-security/references/reporting-template.md`, `.agents/skills/agp-9-upgrade/references/*.md`, `.agents/skills/validate_skills.py`, `llms.txt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Audit all 24 skills for schema, name patterns, description constraints, metadata mapping, line count, and reference validity.
+  - [x] Refactor `android-intent-security` to extract reporting guidelines and templates into `references/reporting-template.md`, bringing `SKILL.md` under 500 lines (499 lines).
+  - [x] Standardize YAML frontmatter across all skills: ensure `name` matches directory (regex `^[a-z0-9]+(-[a-z0-9]+)*$`), `description` is 1-1024 characters with clear "what it does" and "when to use it" triggers without angle brackets, and `metadata` is strictly a string-to-string mapping (`map[string]string`).
+  - [x] Resolve missing reference links in `agp-9-upgrade` by creating self-contained reference files (`references/release-notes.md`, `references/built-in-kotlin.md`).
+  - [x] Implement automated validation script (`.agents/skills/validate_skills.py`) verifying 100% compliance with zero errors or warnings.
+  - [x] Create root `llms.txt` cataloging all 24 agent skills by domain with trigger contexts and links following the standard.
+  - [x] Run `./harness.sh check` and `./harness.sh test` to guarantee zero regressions.
+- **Verification command(s)**:
+  - `./.agents/skills/validate_skills.py`
+  - `./harness.sh check`
+- **Definition of done**: All 24 agent skills pass automated validation against the agentskills.io specification, all SKILL.md files are under 500 lines, descriptions contain trigger contexts, and a root llms.txt discovery index is established.
+
+---
+
+## 📋 52. Compose-Based List View for Fetched Gists with Three-State Sync Indicators (Synced, Pending, Error)
+- **Goal**: Implement a polished, modular Jetpack Compose list view (`GistListView`) to display fetched Gists with comprehensive Material 3 item cards, robust empty/loading handling, and explicit visual sync status indicators (synced, pending, or error) using icons and test tags.
+- **Files expected to change**: `app/src/main/java/com/example/ui/components/GistListView.kt`, `app/src/main/java/com/example/ui/components/GistSyncStateIndicator.kt`, `app/src/main/java/com/example/ui/components/GistCard.kt`, `app/src/main/java/com/example/ui/screens/HomeScreen.kt`, `app/src/test/java/com/example/GistListViewTest.kt`, `app/src/test/java/com/example/GistSyncStateIndicatorTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Extend `GistSyncStateIndicator.kt` to support explicit 3-state sync representations: `synced` (`Icons.Default.CloudDone`), `pending` (`Icons.Default.Sync`), and `error` (`Icons.Default.ErrorOutline`), with `SyncStatusType`, `resolveSyncStatusType`, `SyncStatusIcon`, and `SyncStatusChip`.
+  - [x] Enhance `GistCard.kt` with `hasSyncError: Boolean` and `onSyncIndicatorClick` callback wiring into `GistSyncStateIndicator`.
+  - [x] Build standalone, modular `GistListView.kt` displaying fetched Gists in a `LazyColumn` with stable keys (`key = { it.gist.id }`), swipe-to-dismiss deletion support, custom empty state handling, and sync error highlighting.
+  - [x] Integrate `GistListView` into `HomeScreen.kt`, reducing `HomeScreen.kt` LOC from 544 to 457.
+  - [x] Add high-fidelity JVM unit tests in `GistListViewTest.kt` verifying rendering, item actions, empty states, and synced/pending/error indicator icons.
+  - [x] Update `GistSyncStateIndicatorTest.kt` to cover the new three-state sync resolution and icons.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `./harness.sh e2e`
+  - `compile_applet`
+- **Definition of done**: A Compose-based list view displays fetched Gists with icon-based sync indicators for synced, pending, and error states, with full unit test coverage and clean pass across all quality checks.
+
+
+
+
+
+
 
 
 

@@ -1,24 +1,11 @@
 ---
 name: adaptive
-description: Instructions to make or update an app's UI so that it adapts to different
-  Android devices including phones, tablets, foldables, laptops, desktop, TV, Auto
-  and XR. It includes how to handle different window sizes, pointing devices (such
-  as mouse) and text entry devices (such as keyboard) using the Compose MediaQuery
-  API. It also covers multi-pane layouts using Navigation3 Scenes, adaptive UI components
-  (such as buttons) with varying target sizes, and adaptive layouts (including navigation
-  areas - nav rails and nav bars) using the Compose Grid and FlexBox APIs.
+description: Build and adapt Android app UIs across phones, foldables, tablets, desktops, TV, Auto, and XR. Use this skill when implementing responsive layouts, handling window size classes, supporting mouse and keyboard inputs via Compose MediaQuery, building multi-pane Navigation 3 layouts, or utilizing Compose Grid and FlexBox APIs.
 license: Complete terms in LICENSE.txt
 metadata:
-  author: Google LLC
-  last-updated: '2026-07-02'
-  keywords:
-  - android
-  - ui
-  - adaptive
-  - Grid
-  - FlexBox
-  - MediaQuery
-  - navigation
+  author: "Google LLC"
+  last-updated: "2026-07-02"
+  keywords: "android, ui, adaptive, Grid, FlexBox, MediaQuery, navigation"
 ---
 
 ## Prerequisites

@@ -1,24 +1,16 @@
 ---
 name: agp-9-upgrade
-description: Upgrades, or migrates, an Android project to use Android Gradle Plugin
-  (AGP) version 9. Do not use this skill for migrating Kotlin Multiplatform (KMP)
-  projects.
+description: Upgrades or migrates an Android project to Android Gradle Plugin (AGP) version 9. Use this skill when updating build.gradle.kts files, converting to the AGP 9 declarative DSL, or migrating to built-in Kotlin compilation. Do not use this skill for Kotlin Multiplatform (KMP) projects.
 license: Complete terms in LICENSE.txt
 metadata:
-  author: Google LLC
-  last-updated: '2026-06-25'
-  keywords:
-  - Android Gradle Plugin 9
-  - AGP 9
-  - AGP Upgrade
-  - AGP Migration
-  - New AGP DSL
-  - Migrate to built-in Kotlin
+  author: "Google LLC"
+  last-updated: "2026-06-25"
+  keywords: "Android Gradle Plugin 9, AGP 9, AGP Upgrade, AGP Migration, New AGP DSL, Migrate to built-in Kotlin"
 ---
 
 ## Migration guide
 
-See the [AGP 9 migration guide](references/android/build/releases/agp-9-0-0-release-notes.md) for the major changes, many
+See the [AGP 9 migration guide](references/release-notes.md) for the major changes, many
 breaking, in AGP 9 compared to AGP 8.
 
 ## Requirements
@@ -29,7 +21,7 @@ Upgrade Assistant in Android Studio to update to the latest stable version of
 AGP, and confirm when done. The user may also request that this requirement be
 skipped; if this is the case, you should update the version of AGP to the latest
 stable version as part of the AGP 9 migration. See the
-[AGP 9 migration guide](references/android/build/releases/agp-9-0-0-release-notes.md) for how to do this.
+[AGP 9 migration guide](references/release-notes.md) for how to do this.
 
 Each version of AGP has its own set of compatibilities with other tools, such as
 Gradle, JDK, and Kotlin. The release notes for each of these versions will
@@ -51,11 +43,11 @@ If Hilt is used in the project, ensure it is on version 2.59.2 or higher.
 
 ### Step 2: Migrate to built-in Kotlin
 
-See [the guide](references/android/build/migrate-to-built-in-kotlin.md) for detailed information.
+See [the built-in Kotlin guide](references/built-in-kotlin.md) for detailed information.
 
 ### Step 3. Migrate to the new AGP DSL
 
-See [the guide](references/android/build/releases/agp-9-0-0-release-notes.md) for detailed information.
+See [the release notes](references/release-notes.md) for detailed information.
 
 See also [gradle-recipes](references/recipes.md) for examples on how to migrate old code to code
 that is compatible with AGP 9 and the new DSL.

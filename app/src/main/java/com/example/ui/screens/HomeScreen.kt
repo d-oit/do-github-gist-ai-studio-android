@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,7 +23,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
@@ -43,10 +41,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -63,12 +59,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.entity.GistWithFiles
 import com.example.data.local.entity.SearchHistoryEntity
-import com.example.ui.components.GistCard
-import com.example.ui.components.GistListEmptyState
+import com.example.ui.components.GistListView
 import com.example.ui.components.SearchHistoryView
-import com.example.ui.theme.ActivePurple
-import com.example.ui.theme.ActivePurpleContainer
-import com.example.ui.theme.DarkPurpleText
 import com.example.ui.viewmodel.GistSortOption
 
 @Composable
@@ -141,6 +133,7 @@ fun HomeScreen(
     }
 
   val pullRefreshState = rememberPullRefreshState(refreshing = isRefreshing, onRefresh = onRefresh)
+  val focusManager = LocalFocusManager.current
 
   Box(modifier = Modifier.fillMaxSize().pullRefresh(pullRefreshState)) {
     Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
@@ -149,13 +142,14 @@ fun HomeScreen(
         value = searchQuery,
         onValueChange = onSearchQueryChange,
         placeholder = {
-          Text("Search gists by filename, content, or description...", fontSize = 14.sp)
+          Text("Search gists by filename, content, or description...", fontSize = 13.sp)
         },
         leadingIcon = {
           Icon(
             imageVector = Icons.Default.Search,
             contentDescription = "Search icon",
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp)
           )
         },
         trailingIcon = {
@@ -173,17 +167,23 @@ fun HomeScreen(
           }
         },
         modifier =
-          Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp).testTag("home_search_bar"),
+          Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 4.dp).testTag("home_search_bar"),
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(onSearch = { onSaveSearchQuery(searchQuery) }),
-        shape = RoundedCornerShape(24.dp),
+        keyboardActions =
+          KeyboardActions(
+            onSearch = {
+              onSaveSearchQuery(searchQuery)
+              focusManager.clearFocus()
+            }
+          ),
+        shape = RoundedCornerShape(16.dp),
         colors =
           OutlinedTextFieldDefaults.colors(
             focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
           )
       )
 
@@ -212,7 +212,8 @@ fun HomeScreen(
               if (showStarredOnly) onToggleShowStarredOnly()
               onSelectedTagChange(null)
             },
-            label = { Text("All", fontSize = 12.sp) },
+            label = { Text("All", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier.testTag("tag_filter_all")
           )
         }
@@ -220,7 +221,8 @@ fun HomeScreen(
           FilterChip(
             selected = showStarredOnly,
             onClick = onToggleShowStarredOnly,
-            label = { Text("Starred", fontSize = 12.sp) },
+            label = { Text("Starred", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
+            shape = RoundedCornerShape(12.dp),
             leadingIcon = {
               Icon(
                 imageVector = if (showStarredOnly) Icons.Default.Star else Icons.Default.StarBorder,
@@ -244,14 +246,15 @@ fun HomeScreen(
                 onSelectedTagChange(tag)
               }
             },
-            label = { Text("#$tag", fontSize = 12.sp) },
+            label = { Text("#$tag", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier.testTag("tag_filter_$tag")
           )
         }
       }
 
       Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
       ) {
@@ -259,9 +262,9 @@ fun HomeScreen(
           Text(
             text = "Local Cache & Sync Status",
             fontSize = 12.sp,
-            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-            color = ActivePurple,
-            letterSpacing = 1.sp
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+            letterSpacing = 0.5.sp
           )
           Spacer(modifier = Modifier.height(2.dp))
           Text(
@@ -277,14 +280,17 @@ fun HomeScreen(
         ) {
           Box(
             modifier =
-              Modifier.background(ActivePurpleContainer, RoundedCornerShape(10.dp))
-                .padding(horizontal = 8.dp, vertical = 2.dp)
+              Modifier.background(
+                  MaterialTheme.colorScheme.primaryContainer,
+                  RoundedCornerShape(12.dp)
+                )
+                .padding(horizontal = 10.dp, vertical = 4.dp)
           ) {
             Text(
               text = "${filtered.size} Items",
               fontSize = 11.sp,
-              fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-              color = DarkPurpleText
+              fontWeight = FontWeight.Bold,
+              color = MaterialTheme.colorScheme.onPrimaryContainer
             )
           }
 
@@ -293,9 +299,14 @@ fun HomeScreen(
 
             OutlinedButton(
               onClick = { showSortMenu = true },
-              shape = RoundedCornerShape(10.dp),
-              contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-              modifier = Modifier.height(28.dp).testTag("sort_menu_button")
+              shape = RoundedCornerShape(12.dp),
+              border =
+                androidx.compose.foundation.BorderStroke(
+                  1.dp,
+                  MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                ),
+              contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+              modifier = Modifier.height(32.dp).testTag("sort_menu_button")
             ) {
               Icon(
                 imageVector = Icons.AutoMirrored.Filled.Sort,
@@ -303,7 +314,7 @@ fun HomeScreen(
                 modifier = Modifier.size(14.dp)
               )
               Spacer(modifier = Modifier.width(4.dp))
-              Text(text = sortOption.label, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+              Text(text = sortOption.label, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
             }
 
             DropdownMenu(
@@ -342,164 +353,82 @@ fun HomeScreen(
         }
       }
 
-      if (filtered.isEmpty()) {
-        Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-          if (gists.isEmpty()) {
-            // PRIMARY EMPTY STATE: No local gists at all in the database
-            GistListEmptyState(
-              onFetchClick = onRefresh,
-              isRefreshing = isRefreshing,
-              onCreateDraftClick = onCreateDraftClick
-            )
-          } else {
-            // SECONDARY EMPTY STATE: Gists exist but none match search filters
-            Column(
-              horizontalAlignment = Alignment.CenterHorizontally,
-              verticalArrangement = Arrangement.Center,
-              modifier = Modifier.fillMaxWidth().padding(24.dp)
-            ) {
-              Box(
-                modifier =
-                  Modifier.size(72.dp)
-                    .background(
-                      color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-                      shape = RoundedCornerShape(36.dp)
-                    ),
-                contentAlignment = Alignment.Center
-              ) {
-                Icon(
-                  imageVector = Icons.Default.Search,
-                  contentDescription = "No matches",
-                  tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                  modifier = Modifier.size(28.dp)
-                )
-              }
-              Spacer(modifier = Modifier.height(16.dp))
-              Text(
-                text = "No Matching Gists",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center
-              )
-              Spacer(modifier = Modifier.height(6.dp))
-              Text(
-                text =
-                  "We couldn't find any local gists matching \"$searchQuery\"${if (selectedTag != null) " with tag #$selectedTag" else ""}. Try verifying the spelling or reset your filters.",
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 24.dp)
-              )
-              Spacer(modifier = Modifier.height(24.dp))
-
-              // Reset filters CTA
-              Button(
-                onClick = {
-                  onSearchQueryChange("")
-                  onSelectedTagChange(null)
-                },
-                colors =
-                  ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                  ),
-                shape = RoundedCornerShape(20.dp),
-                modifier = Modifier.height(40.dp).testTag("reset_filters_btn")
-              ) {
-                Text("Reset Search & Filters", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-              }
-            }
-          }
-        }
-      } else {
-        LazyColumn(
-          modifier = Modifier.weight(1f),
-          verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-          items(filtered, key = { it.gist.id }) { item ->
-            val dismissState =
-              rememberSwipeToDismissBoxState(
-                confirmValueChange = { dismissValue ->
-                  if (
-                    dismissValue == SwipeToDismissBoxValue.EndToStart ||
-                      dismissValue == SwipeToDismissBoxValue.StartToEnd
-                  ) {
-                    onDelete(item.gist.id)
-                    false
-                  } else {
-                    false
-                  }
-                }
-              )
-
-            SwipeToDismissBox(
-              state = dismissState,
-              modifier = Modifier.fillMaxWidth().testTag("swipe_to_dismiss_${item.gist.id}"),
-              backgroundContent = {
-                val isDismissed = dismissState.targetValue != SwipeToDismissBoxValue.Settled
-                val color =
-                  if (isDismissed) MaterialTheme.colorScheme.errorContainer
-                  else androidx.compose.ui.graphics.Color.Transparent
-                Box(
-                  modifier =
-                    Modifier.fillMaxSize()
-                      .background(color, RoundedCornerShape(16.dp))
-                      .padding(horizontal = 20.dp),
-                  contentAlignment =
-                    if (dismissState.targetValue == SwipeToDismissBoxValue.StartToEnd) {
-                      Alignment.CenterStart
-                    } else {
-                      Alignment.CenterEnd
-                    }
+      Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+        GistListView(
+          gists = filtered,
+          onGistClick = onPreview,
+          onTogglePin = onTogglePin,
+          onToggleStar = onToggleStar,
+          onEdit = onEdit,
+          onDelete = onDelete,
+          isRefreshing = isRefreshing,
+          onRefresh = onRefresh,
+          onCreateDraftClick = onCreateDraftClick,
+          emptyContent =
+            if (filtered.isEmpty() && gists.isNotEmpty()) {
+              {
+                Column(
+                  horizontalAlignment = Alignment.CenterHorizontally,
+                  verticalArrangement = Arrangement.Center,
+                  modifier = Modifier.fillMaxWidth().padding(24.dp)
                 ) {
-                  if (isDismissed) {
-                    Row(
-                      verticalAlignment = Alignment.CenterVertically,
-                      horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                      if (dismissState.targetValue == SwipeToDismissBoxValue.StartToEnd) {
-                        Icon(
-                          imageVector = Icons.Default.Delete,
-                          contentDescription = "Swipe to delete",
-                          tint = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                        Text(
-                          text = "Delete",
-                          color = MaterialTheme.colorScheme.onErrorContainer,
-                          fontWeight = FontWeight.Bold,
-                          fontSize = 14.sp
-                        )
-                      } else {
-                        Text(
-                          text = "Delete",
-                          color = MaterialTheme.colorScheme.onErrorContainer,
-                          fontWeight = FontWeight.Bold,
-                          fontSize = 14.sp
-                        )
-                        Icon(
-                          imageVector = Icons.Default.Delete,
-                          contentDescription = "Swipe to delete",
-                          tint = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                      }
-                    }
+                  Box(
+                    modifier =
+                      Modifier.size(72.dp)
+                        .background(
+                          color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                          shape = RoundedCornerShape(36.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                  ) {
+                    Icon(
+                      imageVector = Icons.Default.Search,
+                      contentDescription = "No matches",
+                      tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                      modifier = Modifier.size(28.dp)
+                    )
+                  }
+                  Spacer(modifier = Modifier.height(16.dp))
+                  Text(
+                    text = "No Matching Gists",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                  )
+                  Spacer(modifier = Modifier.height(6.dp))
+                  Text(
+                    text =
+                      "We couldn't find any local gists matching \"$searchQuery\"${if (selectedTag != null) " with tag #$selectedTag" else ""}. Try verifying the spelling or reset your filters.",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 24.dp)
+                  )
+                  Spacer(modifier = Modifier.height(24.dp))
+
+                  // Reset filters CTA
+                  Button(
+                    onClick = {
+                      onSearchQueryChange("")
+                      onSelectedTagChange(null)
+                    },
+                    colors =
+                      ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                      ),
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.height(40.dp).testTag("reset_filters_btn")
+                  ) {
+                    Text("Reset Search & Filters", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                   }
                 }
               }
-            ) {
-              GistCard(
-                item = item,
-                onTogglePin = { onTogglePin(item.gist.id) },
-                onToggleStar = { onToggleStar(item.gist.id) },
-                onEdit = { onEdit(item) },
-                onDelete = { onDelete(item.gist.id) },
-                onPreview = { onPreview(item) }
-              )
+            } else {
+              null
             }
-          }
-          item { Spacer(modifier = Modifier.height(80.dp)) }
-        }
+        )
       }
     }
 

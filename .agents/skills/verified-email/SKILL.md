@@ -1,27 +1,11 @@
 ---
 name: verified-email
-description: Provides a complete workflow for implementing verified email retrieval
-  on Android Credential Manager API. Use this skill to integrate a secure, OTP-less
-  email verification flow into an Android app. This skill solves the problem of high-friction
-  sign-up processes by leveraging cryptographically verified credentials from trusted
-  providers like Google.
+description: Workflow for implementing cryptographically verified email retrieval using the Android Credential Manager API. Use this skill when integrating frictionless OTP-less authentication, configuring Digital Credentials (OpenID4VP, SD-JWT), or setting up identity verification flows with trusted identity providers.
 license: Complete terms in LICENSE.txt
 metadata:
-  author: Google LLC
-  last-updated: '2026-07-02'
-  keywords:
-  - implementation
-  - Android
-  - Credential Manager
-  - Digital Credentials
-  - Verified Email
-  - OpenID4VP
-  - SD-JWT
-  - OTP-less
-  - authentication
-  - passkeys
-  - CredMan
-  - identity.
+  author: "Google LLC"
+  last-updated: "2026-07-02"
+  keywords: "implementation, Android, Credential Manager, Digital Credentials, Verified Email, OpenID4VP, SD-JWT, OTP-less, authentication, passkeys, CredMan, identity"
 ---
 
 ## Fundamentals

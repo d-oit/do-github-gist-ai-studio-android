@@ -1,23 +1,11 @@
 ---
 name: wear-compose-m3
-description: Expert guidance for working with Wear OS Compose Material3. Use this
-  skill when creating, updating, or migrating Wear OS projects. This includes the
-  androidx.wear.compose.material3, androidx.wear.compose.foundation, and androidx.wear.compose.navigation3
-  libraries. Also working with core components such as AppScaffold, ScreenScaffold,
-  and TransformingLazyColumn, and core Wear OS concepts such as ambient mode. Migration
-  from lower versions such as Material 2.5 and Horologist.
+description: Technical guidance for developing Wear OS apps with Compose Material 3. Use this skill when building or updating Wear OS applications, migrating from Material 2.5 or Horologist, implementing AppScaffold, ScreenScaffold, and TransformingLazyColumn, or handling ambient display modes.
 license: Complete terms in LICENSE.txt
 metadata:
-  author: Google LLC
-  last-updated: '2026-07-08'
-  keywords:
-  - Wear OS
-  - Compose
-  - Material3
-  - Horologist
-  - TransformingLazyColumn
-  - AppScaffold
-  - ScreenScaffold
+  author: "Google LLC"
+  last-updated: "2026-07-08"
+  keywords: "Wear OS, Compose, Material3, Horologist, TransformingLazyColumn, AppScaffold, ScreenScaffold"
 ---
 
 ## Prerequisites and compatibility

@@ -1,6 +1,10 @@
 ---
 name: master-orchestrator-swarm
-description: Master Orchestrator multi-agent swarm task execution system powered by Gemini 3.6 Flash. Decomposes tasks into isolated atomic TODOs with code-first diagnostics, strict exit criteria, token efficiency, and turn minimization.
+description: Master Orchestrator multi-agent swarm task execution system powered by Gemini 3.6 Flash. Use this skill when architecting complex, ambiguous, or multi-step requests into isolated atomic TODOs, enforcing code-first diagnostic actions, establishing verifiable exit criteria, maximizing token efficiency, and minimizing conversation turns.
+license: Apache-2.0
+metadata:
+  engine: "Gemini 3.6 Flash"
+  paradigm: "Swarm Orchestration"
 ---
 
 # Master Orchestrator Swarm Skill

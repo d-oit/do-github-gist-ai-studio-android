@@ -7,7 +7,11 @@ import androidx.compose.ui.test.onNodeWithText
 import com.example.ui.components.GistSyncState
 import com.example.ui.components.GistSyncStateBanner
 import com.example.ui.components.GistSyncStateIndicator
+import com.example.ui.components.SyncStatusChip
+import com.example.ui.components.SyncStatusIcon
+import com.example.ui.components.SyncStatusType
 import com.example.ui.components.resolveGistSyncState
+import com.example.ui.components.resolveSyncStatusType
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -36,6 +40,35 @@ class GistSyncStateIndicatorTest {
     assertEquals(
       GistSyncState.SYNCED,
       resolveGistSyncState(isLocalOnly = false, isDirty = false, isDeleted = false)
+    )
+    assertEquals(
+      GistSyncState.ERROR,
+      resolveGistSyncState(isLocalOnly = false, isDirty = false, isDeleted = false, hasError = true)
+    )
+  }
+
+  @Test
+  fun testResolveSyncStatusTypeLogic() {
+    assertEquals(
+      SyncStatusType.SYNCED,
+      resolveSyncStatusType(isLocalOnly = false, isDirty = false, isDeleted = false)
+    )
+    assertEquals(
+      SyncStatusType.PENDING,
+      resolveSyncStatusType(isLocalOnly = true, isDirty = false, isDeleted = false)
+    )
+    assertEquals(
+      SyncStatusType.PENDING,
+      resolveSyncStatusType(isLocalOnly = false, isDirty = true, isDeleted = false)
+    )
+    assertEquals(
+      SyncStatusType.ERROR,
+      resolveSyncStatusType(
+        isLocalOnly = false,
+        isDirty = false,
+        isDeleted = false,
+        hasError = true
+      )
     )
   }
 
@@ -72,6 +105,43 @@ class GistSyncStateIndicatorTest {
 
     composeTestRule.onNodeWithTag("sync_status_synced").assertIsDisplayed()
     composeTestRule.onNodeWithText("Pushed to GitHub").assertIsDisplayed()
+  }
+
+  @Test
+  fun testCompactIndicatorDisplaysErrorState() {
+    composeTestRule.setContent {
+      GistSyncStateIndicator(
+        isLocalOnly = false,
+        isDirty = false,
+        isDeleted = false,
+        hasError = true,
+        compact = true
+      )
+    }
+
+    composeTestRule.onNodeWithTag("sync_status_error").assertIsDisplayed()
+    composeTestRule.onNodeWithText("Sync Error").assertIsDisplayed()
+  }
+
+  @Test
+  fun testThreeStateSyncStatusChip() {
+    composeTestRule.setContent { SyncStatusChip(status = SyncStatusType.PENDING) }
+
+    composeTestRule.onNodeWithTag("sync_status_pending").assertIsDisplayed()
+    composeTestRule.onNodeWithText("Pending Sync").assertIsDisplayed()
+  }
+
+  @Test
+  fun testSyncStatusIcons() {
+    composeTestRule.setContent {
+      SyncStatusIcon(status = SyncStatusType.SYNCED)
+      SyncStatusIcon(status = SyncStatusType.PENDING)
+      SyncStatusIcon(status = SyncStatusType.ERROR)
+    }
+
+    composeTestRule.onNodeWithTag("sync_status_icon_synced").assertIsDisplayed()
+    composeTestRule.onNodeWithTag("sync_status_icon_pending").assertIsDisplayed()
+    composeTestRule.onNodeWithTag("sync_status_icon_error").assertIsDisplayed()
   }
 
   @Test

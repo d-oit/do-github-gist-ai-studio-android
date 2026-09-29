@@ -1,21 +1,11 @@
 ---
 name: perfetto-trace-analysis
-description: Analyzes Perfetto traces to find the root cause of latency, memory, or
-  jank issues in Android apps. Use when the user provides a Perfetto trace file and
-  asks any question, ongoing investigation, or open-ended request to analyze its contents.
+description: Analyzes Android Perfetto traces to identify root causes of UI jank, thread contention, and memory spikes. Use this skill when investigating performance regressions, frame rate drops, long layout or draw passes, garbage collection pauses, or app startup bottlenecks.
 license: Complete terms in LICENSE.txt
 metadata:
-  author: Google LLC
-  last-updated: '2026-05-14'
-  keywords:
-  - Perfetto
-  - trace analysis
-  - Android performance
-  - debugging
-  - profiling
-  - jank
-  - bottleneck
-  - SQL
+  author: "Google LLC"
+  last-updated: "2026-05-14"
+  keywords: "Perfetto, trace analysis, Android performance, debugging, profiling, jank, bottleneck, SQL"
 ---
 
 ## Resources

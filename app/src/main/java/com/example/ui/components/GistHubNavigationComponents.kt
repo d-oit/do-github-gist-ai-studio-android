@@ -17,8 +17,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudOff
@@ -42,8 +43,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.repository.SyncStatus
@@ -84,7 +89,7 @@ fun GistHubTopAppBar(
         Box(
           modifier =
             Modifier.size(40.dp)
-              .clip(CircleShape)
+              .clip(RoundedCornerShape(12.dp))
               .background(
                 brush =
                   Brush.linearGradient(
@@ -105,7 +110,7 @@ fun GistHubTopAppBar(
         Column {
           Text(
             text = "do-gist-hub",
-            fontSize = 20.sp,
+            fontSize = 19.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
             letterSpacing = (-0.5).sp
@@ -186,12 +191,12 @@ fun GistHubTopAppBar(
 
     AnimatedVisibility(visible = isOfflineOnly) {
       Surface(
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(10.dp),
         color = MaterialTheme.colorScheme.errorContainer,
         modifier = Modifier.fillMaxWidth().padding(top = 6.dp).testTag("top_bar_offline_banner")
       ) {
         Row(
-          modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+          modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
           verticalAlignment = Alignment.CenterVertically,
           horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -200,7 +205,7 @@ fun GistHubTopAppBar(
               imageVector = Icons.Default.CloudOff,
               contentDescription = null,
               tint = MaterialTheme.colorScheme.onErrorContainer,
-              modifier = Modifier.size(14.dp)
+              modifier = Modifier.size(16.dp)
             )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
@@ -212,7 +217,7 @@ fun GistHubTopAppBar(
           }
           Text(
             text = "Tap to resume",
-            fontSize = 10.sp,
+            fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onErrorContainer,
             modifier = Modifier.clickable { onToggleOfflineOnly?.invoke() }
@@ -221,14 +226,20 @@ fun GistHubTopAppBar(
       }
     }
 
+    val focusManager = LocalFocusManager.current
+
     AnimatedVisibility(visible = isSearchExpanded) {
       Column(modifier = Modifier.padding(top = 8.dp)) {
         OutlinedTextField(
           value = searchQuery,
           onValueChange = onSearchQueryChange,
-          placeholder = { Text("Filter by filename, description, or content...") },
+          placeholder = {
+            Text("Filter by filename, description, or content...", fontSize = 13.sp)
+          },
           modifier = Modifier.fillMaxWidth().heightIn(max = 56.dp).testTag("search_field"),
           singleLine = true,
+          keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+          keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
           colors =
             OutlinedTextFieldDefaults.colors(
               focusedTextColor = MaterialTheme.colorScheme.onSurface,
@@ -238,11 +249,11 @@ fun GistHubTopAppBar(
               unfocusedPlaceholderColor =
                 MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
               focusedBorderColor = MaterialTheme.colorScheme.primary,
-              unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+              unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
               focusedContainerColor = MaterialTheme.colorScheme.surface,
               unfocusedContainerColor = MaterialTheme.colorScheme.surface
             ),
-          shape = RoundedCornerShape(12.dp),
+          shape = RoundedCornerShape(16.dp),
           trailingIcon = {
             if (searchQuery.isNotEmpty()) {
               IconButton(onClick = { onSearchQueryChange("") }) {
@@ -263,44 +274,105 @@ fun GistHubTopAppBar(
 
 @Composable
 fun GistHubBottomBar(activeTab: String, onTabSelected: (String) -> Unit) {
-  Row(
-    modifier =
-      Modifier.fillMaxWidth()
-        .background(MaterialTheme.colorScheme.background)
-        .navigationBarsPadding()
-        .border(1.dp, MaterialTheme.colorScheme.outline)
-        .height(80.dp)
-        .padding(horizontal = 8.dp, vertical = 6.dp),
-    horizontalArrangement = Arrangement.SpaceAround,
-    verticalAlignment = Alignment.CenterVertically
+  Surface(
+    modifier = Modifier.fillMaxWidth(),
+    color = MaterialTheme.colorScheme.surface,
+    tonalElevation = 3.dp,
+    border =
+      androidx.compose.foundation.BorderStroke(
+        width = 1.dp,
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+      )
   ) {
-    TabButton(
-      label = "Home",
-      icon = Icons.Default.Home,
-      isActive = activeTab == "home",
-      onClick = { onTabSelected("home") },
-      modifier = Modifier.testTag("tab_home")
-    )
-    TabButton(
-      label = "Vault",
-      icon = Icons.Default.FolderOpen,
-      isActive = activeTab == "vault",
-      onClick = { onTabSelected("vault") },
-      modifier = Modifier.testTag("tab_vault")
-    )
-    TabButton(
-      label = "Sync",
-      icon = Icons.Default.Sync,
-      isActive = activeTab == "sync",
-      onClick = { onTabSelected("sync") },
-      modifier = Modifier.testTag("tab_sync")
-    )
-    TabButton(
-      label = "Config",
-      icon = Icons.Default.Settings,
-      isActive = activeTab == "config",
-      onClick = { onTabSelected("config") },
-      modifier = Modifier.testTag("tab_config")
+    Row(
+      modifier =
+        Modifier.fillMaxWidth()
+          .navigationBarsPadding()
+          .height(72.dp)
+          .padding(horizontal = 8.dp, vertical = 6.dp),
+      horizontalArrangement = Arrangement.SpaceAround,
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      TabButton(
+        label = "Home",
+        icon = Icons.Default.Home,
+        isActive = activeTab == "home",
+        onClick = { onTabSelected("home") },
+        modifier = Modifier.testTag("tab_home")
+      )
+      TabButton(
+        label = "Vault",
+        icon = Icons.Default.FolderOpen,
+        isActive = activeTab == "vault",
+        onClick = { onTabSelected("vault") },
+        modifier = Modifier.testTag("tab_vault")
+      )
+      TabButton(
+        label = "Sync",
+        icon = Icons.Default.Sync,
+        isActive = activeTab == "sync",
+        onClick = { onTabSelected("sync") },
+        modifier = Modifier.testTag("tab_sync")
+      )
+      TabButton(
+        label = "Config",
+        icon = Icons.Default.Settings,
+        isActive = activeTab == "config",
+        onClick = { onTabSelected("config") },
+        modifier = Modifier.testTag("tab_config")
+      )
+    }
+  }
+}
+
+@Composable
+fun TabButton(
+  label: String,
+  icon: ImageVector,
+  isActive: Boolean,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier
+) {
+  Column(
+    modifier =
+      modifier
+        .width(72.dp)
+        .clip(RoundedCornerShape(16.dp))
+        .clickable(onClick = onClick)
+        .padding(vertical = 4.dp),
+    horizontalAlignment = Alignment.CenterHorizontally,
+    verticalArrangement = Arrangement.Center
+  ) {
+    Box(
+      modifier =
+        Modifier.width(56.dp)
+          .height(32.dp)
+          .clip(RoundedCornerShape(16.dp))
+          .background(
+            if (isActive) MaterialTheme.colorScheme.primaryContainer
+            else androidx.compose.ui.graphics.Color.Transparent
+          ),
+      contentAlignment = Alignment.Center
+    ) {
+      Icon(
+        imageVector = icon,
+        contentDescription = label,
+        tint =
+          if (isActive) MaterialTheme.colorScheme.onPrimaryContainer
+          else MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.size(22.dp)
+      )
+    }
+    Spacer(modifier = Modifier.height(4.dp))
+    Text(
+      text = label,
+      fontSize = 11.sp,
+      fontWeight = if (isActive) FontWeight.Bold else FontWeight.Medium,
+      color =
+        if (isActive) MaterialTheme.colorScheme.onSurface
+        else MaterialTheme.colorScheme.onSurfaceVariant,
+      maxLines = 1,
+      overflow = TextOverflow.Ellipsis
     )
   }
 }

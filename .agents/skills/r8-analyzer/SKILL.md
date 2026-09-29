@@ -1,19 +1,11 @@
 ---
 name: r8-analyzer
-description: Analyzes Android build files and R8 keep rules to identify redundancies,
-  broad package-wide rules, and rules that subsume library consumer keep rules. Use
-  when developers want to optimize their app's size, remove redundant or overly broad
-  keep rules, or troubleshoot Proguard configurations.
+description: Analyzes Android build configurations and R8/Proguard keep rules to minimize app size and prevent runtime reflection crashes. Use this skill when optimizing APK/AAB size, pruning redundant or broad package keep rules, troubleshooting minification issues, or inspecting R8 compiler logs.
 license: Complete terms in LICENSE.txt
 metadata:
-  author: Google LLC
-  last-updated: '2026-06-09'
-  keywords:
-  - R8
-  - proguard
-  - keep rules
-  - app size
-  - optimization
+  author: "Google LLC"
+  last-updated: "2026-06-09"
+  keywords: "R8, proguard, keep rules, app size, optimization"
 ---
 
 ## Step 1. Setup and configuration check

@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -41,20 +42,47 @@ enum class GistSyncState {
   LOCAL_ONLY,
   DIRTY,
   PENDING_DELETE,
-  SYNCED
+  PENDING,
+  SYNCED,
+  ERROR
 }
 
-/** Determines [GistSyncState] from Room flags [isLocalOnly], [isDirty], and [isDeleted]. */
+/** Unified 3-state sync status: synced, pending, or error. */
+enum class SyncStatusType {
+  SYNCED,
+  PENDING,
+  ERROR
+}
+
+/**
+ * Determines [GistSyncState] from Room flags [isLocalOnly], [isDirty], [isDeleted], and [hasError].
+ */
 fun resolveGistSyncState(
   isLocalOnly: Boolean,
   isDirty: Boolean,
-  isDeleted: Boolean = false
+  isDeleted: Boolean = false,
+  hasError: Boolean = false
 ): GistSyncState {
   return when {
+    hasError -> GistSyncState.ERROR
     isDeleted -> GistSyncState.PENDING_DELETE
     isLocalOnly -> GistSyncState.LOCAL_ONLY
     isDirty -> GistSyncState.DIRTY
     else -> GistSyncState.SYNCED
+  }
+}
+
+/** Resolves unified 3-state [SyncStatusType] from sync flags. */
+fun resolveSyncStatusType(
+  isLocalOnly: Boolean,
+  isDirty: Boolean,
+  isDeleted: Boolean = false,
+  hasError: Boolean = false
+): SyncStatusType {
+  return when {
+    hasError -> SyncStatusType.ERROR
+    isLocalOnly || isDirty || isDeleted -> SyncStatusType.PENDING
+    else -> SyncStatusType.SYNCED
   }
 }
 
@@ -95,6 +123,16 @@ fun getSyncStateVisuals(state: GistSyncState): SyncStateVisuals {
         contentColor = Color(0xFFE65100),
         testTagSuffix = "dirty"
       )
+    GistSyncState.PENDING ->
+      SyncStateVisuals(
+        title = "Pending Sync",
+        description = "Changes queued for synchronization with GitHub.",
+        icon = Icons.Default.Sync,
+        containerColor = Color(0xFFFFF3E0),
+        borderColor = Color(0xFFFFE082),
+        contentColor = Color(0xFFE65100),
+        testTagSuffix = "pending"
+      )
     GistSyncState.PENDING_DELETE ->
       SyncStateVisuals(
         title = "Pending Delete",
@@ -104,6 +142,16 @@ fun getSyncStateVisuals(state: GistSyncState): SyncStateVisuals {
         borderColor = MaterialTheme.colorScheme.error,
         contentColor = MaterialTheme.colorScheme.onErrorContainer,
         testTagSuffix = "deleted"
+      )
+    GistSyncState.ERROR ->
+      SyncStateVisuals(
+        title = "Sync Error",
+        description = "Synchronization failed. Tap to retry or review error.",
+        icon = Icons.Default.ErrorOutline,
+        containerColor = Color(0xFFFFEBEE),
+        borderColor = Color(0xFFEF9A9A),
+        contentColor = Color(0xFFC62828),
+        testTagSuffix = "error"
       )
     GistSyncState.SYNCED ->
       SyncStateVisuals(
@@ -120,18 +168,29 @@ fun getSyncStateVisuals(state: GistSyncState): SyncStateVisuals {
 
 /**
  * A compact badge component that tracks whether local Gist changes have been pushed to GitHub using
- * the Room database sync status flags.
+ * the Room database sync status flags or unified 3-state sync status (synced, pending, or error).
  */
 @Composable
 fun GistSyncStateIndicator(
-  isLocalOnly: Boolean,
-  isDirty: Boolean,
+  isLocalOnly: Boolean = false,
+  isDirty: Boolean = false,
   isDeleted: Boolean = false,
+  hasError: Boolean = false,
+  statusType: SyncStatusType? = null,
   modifier: Modifier = Modifier,
   compact: Boolean = true,
   onClick: (() -> Unit)? = null
 ) {
-  val syncState = resolveGistSyncState(isLocalOnly, isDirty, isDeleted)
+  val syncState =
+    when {
+      statusType != null ->
+        when (statusType) {
+          SyncStatusType.SYNCED -> GistSyncState.SYNCED
+          SyncStatusType.PENDING -> GistSyncState.PENDING
+          SyncStatusType.ERROR -> GistSyncState.ERROR
+        }
+      else -> resolveGistSyncState(isLocalOnly, isDirty, isDeleted, hasError)
+    }
   val visuals = getSyncStateVisuals(syncState)
 
   val rootModifier =
@@ -150,7 +209,7 @@ fun GistSyncStateIndicator(
       Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
           imageVector = visuals.icon,
-          contentDescription = null,
+          contentDescription = visuals.title,
           tint = visuals.contentColor,
           modifier = Modifier.size(12.dp)
         )
@@ -166,6 +225,47 @@ fun GistSyncStateIndicator(
   } else {
     GistSyncStateBanner(syncState = syncState, modifier = rootModifier)
   }
+}
+
+/**
+ * Dedicated visual icon component representing the sync state:
+ * - [SyncStatusType.SYNCED]: CloudDone icon in green
+ * - [SyncStatusType.PENDING]: Sync icon in amber/orange
+ * - [SyncStatusType.ERROR]: ErrorOutline icon in red
+ */
+@Composable
+fun SyncStatusIcon(
+  status: SyncStatusType,
+  modifier: Modifier = Modifier,
+  contentDescription: String? = null
+) {
+  val (icon, tint) =
+    when (status) {
+      SyncStatusType.SYNCED -> Icons.Default.CloudDone to Color(0xFF2E7D32)
+      SyncStatusType.PENDING -> Icons.Default.Sync to Color(0xFFE65100)
+      SyncStatusType.ERROR -> Icons.Default.ErrorOutline to Color(0xFFC62828)
+    }
+  Icon(
+    imageVector = icon,
+    contentDescription = contentDescription ?: status.name.lowercase(),
+    tint = tint,
+    modifier = modifier.size(16.dp).testTag("sync_status_icon_${status.name.lowercase()}")
+  )
+}
+
+/** A dedicated interactive chip representing the 3-state sync status (synced, pending, error). */
+@Composable
+fun SyncStatusChip(
+  status: SyncStatusType,
+  modifier: Modifier = Modifier,
+  onClick: (() -> Unit)? = null
+) {
+  GistSyncStateIndicator(
+    statusType = status,
+    modifier = modifier,
+    compact = true,
+    onClick = onClick
+  )
 }
 
 /**

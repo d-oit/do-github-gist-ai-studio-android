@@ -1,6 +1,10 @@
 ---
 name: gh
-description: Patterns for invoking the GitHub CLI (gh) from agents. Covers structured output, pagination, repo targeting, search vs list, gh api fallback.
+description: Patterns and best practices for invoking the GitHub CLI (gh) from AI coding agents. Use this skill when creating, viewing, or managing GitHub pull requests, issues, releases, or repositories, extracting JSON data with --json, handling pagination, configuring tokens, or querying the GitHub REST/GraphQL APIs.
+license: MIT
+metadata:
+  tool: "gh"
+  category: "vcs-integration"
 ---
 
 # Reference

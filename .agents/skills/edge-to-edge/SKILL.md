@@ -1,20 +1,11 @@
 ---
 name: edge-to-edge
-description: Use this skill to migrate your Jetpack Compose app to add adaptive edge-to-edge
-  support and troubleshoot common issues. Use this skill to fix UI components (like
-  buttons or lists) that are obscured by or overlapping with the navigation bar or
-  status bar, fix IME insets, and fix system bar legibility.
+description: Implements adaptive edge-to-edge layouts and insets handling in Jetpack Compose applications. Use this skill when configuring enableEdgeToEdge(), resolving overlapping navigation/status bars, fixing IME soft keyboard animation padding and frame timeouts, or ensuring system bar contrast and legibility.
 license: Complete terms in LICENSE.txt
 metadata:
-  author: Google LLC
-  last-updated: '2026-04-01'
-  keywords:
-  - android
-  - compose
-  - system bars
-  - edge-to-edge
-  - status bar
-  - navigation bar
+  author: "Google LLC"
+  last-updated: "2026-04-01"
+  keywords: "android, compose, system bars, edge-to-edge, status bar, navigation bar, ime insets"
 ---
 
 ## Prerequisites

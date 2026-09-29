@@ -1,6 +1,10 @@
 ---
 name: do-gist-hub-dev-workflow
-description: Strictly enforces Do Gist Hub's manual constructor injection, 600 LOC file limits, Room sync protocols, local test pyramid validation, and local harness commands.
+description: Strictly enforces native Android development guardrails for the d.o.Gist Hub project. Use this skill when modifying architecture, creating or refactoring files under the 600 LOC limit, managing Room offline-first sync state transitions, maintaining manual constructor injection in DoGistHubApp.kt, executing local harness commands, or validating the automated test pyramid.
+license: Apache-2.0
+metadata:
+  project: "d.o.Gist Hub"
+  architecture: "Offline-First Room + Compose + Manual DI"
 ---
 
 # d.o.Gist Hub Developer Workflow Skill

@@ -1,36 +1,11 @@
 ---
 name: navigation-3
-description: Learn how to install and migrate to Jetpack Navigation 3, and how to
-  implement features and patterns such as deep links, multiple backstacks, scenes
-  (dialogs, bottom sheets, list-detail, two-pane, supporting pane), conditional navigation
-  (such as logged-in navigation versus anonymous), returning results from flows, integration
-  with Hilt, ViewModel, Kotlin, and view interoperability.
+description: Migration guide and architectural patterns for Jetpack Navigation 3. Use this skill when migrating from Navigation 2, setting up NavKey, NavHost, and NavDisplay, configuring multi-pane layouts (dialogs, bottom sheets, list-detail, two-pane, supporting pane), handling deep links, multiple backstacks, or returning navigation results.
 license: Complete terms in LICENSE.txt
 metadata:
-  author: Google LLC
-  last-updated: '2026-07-09'
-  keywords:
-  - recipe
-  - Android
-  - Navigation 2
-  - Navigation 3
-  - migration
-  - Compose
-  - guide
-  - dependencies
-  - NavKey
-  - NavHost
-  - NavDisplay
-  - BottomSheet
-  - list-detail
-  - scenes
-  - two-pane
-  - supporting pane
-  - multiple backstacks
-  - dialog
-  - Hilt
-  - ViewModel
-  - View interop.
+  author: "Google LLC"
+  last-updated: "2026-07-09"
+  keywords: "recipe, Android, Navigation 2, Navigation 3, migration, Compose, guide, dependencies, NavKey, NavHost, NavDisplay, BottomSheet, list-detail, scenes, two-pane, supporting pane, multiple backstacks, dialog, Hilt, ViewModel, View interop"
 ---
 
 *** ** * ** ***

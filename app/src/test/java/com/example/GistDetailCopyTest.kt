@@ -78,4 +78,65 @@ class GistDetailCopyTest {
       .assertExists()
       .performClick()
   }
+
+  @Test
+  fun gistDetail_rendersMarkdownFile_andTogglesRawMode() {
+    val sampleGist =
+      GistWithFiles(
+        gist =
+          GistEntity(
+            id = "test_gist_md",
+            description = "Markdown Test",
+            htmlUrl = "https://gist.github.com/test_gist_md",
+            url = "https://api.github.com/gists/test_gist_md",
+            createdAt = "2026-01-01T00:00:00Z",
+            updatedAt = "2026-01-01T00:00:00Z",
+            nodeId = "node_md",
+            isPublic = true,
+            isPinned = false,
+            isLocalOnly = false,
+            isDirty = false,
+            ownerLogin = "testuser",
+            ownerId = 1,
+            ownerAvatarUrl = "https://avatars.githubusercontent.com/u/1"
+          ),
+        files =
+          listOf(
+            GistFileEntity(
+              fileId = "test_gist_md_README.md",
+              gistId = "test_gist_md",
+              filename = "README.md",
+              type = "text/markdown",
+              language = "Markdown",
+              rawUrl = "https://gist.githubusercontent.com/README.md",
+              size = 50,
+              content = "# Hello World\nThis is markdown."
+            )
+          )
+      )
+
+    composeTestRule.setContent {
+      GistDetailScreen(
+        item = sampleGist,
+        onBack = {},
+        onEdit = {},
+        onDelete = {},
+        onTogglePin = {},
+        onToggleStar = {}
+      )
+    }
+
+    composeTestRule
+      .onNodeWithTag("detail_screen_lazy_column")
+      .performScrollToNode(hasTestTag("detail_file_card_README.md"))
+
+    composeTestRule
+      .onNodeWithTag("file_mode_raw_README.md", useUnmergedTree = true)
+      .assertExists()
+      .performClick()
+    composeTestRule
+      .onNodeWithTag("file_mode_markdown_README.md", useUnmergedTree = true)
+      .assertExists()
+      .performClick()
+  }
 }

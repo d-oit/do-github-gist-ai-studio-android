@@ -44,8 +44,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -56,10 +57,14 @@ import com.example.ui.theme.ActivePurple
 import com.example.ui.theme.ActivePurpleContainer
 import com.example.ui.theme.DarkPurpleText
 import com.example.ui.theme.ErrorRed
+import com.example.ui.theme.getLanguageColor
 
 @Composable
 fun borderButtonStroke() =
-  androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+  androidx.compose.foundation.BorderStroke(
+    1.dp,
+    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+  )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,9 +74,15 @@ fun GistCard(
   onToggleStar: () -> Unit,
   onEdit: () -> Unit,
   onDelete: () -> Unit,
-  onPreview: () -> Unit
+  onPreview: () -> Unit,
+  hasSyncError: Boolean = false,
+  onSyncIndicatorClick: (() -> Unit)? = null
 ) {
   var isExpanded by remember { mutableStateOf(false) }
+  val clipboardManager = LocalClipboardManager.current
+  val firstFile = item.files.firstOrNull()
+  val filename = firstFile?.filename ?: "untitled.kt"
+  val langColor = getLanguageColor(filename)
 
   Card(
     onClick = onPreview,
@@ -79,7 +90,7 @@ fun GistCard(
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     border = borderButtonStroke(),
     shape = RoundedCornerShape(16.dp),
-    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
   ) {
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
       Row(
@@ -89,8 +100,11 @@ fun GistCard(
       ) {
         Column(modifier = Modifier.weight(1f)) {
           Row(verticalAlignment = Alignment.CenterVertically) {
+            // Language Dot
+            Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(langColor))
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
-              text = item.files.firstOrNull()?.filename ?: "untitled.kt",
+              text = filename,
               fontSize = 15.sp,
               fontWeight = FontWeight.Bold,
               color = MaterialTheme.colorScheme.onSurface,
@@ -109,7 +123,9 @@ fun GistCard(
           Text(
             text = item.gist.description ?: "No description provided",
             fontSize = 13.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
           )
           if (item.gist.tags.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
@@ -121,10 +137,10 @@ fun GistCard(
                 Box(
                   modifier =
                     Modifier.background(
-                        MaterialTheme.colorScheme.secondaryContainer,
+                        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
                         RoundedCornerShape(6.dp)
                       )
-                      .padding(horizontal = 6.dp, vertical = 2.dp)
+                      .padding(horizontal = 7.dp, vertical = 2.dp)
                       .testTag("gist_card_tag_$tag")
                 ) {
                   Text(
@@ -141,7 +157,7 @@ fun GistCard(
 
         Row(
           verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(4.dp)
+          horizontalArrangement = Arrangement.spacedBy(2.dp)
         ) {
           IconButton(
             onClick = onToggleStar,
@@ -190,7 +206,7 @@ fun GistCard(
             Box(
               modifier =
                 Modifier.background(ActivePurpleContainer, RoundedCornerShape(8.dp))
-                  .padding(horizontal = 8.dp, vertical = 4.dp)
+                  .padding(horizontal = 8.dp, vertical = 3.dp)
             ) {
               Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(ActivePurple))
@@ -210,14 +226,14 @@ fun GistCard(
               modifier =
                 Modifier.background(Color(0xFFFFF8E1), RoundedCornerShape(8.dp))
                   .border(1.dp, Color(0xFFFFE082), RoundedCornerShape(8.dp))
-                  .padding(horizontal = 8.dp, vertical = 4.dp)
+                  .padding(horizontal = 8.dp, vertical = 3.dp)
             ) {
               Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                   imageVector = Icons.Default.Star,
                   contentDescription = "Starred Badge",
                   tint = Color(0xFFFFA000),
-                  modifier = Modifier.size(10.dp)
+                  modifier = Modifier.size(11.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
@@ -234,12 +250,14 @@ fun GistCard(
             isLocalOnly = item.gist.isLocalOnly,
             isDirty = item.gist.isDirty,
             isDeleted = item.gist.isDeleted,
-            compact = true
+            hasError = hasSyncError,
+            compact = true,
+            onClick = onSyncIndicatorClick
           )
         }
 
         // Action buttons
-        Row {
+        Row(verticalAlignment = Alignment.CenterVertically) {
           IconButton(
             onClick = { isExpanded = !isExpanded },
             modifier = Modifier.testTag("expand_gist_button_${item.gist.id}")
@@ -290,7 +308,9 @@ fun GistCard(
           modifier =
             Modifier.fillMaxWidth()
               .testTag("expanded_content_${item.gist.id}")
-              .background(Color(0xFF1E1E1E), RoundedCornerShape(8.dp))
+              .clip(RoundedCornerShape(12.dp))
+              .background(Color(0xFF161B22))
+              .border(1.dp, Color(0xFF30363D), RoundedCornerShape(12.dp))
               .padding(12.dp)
         ) {
           Row(
@@ -314,78 +334,66 @@ fun GistCard(
                 modifier = Modifier.testTag("auto_decrypted_badge_${item.gist.id}")
               )
             }
-            Text(text = "${item.files.size} file(s)", fontSize = 11.sp, color = Color.LightGray)
+            Text(
+              text = "${item.files.size} file(s)",
+              fontSize = 11.sp,
+              color = Color(0xFF8B949E),
+              fontWeight = FontWeight.Medium
+            )
           }
-          Spacer(modifier = Modifier.height(8.dp))
+          Spacer(modifier = Modifier.height(10.dp))
           item.files.forEach { file ->
-            Text(
-              text = "📄 ${file.filename}",
-              fontSize = 12.sp,
-              fontWeight = FontWeight.Bold,
-              color = Color(0xFF80CBC4)
-            )
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.SpaceBetween,
+              verticalAlignment = Alignment.CenterVertically
+            ) {
+              Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                  modifier =
+                    Modifier.size(8.dp)
+                      .clip(CircleShape)
+                      .background(getLanguageColor(file.filename))
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                  text = file.filename,
+                  fontSize = 12.sp,
+                  fontWeight = FontWeight.Bold,
+                  color = Color(0xFFE6EDF3)
+                )
+              }
+              Text(
+                text = "Copy",
+                fontSize = 10.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF58A6FF),
+                modifier =
+                  Modifier.clickable { clipboardManager.setText(AnnotatedString(file.content)) }
+                    .padding(4.dp)
+              )
+            }
             Spacer(modifier = Modifier.height(4.dp))
-            Text(
-              text = file.content.ifEmpty { "// Empty content" },
-              fontFamily = FontFamily.Monospace,
-              fontSize = 12.sp,
-              color = Color(0xFFD4D4D4),
-              maxLines = 15,
-              overflow = TextOverflow.Ellipsis
-            )
+            Box(
+              modifier =
+                Modifier.fillMaxWidth()
+                  .background(Color(0xFF0D1117), RoundedCornerShape(8.dp))
+                  .padding(10.dp)
+            ) {
+              Text(
+                text = file.content.ifEmpty { "// Empty content" },
+                fontFamily = FontFamily.Monospace,
+                fontSize = 11.5.sp,
+                lineHeight = 16.sp,
+                color = Color(0xFFC9D1D9),
+                maxLines = 15,
+                overflow = TextOverflow.Ellipsis
+              )
+            }
             Spacer(modifier = Modifier.height(8.dp))
           }
         }
       }
     }
-  }
-}
-
-@Composable
-fun TabButton(
-  label: String,
-  icon: ImageVector,
-  isActive: Boolean,
-  onClick: () -> Unit,
-  modifier: Modifier = Modifier
-) {
-  Column(
-    modifier =
-      modifier
-        .width(72.dp)
-        .clip(RoundedCornerShape(12.dp))
-        .clickable(onClick = onClick)
-        .padding(vertical = 4.dp),
-    horizontalAlignment = Alignment.CenterHorizontally,
-    verticalArrangement = Arrangement.Center
-  ) {
-    Box(
-      modifier =
-        Modifier.width(48.dp)
-          .height(32.dp)
-          .clip(RoundedCornerShape(16.dp))
-          .background(
-            if (isActive) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
-          ),
-      contentAlignment = Alignment.Center
-    ) {
-      Icon(
-        imageVector = icon,
-        contentDescription = label,
-        tint =
-          if (isActive) MaterialTheme.colorScheme.onPrimaryContainer
-          else MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.size(22.dp)
-      )
-    }
-    Spacer(modifier = Modifier.height(3.dp))
-    Text(
-      text = label,
-      fontSize = 11.sp,
-      fontWeight = if (isActive) FontWeight.Bold else FontWeight.Medium,
-      color =
-        if (isActive) MaterialTheme.colorScheme.onPrimaryContainer
-        else MaterialTheme.colorScheme.onSurfaceVariant
-    )
   }
 }

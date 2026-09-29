@@ -1,27 +1,11 @@
 ---
 name: android-intent-security
-description: Best practices for Android Intent security. Use this skill when auditing
-  component configurations in AndroidManifest.xml activities, services, receivers)
-  or source code handling incoming Intents (getIntent, getParcelableExtra) to prevent
-  Intent Redirection and unauthorized access.
+description: Provides guidelines and patterns for Android Intent security. Use this skill when auditing component configurations in AndroidManifest.xml (activities, services, receivers, providers) or reviewing source code handling incoming Intents (getIntent, getParcelableExtra) to prevent Intent Redirection, component hijacking, and unauthorized access.
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
-  last-updated: '2026-06-25'
-  keywords:
-  - recipe
-  - Android
-  - Security
-  - Intent
-  - Redirection
-  - PendingIntent
-  - ContentProvider
-  - Service
-  - Signature
-  - Verification
-  - sanitizer
-  - Vulnerability
-  - Best Practices
+  last-updated: "2026-06-25"
+  keywords: "recipe, Android, Security, Intent, Redirection, PendingIntent, ContentProvider, Service, Signature, Verification, sanitizer, Vulnerability, Best Practices"
 ---
 
 This skill provides guidelines and patterns to secure Android components
@@ -485,39 +469,7 @@ fun safeErrorHandling(callingPackage: String?) {
 
 ## Reporting guidelines
 
-When this skill is executed to apply security hardening updates to a codebase,
-the agent **MUST** generate a structured "Best Practices and Security Alignment
-Update" report for the developer. The report **must** be written to the session
-artifact folder (or printed in the final response) and include:
-
-1. **Security alignment area:** The category of improvement applied (for example, Safe Intent Redirection, Secure PendingIntent Configuration, ContentProvider Data Guarding).
-2. **Impact and priority:** The potential safety risk addressed by the update (for example, Component Hijacking Prevention, Private Data Isolation).
-3. **Scope of changes:** A list of all modified classes, XML files, and dependencies.
-4. **Implementation summary:** Concrete details of the solution (for example, "Updated nested intent parsing to use the `IntentSanitizer` API with a strict component allowlist").
-5. **Code diff:** Standard unified diffs showing the exact modifications.
-
-### Best practices and security alignment update template
-
-Use the following markdown template when reporting changes to developers:
-
-    ### Best practices and security alignment update: [Security Alignment Area]
-
-    *   **Improvement Description:** [Brief description of the hardening update and why it's recommended]
-    *   **Priority Level:** [High / Medium / Low]
-    *   **Alignment Action:** [Summary of updates, for example, converted to FLAG_IMMUTABLE]
-
-    #### Files modified
-    *   `[Relative path to File 1]`
-    *   `[Relative path to File 2]`
-
-    #### Implementation diff
-    ```diff
-    // Insert Unified Diff here
-
-#### Testing and verification
-
-1. \[Step 1 to verify the component behaves correctly, for example, run component unit test\]
-2. \[Step 2 to verify regression safety\] \`\`\`
+When applying security hardening updates to a codebase, the agent must generate a structured "Best Practices and Security Alignment Update" report. See [references/reporting-template.md](references/reporting-template.md) for the required reporting schema and markdown template.
 
 *** ** * ** ***
 

@@ -207,6 +207,7 @@ fun GistHubAppScreen(viewModel: GistViewModel) {
     if (selectedDetailGist != null) {
       GistDetailScreen(
         item = selectedDetailGist,
+        viewModel = viewModel,
         onBack = { selectedDetailGistId = null },
         onEdit = {
           val currentItem = selectedDetailGist

@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -24,10 +24,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.CallSplit
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Public
@@ -37,6 +37,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,8 +46,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,28 +55,32 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.entity.GistWithFiles
+import com.example.ui.components.DetailFileItemCard
 import com.example.ui.components.DetailedCreationInfoCard
+import com.example.ui.components.DetailedRevisionChangesView
 import com.example.ui.components.GistSyncStateIndicator
-import com.example.ui.components.MarkdownText
-import com.example.ui.components.SyntaxHighlighter
+import com.example.ui.components.RevisionHistoryListView
 import com.example.ui.components.borderButtonStroke
 import com.example.ui.theme.ActivePurple
 import com.example.ui.theme.SlateBg
+import com.example.ui.viewmodel.GistViewModel
+import com.example.ui.viewmodel.clearPreviewRevisionState
+import com.example.ui.viewmodel.loadGistHistory
+import com.example.ui.viewmodel.selectRevision
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GistDetailScreen(
   item: GistWithFiles,
+  viewModel: GistViewModel? = null,
   onBack: () -> Unit,
   onEdit: () -> Unit,
   onDelete: () -> Unit,
@@ -85,6 +90,44 @@ fun GistDetailScreen(
   isForking: Boolean = false,
   modifier: Modifier = Modifier
 ) {
+  var activeDetailTab by remember { mutableStateOf("files") }
+  var diffViewMode by remember { mutableStateOf("unified") }
+
+  val historyList = viewModel?.historyList?.collectAsStateWithLifecycle()?.value
+  val isLoadingHistory = viewModel?.isLoadingHistory?.collectAsStateWithLifecycle()?.value ?: false
+  val historyError = viewModel?.historyError?.collectAsStateWithLifecycle()?.value
+
+  val selectedRevisionSha = viewModel?.selectedRevisionSha?.collectAsStateWithLifecycle()?.value
+  val currentRevisionGist = viewModel?.currentRevisionGist?.collectAsStateWithLifecycle()?.value
+  val parentRevisionGist = viewModel?.parentRevisionGist?.collectAsStateWithLifecycle()?.value
+  val isLoadingRevisionContent =
+    viewModel?.isLoadingRevisionContent?.collectAsStateWithLifecycle()?.value ?: false
+  val revisionContentError = viewModel?.revisionContentError?.collectAsStateWithLifecycle()?.value
+
+  LaunchedEffect(item.gist.id, activeDetailTab) {
+    if (activeDetailTab == "revisions" && viewModel != null) {
+      if (item.gist.isLocalOnly) {
+        viewModel.clearPreviewRevisionState()
+      } else {
+        viewModel.loadGistHistory(item.gist.id)
+      }
+    }
+  }
+
+  DisposableEffect(item.gist.id) { onDispose { viewModel?.clearPreviewRevisionState() } }
+
+  val filesToCompare =
+    remember(currentRevisionGist, parentRevisionGist) {
+      val curFiles = currentRevisionGist?.files ?: emptyMap()
+      val parFiles = parentRevisionGist?.files ?: emptyMap()
+      val allNames = (curFiles.keys + parFiles.keys).toSet().toList().sorted()
+      allNames.map { name ->
+        val cur = curFiles[name]
+        val par = parFiles[name]
+        Triple(name, par?.content ?: "", cur?.content ?: "")
+      }
+    }
+
   Scaffold(
     topBar = {
       Surface(
@@ -115,10 +158,30 @@ fun GistDetailScreen(
           }
 
           Row(verticalAlignment = Alignment.CenterVertically) {
+            if (viewModel != null && !item.gist.isLocalOnly) {
+              IconButton(
+                onClick = {
+                  activeDetailTab = if (activeDetailTab == "files") "revisions" else "files"
+                  if (activeDetailTab == "revisions") {
+                    viewModel.selectRevision(item.gist.id, null)
+                  }
+                },
+                modifier = Modifier.testTag("detail_revisions_toggle_button")
+              ) {
+                Icon(
+                  imageVector = Icons.Default.History,
+                  contentDescription = "Revisions",
+                  tint =
+                    if (activeDetailTab == "revisions") ActivePurple
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                  modifier = Modifier.size(22.dp)
+                )
+              }
+            }
             if (onFork != null) {
               IconButton(onClick = onFork, modifier = Modifier.testTag("detail_fork_button")) {
                 if (isForking) {
-                  androidx.compose.material3.CircularProgressIndicator(
+                  CircularProgressIndicator(
                     modifier = Modifier.size(18.dp),
                     strokeWidth = 1.5.dp,
                     color = ActivePurple
@@ -337,153 +400,116 @@ fun GistDetailScreen(
         }
       }
 
-      // Display all files
-      items(item.files) { file ->
-        val isMarkdown =
-          file.filename.endsWith(".md", ignoreCase = true) ||
-            file.filename.endsWith(".markdown", ignoreCase = true)
-
-        var previewMode by remember { mutableStateOf(if (isMarkdown) "markdown" else "raw") }
-        val clipboardManager = LocalClipboardManager.current
-        var isCopied by remember { mutableStateOf(false) }
-
-        if (isCopied) {
-          LaunchedEffect(Unit) {
-            kotlinx.coroutines.delay(2000)
-            isCopied = false
-          }
-        }
-
-        Card(
-          modifier = Modifier.fillMaxWidth().testTag("detail_file_card_${file.filename}"),
-          border = borderButtonStroke(),
-          shape = RoundedCornerShape(12.dp),
-          colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        ) {
-          Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-              modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.SpaceBetween,
-              verticalAlignment = Alignment.CenterVertically
-            ) {
-              Column(modifier = Modifier.weight(1f)) {
-                Text(
-                  text = file.filename,
-                  fontSize = 15.sp,
-                  fontWeight = FontWeight.Bold,
-                  color = MaterialTheme.colorScheme.primary,
-                  maxLines = 1,
-                  overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                  text = "${file.language ?: "Plain Text"} • ${file.size} bytes",
-                  fontSize = 11.sp,
-                  color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-              }
-
-              Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically
-              ) {
-                if (isMarkdown) {
-                  TextButton(
-                    onClick = { previewMode = "raw" },
-                    modifier = Modifier.height(36.dp).testTag("file_mode_raw_${file.filename}")
-                  ) {
-                    Text(
-                      text = "Raw",
-                      fontSize = 12.sp,
-                      fontWeight = if (previewMode == "raw") FontWeight.Bold else FontWeight.Normal,
-                      color =
-                        if (previewMode == "raw") MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                  }
-                  TextButton(
-                    onClick = { previewMode = "markdown" },
-                    modifier = Modifier.height(36.dp).testTag("file_mode_markdown_${file.filename}")
-                  ) {
-                    Text(
-                      text = "Markdown",
-                      fontSize = 12.sp,
-                      fontWeight =
-                        if (previewMode == "markdown") FontWeight.Bold else FontWeight.Normal,
-                      color =
-                        if (previewMode == "markdown") MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                  }
-                }
-
-                IconButton(
-                  onClick = {
-                    clipboardManager.setText(AnnotatedString(file.content))
-                    isCopied = true
-                  },
-                  modifier = Modifier.size(36.dp).testTag("copy_file_button_${file.filename}")
+      // Tab selector: Files vs Revisions (if ViewModel is available)
+      if (viewModel != null && !item.gist.isLocalOnly) {
+        item {
+          Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+          ) {
+            listOf("Files" to Icons.Default.Description, "Revisions" to Icons.Default.History)
+              .forEach { (tabName, icon) ->
+                val isSelected = activeDetailTab == tabName.lowercase()
+                Row(
+                  modifier =
+                    Modifier.clip(RoundedCornerShape(8.dp))
+                      .background(
+                        if (isSelected) ActivePurple.copy(alpha = 0.15f) else Color.Transparent
+                      )
+                      .border(
+                        1.dp,
+                        if (isSelected) ActivePurple else MaterialTheme.colorScheme.outlineVariant,
+                        RoundedCornerShape(8.dp)
+                      )
+                      .clickable {
+                        activeDetailTab = tabName.lowercase()
+                        if (tabName.lowercase() == "revisions") {
+                          viewModel.selectRevision(item.gist.id, null)
+                        }
+                      }
+                      .padding(horizontal = 16.dp, vertical = 8.dp)
+                      .testTag("detail_tab_${tabName.lowercase()}"),
+                  verticalAlignment = Alignment.CenterVertically
                 ) {
                   Icon(
-                    imageVector = if (isCopied) Icons.Default.Check else Icons.Default.ContentCopy,
-                    contentDescription = "Copy to Clipboard",
+                    imageVector = icon,
+                    contentDescription = tabName,
                     tint =
-                      if (isCopied) MaterialTheme.colorScheme.primary
-                      else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(18.dp)
+                      if (isSelected) ActivePurple else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp)
+                  )
+                  Spacer(modifier = Modifier.width(6.dp))
+                  Text(
+                    text = tabName,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isSelected) ActivePurple else MaterialTheme.colorScheme.onSurface
+                  )
+                }
+              }
+          }
+        }
+      }
+
+      if (activeDetailTab == "files") {
+        // Display all files
+        items(item.files) { file -> DetailFileItemCard(file = file) }
+      } else {
+        // Revisions tab content
+        item {
+          val currentRevisionSha = selectedRevisionSha
+          if (currentRevisionSha == null) {
+            if (isLoadingHistory) {
+              Box(
+                modifier =
+                  Modifier.height(200.dp).fillMaxWidth().testTag("detail_revisions_loading"),
+                contentAlignment = Alignment.Center
+              ) {
+                CircularProgressIndicator(color = ActivePurple)
+              }
+            } else if (historyError != null) {
+              Box(
+                modifier = Modifier.fillMaxWidth().testTag("detail_revisions_error"),
+                contentAlignment = Alignment.Center
+              ) {
+                Text(
+                  text = historyError,
+                  fontSize = 14.sp,
+                  color = MaterialTheme.colorScheme.error,
+                  modifier = Modifier.padding(16.dp)
+                )
+              }
+            } else {
+              val hist = historyList
+              if (hist != null) {
+                RevisionHistoryListView(
+                  historyList = hist,
+                  defaultOwnerLogin = item.gist.ownerLogin,
+                  onSelectRevision = { sha -> viewModel?.selectRevision(item.gist.id, sha) }
+                )
+              } else {
+                Box(
+                  modifier = Modifier.fillMaxWidth().padding(16.dp),
+                  contentAlignment = Alignment.Center
+                ) {
+                  Text(
+                    text = "No revision history found.",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                   )
                 }
               }
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            if (isMarkdown && previewMode == "markdown") {
-              Surface(
-                modifier =
-                  Modifier.fillMaxWidth()
-                    .border(
-                      1.dp,
-                      MaterialTheme.colorScheme.outlineVariant,
-                      RoundedCornerShape(8.dp)
-                    )
-                    .padding(12.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(8.dp)
-              ) {
-                MarkdownText(text = file.content)
-              }
-            } else {
-              Surface(
-                modifier =
-                  Modifier.fillMaxWidth()
-                    .heightIn(min = 100.dp, max = 500.dp)
-                    .border(
-                      1.dp,
-                      MaterialTheme.colorScheme.outlineVariant,
-                      RoundedCornerShape(8.dp)
-                    ),
-                shape = RoundedCornerShape(8.dp),
-                color = Color(0xFF1E1E1E)
-              ) {
-                LazyColumn(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
-                  item {
-                    val highlightedText =
-                      remember(file.content, file.filename) {
-                        SyntaxHighlighter.highlight(
-                          text = file.content.ifEmpty { "// Empty content" },
-                          filename = file.filename
-                        )
-                      }
-                    Text(
-                      text = highlightedText,
-                      fontFamily = FontFamily.Monospace,
-                      fontSize = 12.sp,
-                      lineHeight = 16.sp
-                    )
-                  }
-                }
-              }
-            }
+          } else {
+            DetailedRevisionChangesView(
+              selectedRevisionSha = currentRevisionSha,
+              diffViewMode = diffViewMode,
+              onDiffViewModeChange = { diffViewMode = it },
+              isLoadingRevisionContent = isLoadingRevisionContent,
+              revisionContentError = revisionContentError,
+              filesToCompare = filesToCompare,
+              onBack = { viewModel?.selectRevision(item.gist.id, null) }
+            )
           }
         }
       }

@@ -1,23 +1,11 @@
 ---
 name: appfunctions
-description: Analyzes Android apps to identify key user workflows for AppFunctions
-  such as creating a note, playing media, or sending an automated or AI agent triggered
-  message, voice commands, or system shortcuts, without needing to open the app UI.
-  Generates Kotlin code to expose these workflows to the Android system, allowing
-  agents to discover and execute them on-device. Also refines KDoc documentation to
-  ensure AI agents correctly understand and use the provided functionality.
+description: Analyzes Android applications to identify and expose key user workflows to AppFunctions. Use this skill when enabling system or AI agent-triggered actions (e.g., creating notes, media playback, messaging shortcuts) without opening the app UI, generating Kotlin and KSP bindings, or authoring accurate KDoc documentation for AI discovery.
 license: Complete terms in LICENSE.txt
 metadata:
-  author: Google LLC
-  last-updated: '2026-05-16'
-  keywords:
-  - AppFunctions
-  - Kotlin
-  - KSP
-  - ADB
-  - AI
-  - LLM
-  - MCP
+  author: "Google LLC"
+  last-updated: "2026-05-16"
+  keywords: "AppFunctions, Kotlin, KSP, ADB, AI, LLM, MCP"
 ---
 
 Analyzes Android apps to identify key user workflows for AppFunctions such as

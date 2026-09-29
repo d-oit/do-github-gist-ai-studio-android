@@ -1,0 +1,47 @@
+# d.o.Gist Hub Agent Skills Catalog
+
+> Standardized Agent Skills catalog for d.o.Gist Hub, built in accordance with the Agent Skills open standard (https://agentskills.io).
+
+All skills follow progressive disclosure, YAML frontmatter specification, and optimized triggering descriptions.
+
+## Core Project & Workflow Skills
+
+- [do-gist-hub-dev-workflow](.agents/skills/do-gist-hub-dev-workflow/SKILL.md): Strictly enforces native Android development guardrails for the d.o.Gist Hub project. Use this skill when modifying architecture, creating or refactoring files under the 600 LOC limit, managing Room offline-first sync state transitions, maintaining manual constructor injection in DoGistHubApp.kt, executing local harness commands, or validating the automated test pyramid.
+- [master-orchestrator-swarm](.agents/skills/master-orchestrator-swarm/SKILL.md): Master Orchestrator multi-agent swarm task execution system powered by Gemini 3.6 Flash. Use this skill when architecting complex, ambiguous, or multi-step requests into isolated atomic TODOs, enforcing code-first diagnostic actions, establishing verifiable exit criteria, maximizing token efficiency, and minimizing conversation turns.
+- [gh](.agents/skills/gh/SKILL.md): Patterns and best practices for invoking the GitHub CLI (gh) from AI coding agents. Use this skill when creating, viewing, or managing GitHub pull requests, issues, releases, or repositories, extracting JSON data with --json, handling pagination, configuring tokens, or querying the GitHub REST/GraphQL APIs.
+- [gh-skill](.agents/skills/gh-skill/SKILL.md): Manage and maintain agent skills using gh skill commands. Use this skill to discover, preview, install, update, validate, and publish Agent Skills in compliance with the agentskills.io open standard, enabling autonomous skill lifecycle management.
+
+## Android Architecture & UI Skills
+
+- [adaptive](.agents/skills/adaptive/SKILL.md): Build and adapt Android app UIs across phones, foldables, tablets, desktops, TV, Auto, and XR. Use this skill when implementing responsive layouts, handling window size classes, supporting mouse and keyboard inputs via Compose MediaQuery, building multi-pane Navigation 3 layouts, or utilizing Compose Grid and FlexBox APIs.
+- [edge-to-edge](.agents/skills/edge-to-edge/SKILL.md): Implements adaptive edge-to-edge layouts and insets handling in Jetpack Compose applications. Use this skill when configuring enableEdgeToEdge(), resolving overlapping navigation/status bars, fixing IME soft keyboard animation padding and frame timeouts, or ensuring system bar contrast and legibility.
+- [navigation-3](.agents/skills/navigation-3/SKILL.md): Migration guide and architectural patterns for Jetpack Navigation 3. Use this skill when migrating from Navigation 2, setting up NavKey, NavHost, and NavDisplay, configuring multi-pane layouts (dialogs, bottom sheets, list-detail, two-pane, supporting pane), handling deep links, multiple backstacks, or returning navigation results.
+- [styles](.agents/skills/styles/SKILL.md): Integrates the Jetpack Compose Styles API into an Android project. Use this skill when creating centralized component styles, building extensible design systems, replacing hardcoded styling parameters with Style attributes, or implementing interactive states with Modifier.styleable.
+- [migrate-xml-views-to-jetpack-compose](.agents/skills/migrate-xml-views-to-jetpack-compose/SKILL.md): Provides a structured workflow for migrating legacy Android XML Views to Jetpack Compose. Use this skill when converting layouts from XML to declarative Compose components, establishing ComposeView interoperability, setting up Compose compiler dependencies, or migrating XML styles to MaterialTheme.
+
+## Testing & Quality Skills
+
+- [testing-setup](.agents/skills/testing-setup/SKILL.md): Establishes a comprehensive testing infrastructure for native Android applications. Use this skill when configuring dependencies, creating test harnesses, setting up local JVM unit tests, Robolectric UI tests, Roborazzi screenshot verification, or end-to-end integration test suites.
+
+## Security & Policy Skills
+
+- [android-intent-security](.agents/skills/android-intent-security/SKILL.md): Provides guidelines and patterns for Android Intent security. Use this skill when auditing component configurations in AndroidManifest.xml (activities, services, receivers, providers) or reviewing source code handling incoming Intents (getIntent, getParcelableExtra) to prevent Intent Redirection, component hijacking, and unauthorized access.
+- [play-policy-insights](.agents/skills/play-policy-insights/SKILL.md): Automated auditor verifying Android apps against Google Play Developer Program policies. Use this skill when performing pre-submission audits, validating static code compliance, assessing permission declarations (e.g. Scoped Storage, Photo Picker, Foreground Services), or auditing Data Safety labels and account deletion disclosures.
+- [verified-email](.agents/skills/verified-email/SKILL.md): Workflow for implementing cryptographically verified email retrieval using the Android Credential Manager API. Use this skill when integrating frictionless OTP-less authentication, configuring Digital Credentials (OpenID4VP, SD-JWT), or setting up identity verification flows with trusted identity providers.
+
+## Tooling & Build Optimization Skills
+
+- [agp-9-upgrade](.agents/skills/agp-9-upgrade/SKILL.md): Upgrades or migrates an Android project to Android Gradle Plugin (AGP) version 9. Use this skill when updating build.gradle.kts files, converting to the AGP 9 declarative DSL, or migrating to built-in Kotlin compilation. Do not use this skill for Kotlin Multiplatform (KMP) projects.
+- [android-cli](.agents/skills/android-cli/SKILL.md): Provides instructions for installing and using the android CLI command-line tool. Use this skill when creating new Android projects, running apps on physical or virtual devices, interacting with Android emulators (including UI inspection and screenshots), managing Android SDK components, or looking up official documentation.
+- [r8-analyzer](.agents/skills/r8-analyzer/SKILL.md): Analyzes Android build configurations and R8/Proguard keep rules to minimize app size and prevent runtime reflection crashes. Use this skill when optimizing APK/AAB size, pruning redundant or broad package keep rules, troubleshooting minification issues, or inspecting R8 compiler logs.
+- [perfetto-sql](.agents/skills/perfetto-sql/SKILL.md): Translates natural language performance queries into syntactically valid Perfetto SQL queries and executes them against trace files. Use this skill when extracting slices, thread scheduling, memory allocations, or flamegraph metrics from Android Perfetto traces using trace_processor.
+- [perfetto-trace-analysis](.agents/skills/perfetto-trace-analysis/SKILL.md): Analyzes Android Perfetto traces to identify root causes of UI jank, thread contention, and memory spikes. Use this skill when investigating performance regressions, frame rate drops, long layout or draw passes, garbage collection pauses, or app startup bottlenecks.
+
+## Ecosystem & Specialized Hardware Skills
+
+- [appfunctions](.agents/skills/appfunctions/SKILL.md): Analyzes Android applications to identify and expose key user workflows to AppFunctions. Use this skill when enabling system or AI agent-triggered actions (e.g., creating notes, media playback, messaging shortcuts) without opening the app UI, generating Kotlin and KSP bindings, or authoring accurate KDoc documentation for AI discovery.
+- [camerax](.agents/skills/camerax/SKILL.md): Technical guidance for modern Android camera development using CameraX and Jetpack Compose. Use this skill when implementing camera capture, configuring PreviewView or CameraXViewfinder, handling asynchronous recording lifecycles, wiring hardware interop, or integrating ML Kit and Media3 effects.
+- [display-glasses-with-jetpack-compose-glimmer](.agents/skills/display-glasses-with-jetpack-compose-glimmer/SKILL.md): Guidelines for developing projected Android XR applications for display glasses using Jetpack Compose Glimmer. Use this skill when building Android XR Augmented Experience apps, applying the Glimmer design system and GlimmerTheme, structuring Projected Activities, or implementing heads-up display interaction models.
+- [engage-sdk-integration](.agents/skills/engage-sdk-integration/SKILL.md): Guides the integration, debugging, and verification of the Google Play Engage SDK. Use this skill when adding user engagement clusters, generating Engage publishing code, mapping domain models to Engage entities, or troubleshooting Play Engage client errors.
+- [play-billing-library-version-upgrade](.agents/skills/play-billing-library-version-upgrade/SKILL.md): Guides the migration and upgrade of Google Play Billing Library (PBL) in Android applications. Use this skill when upgrading from legacy Play Billing Library versions to the latest stable release, adapting to new BillingClient lifecycles, replacing deprecated purchase flows, or handling in-app subscriptions.
+- [wear-compose-m3](.agents/skills/wear-compose-m3/SKILL.md): Technical guidance for developing Wear OS apps with Compose Material 3. Use this skill when building or updating Wear OS applications, migrating from Material 2.5 or Horologist, implementing AppScaffold, ScreenScaffold, and TransformingLazyColumn, or handling ambient display modes.
