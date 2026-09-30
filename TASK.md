@@ -979,6 +979,44 @@ and upload SARIF to GitHub Security.
   - `compile_applet`
 - **Definition of done**: A Compose-based list view displays fetched Gists with icon-based sync indicators for synced, pending, and error states, with full unit test coverage and clean pass across all quality checks.
 
+---
+
+## 💾 53. Offline JSON Backup Import/Restore Engine & String Resource Localization
+- **Goal**: Implement a complete offline-first JSON backup restore/import engine (`BackupImporter`), wire it to the UI in `ConfigScreen` with an "Import JSON Backup" button, modularize configuration cards (`ConfigCards.kt`) to strictly enforce the 600 LOC ceiling, localize all hardcoded UI strings in `ConfigScreen`, and verify round-trip export/import via automated tests.
+- **Files expected to change**: `BackupImporter.kt`, `GistViewModelExtensions.kt`, `strings.xml`, `ConfigCards.kt`, `ConfigScreen.kt`, `BackupImportExportTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Create `BackupImporter.kt` to parse `GistBackupPayload` from content URIs or file streams using Moshi, map back into `GistWithFiles`, and restore into Room DB with AES-256 encryption.
+  - [x] Expose `importBackup(...)` extension in `GistViewModelExtensions.kt`.
+  - [x] Add localized string resources in `strings.xml` for backup restore and all `ConfigScreen` UI elements, completely eliminating hardcoded strings per AGENTS.md Rule 5.2.
+  - [x] Extract modular `ConfigCards.kt` (`ConfigThemeSelectorCard`, `ConfigBackupCard`, `ConfigConnectionStatusCard`) reducing `ConfigScreen.kt` to ~340 LOC, well below the 600 LOC ceiling.
+  - [x] Add "Import JSON Backup" action button (`testTag("config_import_backup_button")`) with file picker launcher in `ConfigBackupCard`.
+  - [x] Create comprehensive Robolectric unit test `BackupImportExportTest.kt` verifying export format, import restore into Room DB, malformed JSON error handling, and round-trip fidelity.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `compile_applet`
+- **Definition of done**: Backup import and export engine works end-to-end, all strings are localized, files are strictly under 600 LOC, test suite passes, and the application builds cleanly.
+
+---
+
+## 💬 54. Gist Comments Integration & Discussion Panel
+- **Goal**: Implement full GitHub Gist comments interaction per SPEC.md Section 10, connecting `GitHubApiService` endpoints (`getGistComments`, `createGistComment`, `deleteGistComment`), repository operations, `GistViewModel` reactive state flows, `GistCommentsView` discussion composer & list, and integrating the "Comments" tab into `GistDetailScreen` with end-to-end unit and Robolectric test coverage.
+- **Files expected to change**: `GitHubApiService.kt`, `GistRepositoryCommentsExtensions.kt`, `GistViewModelCommentsExtensions.kt`, `GistCommentsView.kt`, `GistDetailScreen.kt`, `GistRevisionViews.kt`, `GistCommentsTest.kt`, `TASK.md`
+- **Implementation checklist**:
+  - [x] Connect GitHub Gist Comments API endpoints (`GET /gists/{id}/comments`, `POST /gists/{id}/comments`, `DELETE /gists/{id}/comments/{comment_id}`).
+  - [x] Expose reactive comments state flows (`commentsList`, `isLoadingComments`, `commentsError`, `isPostingComment`) and actions (`loadComments`, `postComment`, `deleteComment`, `clearCommentsState`) in `GistViewModel`.
+  - [x] Integrate "Comments" navigation tab in `GistDetailScreen` tab bar (`detail_tab_comments`).
+  - [x] Modularize `DetailRevisionsTabSection` in `GistRevisionViews.kt` keeping `GistDetailScreen.kt` well below the 600 LOC ceiling.
+  - [x] Render `GistCommentsView` with comment composer, author metadata, markdown body, timestamp, error retry, and author delete actions.
+  - [x] Update test fakes (`FakeGitHubApiService`, `DeleteConfirmationDialogTest`, `GistOfflineE2ETest`, `GistSortTest`, `NetworkConnectivityMonitorTest`, `StarredGistTest`, `SwipeToDeleteAndUndoTest`) to implement comment endpoints.
+  - [x] Create comprehensive Robolectric test suite `GistCommentsTest.kt` verifying comments rendering, posting, deletion, error handling, empty state, and detail screen tab integration.
+- **Verification command(s)**:
+  - `./harness.sh format`
+  - `./harness.sh check`
+  - `./harness.sh build`
+- **Definition of done**: Users can seamlessly read, compose, and manage comments on Gists, the Comments tab renders with web parity, and all tests and quality checks pass 100% green.
+
+
 
 
 

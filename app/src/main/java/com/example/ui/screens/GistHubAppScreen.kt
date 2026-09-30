@@ -38,6 +38,8 @@ import com.example.ui.components.LoadingFeedbackBar
 import com.example.ui.components.LoadingFeedbackOverlay
 import com.example.ui.viewmodel.GistViewModel
 import com.example.ui.viewmodel.TokenVerificationState
+import com.example.ui.viewmodel.analyzeGistContent
+import com.example.ui.viewmodel.clearAiAnalysis
 import com.example.ui.viewmodel.clearAutoSavedDraft
 import com.example.ui.viewmodel.clearSearchHistory
 import com.example.ui.viewmodel.deleteSearchQuery

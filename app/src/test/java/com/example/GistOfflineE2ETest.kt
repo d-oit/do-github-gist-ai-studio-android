@@ -557,5 +557,40 @@ class GistOfflineE2ETest {
       gistsList.add(forked)
       return forked
     }
+
+    val commentsMap =
+      mutableMapOf<String, MutableList<com.example.data.remote.model.GistCommentResponse>>()
+
+    override suspend fun getGistComments(
+      id: String
+    ): List<com.example.data.remote.model.GistCommentResponse> {
+      checkOffline()
+      return commentsMap[id] ?: emptyList()
+    }
+
+    override suspend fun createGistComment(
+      id: String,
+      request: com.example.data.remote.model.GistCommentRequest
+    ): com.example.data.remote.model.GistCommentResponse {
+      checkOffline()
+      val comment =
+        com.example.data.remote.model.GistCommentResponse(
+          id = System.currentTimeMillis(),
+          nodeId = "comment_node",
+          url = "https://api.github.com/gists/$id/comments/1",
+          body = request.body,
+          user = defaultOwner,
+          createdAt = "2026-09-29T12:00:00Z",
+          updatedAt = "2026-09-29T12:00:00Z"
+        )
+      commentsMap.getOrPut(id) { mutableListOf() }.add(comment)
+      return comment
+    }
+
+    override suspend fun deleteGistComment(id: String, commentId: Long): Response<Unit> {
+      checkOffline()
+      commentsMap[id]?.removeAll { it.id == commentId }
+      return Response.success(204, Unit)
+    }
   }
 }
