@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -238,5 +239,67 @@ fun DetailedRevisionChangesView(
         }
       }
     }
+  }
+}
+
+@Composable
+fun DetailRevisionsTabSection(
+  selectedRevisionSha: String?,
+  isLoadingHistory: Boolean,
+  historyError: String?,
+  historyList: List<com.example.data.remote.model.GistHistoryResponse>?,
+  defaultOwnerLogin: String,
+  onSelectRevision: (String?) -> Unit,
+  diffViewMode: String,
+  onDiffViewModeChange: (String) -> Unit,
+  isLoadingRevisionContent: Boolean,
+  revisionContentError: String?,
+  filesToCompare: List<Triple<String, String, String>>
+) {
+  if (selectedRevisionSha == null) {
+    if (isLoadingHistory) {
+      Box(
+        modifier = Modifier.height(200.dp).fillMaxWidth().testTag("detail_revisions_loading"),
+        contentAlignment = Alignment.Center
+      ) {
+        CircularProgressIndicator(color = ActivePurple)
+      }
+    } else if (historyError != null) {
+      Box(
+        modifier = Modifier.fillMaxWidth().testTag("detail_revisions_error"),
+        contentAlignment = Alignment.Center
+      ) {
+        Text(
+          text = historyError,
+          fontSize = 14.sp,
+          color = MaterialTheme.colorScheme.error,
+          modifier = Modifier.padding(16.dp)
+        )
+      }
+    } else if (historyList != null) {
+      RevisionHistoryListView(
+        historyList = historyList,
+        defaultOwnerLogin = defaultOwnerLogin,
+        onSelectRevision = { sha -> onSelectRevision(sha) }
+      )
+    } else {
+      Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+        Text(
+          text = "No revision history found.",
+          fontSize = 13.sp,
+          color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+      }
+    }
+  } else {
+    DetailedRevisionChangesView(
+      selectedRevisionSha = selectedRevisionSha,
+      diffViewMode = diffViewMode,
+      onDiffViewModeChange = onDiffViewModeChange,
+      isLoadingRevisionContent = isLoadingRevisionContent,
+      revisionContentError = revisionContentError,
+      filesToCompare = filesToCompare,
+      onBack = { onSelectRevision(null) }
+    )
   }
 }
