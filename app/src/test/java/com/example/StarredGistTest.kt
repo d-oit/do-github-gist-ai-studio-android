@@ -241,5 +241,17 @@ class StarredGistTest {
 
     override suspend fun forkGist(id: String): com.example.data.remote.model.GistResponse =
       throw Exception()
+
+    override suspend fun getGistComments(
+      id: String
+    ): List<com.example.data.remote.model.GistCommentResponse> = emptyList()
+
+    override suspend fun createGistComment(
+      id: String,
+      request: com.example.data.remote.model.GistCommentRequest
+    ): com.example.data.remote.model.GistCommentResponse = throw Exception()
+
+    override suspend fun deleteGistComment(id: String, commentId: Long): retrofit2.Response<Unit> =
+      retrofit2.Response.success(Unit)
   }
 }

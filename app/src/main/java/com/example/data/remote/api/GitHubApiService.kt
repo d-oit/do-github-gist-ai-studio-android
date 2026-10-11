@@ -1,5 +1,7 @@
 package com.example.data.remote.api
 
+import com.example.data.remote.model.GistCommentRequest
+import com.example.data.remote.model.GistCommentResponse
 import com.example.data.remote.model.GistOwnerResponse
 import com.example.data.remote.model.GistRequest
 import com.example.data.remote.model.GistResponse
@@ -46,4 +48,19 @@ interface GitHubApiService {
   @DELETE("gists/{id}/star") suspend fun unstarGist(@Path("id") id: String): Response<Unit>
 
   @POST("gists/{id}/forks") suspend fun forkGist(@Path("id") id: String): GistResponse
+
+  @GET("gists/{id}/comments")
+  suspend fun getGistComments(@Path("id") id: String): List<GistCommentResponse>
+
+  @POST("gists/{id}/comments")
+  suspend fun createGistComment(
+    @Path("id") id: String,
+    @Body request: GistCommentRequest
+  ): GistCommentResponse
+
+  @DELETE("gists/{id}/comments/{comment_id}")
+  suspend fun deleteGistComment(
+    @Path("id") id: String,
+    @Path("comment_id") commentId: Long
+  ): Response<Unit>
 }

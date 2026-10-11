@@ -96,3 +96,19 @@ data class GistHistoryResponse(
   @param:Json(name = "change_status") val changeStatus: GistHistoryChangeStatus?,
   @param:Json(name = "committed_at") val committedAt: String?
 )
+
+/** Model for creating a comment on a Gist. */
+@JsonClass(generateAdapter = true)
+data class GistCommentRequest(@param:Json(name = "body") val body: String)
+
+/** Model representing a comment on a Gist from GitHub. */
+@JsonClass(generateAdapter = true)
+data class GistCommentResponse(
+  @param:Json(name = "id") val id: Long? = null,
+  @param:Json(name = "node_id") val nodeId: String? = null,
+  @param:Json(name = "url") val url: String? = null,
+  @param:Json(name = "body") val body: String? = null,
+  @param:Json(name = "user") val user: GistOwnerResponse? = null,
+  @param:Json(name = "created_at") val createdAt: String? = null,
+  @param:Json(name = "updated_at") val updatedAt: String? = null
+)

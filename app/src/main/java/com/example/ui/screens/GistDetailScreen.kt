@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.CallSplit
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
@@ -64,16 +65,20 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.entity.GistWithFiles
 import com.example.ui.components.DetailFileItemCard
+import com.example.ui.components.DetailRevisionsTabSection
 import com.example.ui.components.DetailedCreationInfoCard
-import com.example.ui.components.DetailedRevisionChangesView
+import com.example.ui.components.GistCommentsView
 import com.example.ui.components.GistSyncStateIndicator
-import com.example.ui.components.RevisionHistoryListView
 import com.example.ui.components.borderButtonStroke
 import com.example.ui.theme.ActivePurple
 import com.example.ui.theme.SlateBg
 import com.example.ui.viewmodel.GistViewModel
+import com.example.ui.viewmodel.clearCommentsState
 import com.example.ui.viewmodel.clearPreviewRevisionState
+import com.example.ui.viewmodel.deleteComment
+import com.example.ui.viewmodel.loadComments
 import com.example.ui.viewmodel.loadGistHistory
+import com.example.ui.viewmodel.postComment
 import com.example.ui.viewmodel.selectRevision
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -104,6 +109,13 @@ fun GistDetailScreen(
     viewModel?.isLoadingRevisionContent?.collectAsStateWithLifecycle()?.value ?: false
   val revisionContentError = viewModel?.revisionContentError?.collectAsStateWithLifecycle()?.value
 
+  val commentsList = viewModel?.commentsList?.collectAsStateWithLifecycle()?.value ?: emptyList()
+  val isLoadingComments =
+    viewModel?.isLoadingComments?.collectAsStateWithLifecycle()?.value ?: false
+  val commentsError = viewModel?.commentsError?.collectAsStateWithLifecycle()?.value
+  val isPostingComment = viewModel?.isPostingComment?.collectAsStateWithLifecycle()?.value ?: false
+  val ownerLogin = viewModel?.ownerLogin?.collectAsStateWithLifecycle()?.value ?: ""
+
   LaunchedEffect(item.gist.id, activeDetailTab) {
     if (activeDetailTab == "revisions" && viewModel != null) {
       if (item.gist.isLocalOnly) {
@@ -111,10 +123,21 @@ fun GistDetailScreen(
       } else {
         viewModel.loadGistHistory(item.gist.id)
       }
+    } else if (activeDetailTab == "comments" && viewModel != null) {
+      if (item.gist.isLocalOnly) {
+        viewModel.clearCommentsState()
+      } else {
+        viewModel.loadComments(item.gist.id)
+      }
     }
   }
 
-  DisposableEffect(item.gist.id) { onDispose { viewModel?.clearPreviewRevisionState() } }
+  DisposableEffect(item.gist.id) {
+    onDispose {
+      viewModel?.clearPreviewRevisionState()
+      viewModel?.clearCommentsState()
+    }
+  }
 
   val filesToCompare =
     remember(currentRevisionGist, parentRevisionGist) {
@@ -400,14 +423,18 @@ fun GistDetailScreen(
         }
       }
 
-      // Tab selector: Files vs Revisions (if ViewModel is available)
+      // Tab selector: Files vs Revisions vs Comments (if ViewModel is available)
       if (viewModel != null && !item.gist.isLocalOnly) {
         item {
           Row(
             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
           ) {
-            listOf("Files" to Icons.Default.Description, "Revisions" to Icons.Default.History)
+            listOf(
+                "Files" to Icons.Default.Description,
+                "Revisions" to Icons.Default.History,
+                "Comments" to Icons.Default.ChatBubbleOutline
+              )
               .forEach { (tabName, icon) ->
                 val isSelected = activeDetailTab == tabName.lowercase()
                 Row(
@@ -451,64 +478,41 @@ fun GistDetailScreen(
         }
       }
 
-      if (activeDetailTab == "files") {
-        // Display all files
-        items(item.files) { file -> DetailFileItemCard(file = file) }
-      } else {
-        // Revisions tab content
-        item {
-          val currentRevisionSha = selectedRevisionSha
-          if (currentRevisionSha == null) {
-            if (isLoadingHistory) {
-              Box(
-                modifier =
-                  Modifier.height(200.dp).fillMaxWidth().testTag("detail_revisions_loading"),
-                contentAlignment = Alignment.Center
-              ) {
-                CircularProgressIndicator(color = ActivePurple)
-              }
-            } else if (historyError != null) {
-              Box(
-                modifier = Modifier.fillMaxWidth().testTag("detail_revisions_error"),
-                contentAlignment = Alignment.Center
-              ) {
-                Text(
-                  text = historyError,
-                  fontSize = 14.sp,
-                  color = MaterialTheme.colorScheme.error,
-                  modifier = Modifier.padding(16.dp)
-                )
-              }
-            } else {
-              val hist = historyList
-              if (hist != null) {
-                RevisionHistoryListView(
-                  historyList = hist,
-                  defaultOwnerLogin = item.gist.ownerLogin,
-                  onSelectRevision = { sha -> viewModel?.selectRevision(item.gist.id, sha) }
-                )
-              } else {
-                Box(
-                  modifier = Modifier.fillMaxWidth().padding(16.dp),
-                  contentAlignment = Alignment.Center
-                ) {
-                  Text(
-                    text = "No revision history found.",
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                  )
-                }
-              }
-            }
-          } else {
-            DetailedRevisionChangesView(
-              selectedRevisionSha = currentRevisionSha,
+      when (activeDetailTab) {
+        "files" -> {
+          // Display all files
+          items(item.files) { file -> DetailFileItemCard(file = file) }
+        }
+        "revisions" -> {
+          // Revisions tab content
+          item {
+            DetailRevisionsTabSection(
+              selectedRevisionSha = selectedRevisionSha,
+              isLoadingHistory = isLoadingHistory,
+              historyError = historyError,
+              historyList = historyList,
+              defaultOwnerLogin = item.gist.ownerLogin,
+              onSelectRevision = { sha -> viewModel?.selectRevision(item.gist.id, sha) },
               diffViewMode = diffViewMode,
               onDiffViewModeChange = { diffViewMode = it },
               isLoadingRevisionContent = isLoadingRevisionContent,
               revisionContentError = revisionContentError,
-              filesToCompare = filesToCompare,
-              onBack = { viewModel?.selectRevision(item.gist.id, null) }
+              filesToCompare = filesToCompare
+            )
+          }
+        }
+        "comments" -> {
+          // Comments tab content
+          item {
+            GistCommentsView(
+              comments = commentsList,
+              isLoading = isLoadingComments,
+              errorMessage = commentsError,
+              isPosting = isPostingComment,
+              currentUserLogin = ownerLogin,
+              onPostComment = { body -> viewModel?.postComment(item.gist.id, body) },
+              onDeleteComment = { commentId -> viewModel?.deleteComment(item.gist.id, commentId) },
+              onRetry = { viewModel?.loadComments(item.gist.id) }
             )
           }
         }

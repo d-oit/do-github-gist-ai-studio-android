@@ -162,7 +162,14 @@ class SearchHistoryTest {
       assertEquals("reactive", dbHistory[0].query)
 
       // Clear all history
+      composeTestRule.waitForIdle()
       composeTestRule.onNodeWithTag("clear_all_search_history_btn").performClick()
+      composeTestRule.waitForIdle()
+      testDispatcher.scheduler.advanceUntilIdle()
+      composeTestRule.waitForIdle()
+
+      val dbCleared = repository.searchHistory.first()
+      assertEquals(0, dbCleared.size)
       testDispatcher.scheduler.advanceUntilIdle()
       composeTestRule.waitForIdle()
 

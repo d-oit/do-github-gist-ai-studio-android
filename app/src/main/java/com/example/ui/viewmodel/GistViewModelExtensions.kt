@@ -69,3 +69,19 @@ fun GistViewModel.exportBackup(
     onResult = onResult
   )
 }
+
+fun GistViewModel.importBackup(
+  context: Context,
+  uri: Uri,
+  ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = kotlinx.coroutines.Dispatchers.IO,
+  onResult: (Boolean, String, Int) -> Unit
+) {
+  BackupImporter.importBackup(
+    scope = viewModelScope,
+    repository = repository,
+    context = context,
+    uri = uri,
+    ioDispatcher = ioDispatcher,
+    onResult = onResult
+  )
+}

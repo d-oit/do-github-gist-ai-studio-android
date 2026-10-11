@@ -367,39 +367,28 @@ class GistViewModel(
     }
   }
 
-  private val _aiAnalysis = MutableStateFlow<com.example.ui.components.GistAiAnalysis?>(null)
+  @Suppress("VariableNaming")
+  internal val _aiAnalysis = MutableStateFlow<com.example.ui.components.GistAiAnalysis?>(null)
   val aiAnalysis: StateFlow<com.example.ui.components.GistAiAnalysis?> = _aiAnalysis.asStateFlow()
 
-  private val _isAnalyzingGist = MutableStateFlow(false)
+  @Suppress("VariableNaming") internal val _isAnalyzingGist = MutableStateFlow(false)
   val isAnalyzingGist: StateFlow<Boolean> = _isAnalyzingGist.asStateFlow()
 
-  fun analyzeGistContent(description: String, files: List<Pair<String, String>>) {
-    viewModelScope.launch {
-      _isAnalyzingGist.value = true
-      _aiAnalysis.value = null
-      android.util.Log.d("GistViewModel", "Triggered analyzeGistContent. File count: ${files.size}")
-      try {
-        val geminiKey = appConfiguration.geminiApiKeyOrNull() ?: ""
-        val result =
-          com.example.ui.components.LocalGistAiModel.analyzeGist(
-            description = description,
-            files = files,
-            apiKey = geminiKey.ifBlank { null }
-          )
-        _aiAnalysis.value = result
-      } catch (e: Exception) {
-        val sanitizedError =
-          com.example.core.security.PrivacySanitizer.redact(e.message ?: "Unknown error")
-        android.util.Log.e("GistViewModel", "Error in analyzeGistContent: $sanitizedError", e)
-      } finally {
-        _isAnalyzingGist.value = false
-      }
-    }
-  }
+  // Gist Comments States
+  @Suppress("VariableNaming")
+  internal val _commentsList =
+    MutableStateFlow<List<com.example.data.remote.model.GistCommentResponse>>(emptyList())
+  val commentsList: StateFlow<List<com.example.data.remote.model.GistCommentResponse>> =
+    _commentsList.asStateFlow()
 
-  fun clearAiAnalysis() {
-    _aiAnalysis.value = null
-  }
+  @Suppress("VariableNaming") internal val _isLoadingComments = MutableStateFlow(false)
+  val isLoadingComments: StateFlow<Boolean> = _isLoadingComments.asStateFlow()
+
+  @Suppress("VariableNaming") internal val _commentsError = MutableStateFlow<String?>(null)
+  val commentsError: StateFlow<String?> = _commentsError.asStateFlow()
+
+  @Suppress("VariableNaming") internal val _isPostingComment = MutableStateFlow(false)
+  val isPostingComment: StateFlow<Boolean> = _isPostingComment.asStateFlow()
 
   fun createGist(
     description: String,

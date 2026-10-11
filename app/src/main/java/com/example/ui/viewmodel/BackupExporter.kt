@@ -11,9 +11,12 @@ import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 object BackupExporter {
   fun exportBackup(
@@ -21,10 +24,11 @@ object BackupExporter {
     localGists: List<GistWithFiles>,
     context: Context,
     uri: Uri,
-    ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
+    ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
     onResult: (Boolean, String) -> Unit
-  ) {
-    scope.launch(ioDispatcher) {
+  ): Job {
+    return scope.launch(ioDispatcher) {
       try {
         val backupItems =
           localGists.map { item ->
@@ -72,19 +76,19 @@ object BackupExporter {
         val jsonString = adapter.toJson(payload)
 
         if (uri.scheme == "file") {
-          val file = java.io.File(uri.path ?: throw Exception("Invalid file path"))
+          val file = java.io.File(uri.path ?: throw IllegalArgumentException("Invalid file path"))
           file.outputStream().use { outputStream ->
             outputStream.write(jsonString.toByteArray(Charsets.UTF_8))
           }
         } else {
           context.contentResolver.openOutputStream(uri)?.use { outputStream ->
             outputStream.write(jsonString.toByteArray(Charsets.UTF_8))
-          } ?: throw Exception("Failed to open output stream")
+          } ?: throw IllegalArgumentException("Failed to open output stream")
         }
 
-        scope.launch(Dispatchers.Main) { onResult(true, "Backup completed successfully") }
+        withContext(mainDispatcher) { onResult(true, "Backup completed successfully") }
       } catch (e: Exception) {
-        scope.launch(Dispatchers.Main) {
+        withContext(mainDispatcher) {
           onResult(false, e.localizedMessage ?: e.message ?: "Failed to save backup")
         }
       }
